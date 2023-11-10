@@ -6,7 +6,7 @@ from typing import List
 from typing import Dict
 from re import Pattern
 
-from src.compiler.token.token import Token
+from src.compiler.token import Token
 
 
 logger = logging.getLogger(__name__)
