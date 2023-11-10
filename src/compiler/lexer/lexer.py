@@ -1,89 +1,87 @@
+import os
 import re
 import yaml
+import logging
 from typing import List
 from typing import Dict
+from re import Pattern
 
 from src.compiler.token.token import Token
-from src.compiler.token.token import DefToken
 
 
-# TODO: set lines and position in tokens
-# TODO: implementation for ignore
+logger = logging.getLogger(__name__)
+
+
+# TODO: implementation for comment
+# TODO: add errors
 class Lexer:
-    tokens: List[DefToken]
-    ignore: str
+    _rules: Dict[str, Pattern]
+    _ignore: Pattern
+    _newline: Pattern
+    _comment: Pattern
 
-    def __init__(self, token_definitions_path: str) -> None:
-        token_definitions = self.__load_token_definitions(token_definitions_path)
-        self.tokens = self.__generate_tokens(token_definitions)
-        self.ignore = " "
-
-    def __split_lines(self, text: str) -> List[str]:
-        '''
-        Split the text in lines.
-        '''
-        return text.splitlines()
+    def __init__(self, rules_filepath: str) -> None:
+        self._colect_rules(rules_filepath)
     
-    def __split_ignore(self, text: str) -> List[str]:
-        '''
-        Split the text by the ignore rule.
-        '''
-        if not self.ignore:
-            return [text]
-        return re.split(self.ignore, text)
+    @property
+    def rules(self):
+        return self._rules
     
-    # FIX: the position is not correct
-    def __split_tokens(self, text: str, line: int) -> List[Token]:
-        '''
-        Split the text by the tokens.
-        '''
-        position = 0
-        tokens = []
-        while position < len(text):
-            match = None
-            for base_token in self.tokens:
-                match = base_token.match(text=text, position=position)
-                if match:
-                    value = match.group(0)
-                    tokens.append(Token(name=base_token.name, value=value))
-                    position = match.end()
-                    break
-            if not match:
-                # TODO: add error
-                raise ValueError(f"Invalid token at line {line} position {position}")
-        return tokens
+    @property
+    def ignore(self):
+        return self._ignore
+    
+    @property
+    def newline(self):
+        return self._newline
+    
+    @property
+    def comment(self):
+        return self._comment
 
-    def __load_token_definitions(self, filepath: str) -> Dict[str, str]:
+    def _colect_rules(self, filepath: str):
         '''
         Load the file with token definitions.
         '''
+        if not os.path.isfile(filepath) or not filepath.endswith(".yml"):
+            raise
         with open(filepath, "r") as f:
-            tokens_dict = yaml.safe_load(f)
-            if not isinstance(tokens_dict, dict):
+            rules = yaml.safe_load(f)
+            if not isinstance(rules, dict):
                 raise
-            return tokens_dict.get("tokens", {})
-    
-    def __generate_tokens(self, token_definitions: Dict[str, str]) -> List[DefToken]:
-        '''
-        Generate the tokens from the definitions.
-        '''
-        tokens = []
-        for name, rule in zip(token_definitions.keys(), token_definitions.values()):
-            tokens.append(DefToken(name=name, rule=rule))
-        return tokens
+            
+            token_rules = rules.get("tokens", {})
+            self._rules = {}
+            for name, rule in zip(token_rules.keys(), token_rules.values()):
+                self._rules.update({name: re.compile(rule)})
+            self._ignore = re.compile(rules.get("ignore", ""))
+            self._newline = re.compile(rules.get("newline", ""))
+            self._comment = re.compile(rules.get("comment", ""))
 
-    # TODO: the return should be a generator?
     def tokenize(self, text: str) -> List[Token]:
         '''
         Tokenize the text.
         '''
+        position = 0
         line_counter = 0
-        tokens = []
-        text_lines = self.__split_lines(text)
-        for line in text_lines:
-            line_counter+=1
-            splited_ignored = self.__split_ignore(line)
-            for subtext in splited_ignored:
-                subtext_tokens = self.__split_tokens(text=subtext, line=line_counter)
-                tokens.extend(subtext_tokens)
-        return tokens
+        while position < len(text):
+            if self.ignore.match(string=text, pos=position):
+                logger.debug("match ignore")
+                position+=1
+                continue
+            if self.newline.match(string=text, pos=position):
+                logger.debug("match newline")
+                line_counter+=1
+                position+=1
+                continue
+            for rule_name, rule in zip(self.rules.keys(), self.rules.values()):
+                match = rule.match(string=text, pos=position)
+                if match:
+                    logger.debug("match rule")
+                    value = match.group(0)
+                    position = match.end()
+                    yield Token(name=rule_name, value=value, line=line_counter)
+                    break
+            if not match:
+                # TODO: add error
+                raise ValueError(f"Invalid token at line {line_counter} position {position}")

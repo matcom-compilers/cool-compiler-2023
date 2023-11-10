@@ -1,5 +1,6 @@
 from src.COOL.lexer import lexer
 
-a = lexer.tokenize('ab\na a')
+a = lexer.tokenize('(2+ 31) *5 \n       24/3')
 
-print(a)
+for i in a:
+    print(i)

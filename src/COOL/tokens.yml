@@ -1,6 +1,0 @@
-tokens:
-  a: "a"
-  b: "b"
-
-ignore:
-  b: "b"
