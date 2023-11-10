@@ -1,0 +1,14 @@
+tokens:
+  NUMBER: \d+
+  PLUS: \+
+  MINUS: \-
+  TIMES: \*
+  DIVIDE: /
+  LPAREN: \(
+  RPAREN: \)
+
+ignore: " "
+
+newline: \n
+
+comment: "#"
