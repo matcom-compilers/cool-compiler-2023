@@ -1,3 +1,7 @@
-from src.COOL import Lexer
+# from src.COOL import Lexer
 
-lexer = Lexer('src/COOL/rules.yml')
+# lexer = Lexer('src/COOL/rules.yml')
+
+from src.COOL import SLYLexer
+
+lexer = SLYLexer()
