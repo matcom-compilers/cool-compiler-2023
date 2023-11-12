@@ -1,3 +1,3 @@
-from src.compiler import Lexer
+from src.COOL import Lexer
 
 lexer = Lexer('src/COOL/rules.yml')
