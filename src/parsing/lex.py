@@ -140,13 +140,14 @@ class Lexer:
 
             peek_char = self.stream.peek_char()
             # Keywords and identifiers
-            if char.isalpha() or char == "_":
+            if char.isalpha():
                 identifier = char
                 while peek_char is not None and (
                     peek_char.isalnum() or peek_char == "_"
                 ):
                     identifier += peek_char
-                    peek_char = self.stream.next_char()
+                    self.stream.next_char()  # consume peek_char
+                    peek_char = self.stream.peek_char()
 
                 if identifier in self.keywords:
                     log.debug(
@@ -205,6 +206,19 @@ class Lexer:
                         if peek_char == "\n":  # ignore escaped newlines
                             self.stream.next_char()  # consume '\n'
                             continue
+                        if peek_char in {"n", "t", "b", "f", "\\", '"'}:
+                            escape_dict = {
+                                "n": "\n",
+                                "t": "\t",
+                                "b": "\b",
+                                "f": "\f",
+                                "\\": "\\",
+                                '"': '"',
+                            }
+                            string += escape_dict[peek_char]
+                            self.stream.next_char()  # consume escaped
+                            continue
+
                     if char == '"':
                         return Token(
                             type=TokenType.STRING_CONST,
