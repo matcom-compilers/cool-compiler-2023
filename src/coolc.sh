@@ -8,4 +8,4 @@ echo "IceBox: Turning COOL code into cooler results!"        #
 echo "Copyright (c) 2019: Dario Fragas, Abraham González"    # TODO: líneas a los valores correctos
 
 # Exec the compiler
-exec python3 cool.py $INPUT_FILE $OUTPUT_FILE 
+exec python3 cool.py "$@"  

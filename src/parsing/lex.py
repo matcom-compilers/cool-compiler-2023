@@ -13,13 +13,15 @@ class CharacterStream:
         self.source_code = source_code
         self.position = 0
         self.line = 1
-        self.column = 1
+        self.column = 0
+        self.previous_position = self.get_position()
 
     def next_char(self) -> Optional[str]:
         if self.position >= len(self.source_code):
             return None
         char = self.source_code[self.position]
         self.position += 1
+        self.previous_position = self.get_position()
         if char == "\n":
             self.line += 1
             self.column = 1
@@ -38,7 +40,7 @@ class CharacterStream:
     def reset(self):
         self.position = 0
         self.line = 1
-        self.column = 1
+        self.column = 0
 
 
 class TokenType:
@@ -121,8 +123,10 @@ class Lexer:
         }
         self.errors = []
 
-    def error(self, message):
-        row, col = self.stream.get_position()
+    def error(self, message, position: Optional[CharPosition] = None):
+        if position is None:
+            position = self.stream.previous_position
+        row, col = position
         self.errors.append(f"({row}, {col}) - LexicographicError: {message}")
 
     def fetch_token(self):
@@ -176,15 +180,31 @@ class Lexer:
                     position=self.stream.get_position(),
                 )
 
-            # Strings
             if char == '"':
                 string = ""
                 while True:
                     char = self.stream.next_char()
                     if char is None:
-                        self.error("Unterminated string")
+                        self.error(
+                            "Unterminated string constant", self.stream.get_position()
+                        )
+                        return None
+                    if char == "\n":
+                        self.error(
+                            "Unterminated string constant",
+                        )
+                        return None
+                    if char == "\0":
+                        self.error(
+                            "String contains null character",
+                        )
                         return None
 
+                    if char == "\\":
+                        peek_char = self.stream.peek_char()
+                        if peek_char == "\n":  # ignore escaped newlines
+                            self.stream.next_char()  # consume '\n'
+                            continue
                     if char == '"':
                         return Token(
                             type=TokenType.STRING_CONST,
@@ -192,7 +212,7 @@ class Lexer:
                             position=self.stream.get_position(),
                         )
 
-                    string += char
+                    string += char  # type: ignore
 
             # Single-line comments
             if char == "-":
