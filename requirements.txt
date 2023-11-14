@@ -1,2 +1,6 @@
 pytest
 pytest-ordering
+
+
+# For better logging
+colorlog==6.7.0
