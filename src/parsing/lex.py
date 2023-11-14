@@ -1,4 +1,5 @@
 from collections import namedtuple
+from enum import Enum
 from logging import getLogger
 from typing import Optional
 
@@ -43,9 +44,8 @@ class CharacterStream:
         self.column = 0
 
 
-class TokenType:
+class TokenType(Enum):
     OBJECTID = "OBJECTID"
-    TYPEID = "TYPEID"
     INT_CONST = "INT_CONST"
     STRING_CONST = "STRING_CONST"
     DOT = "DOT"
@@ -88,6 +88,7 @@ class TokenType:
     TRUE = "TRUE"
     SINGLE_LINE_COMMENT = "SINGLE_LINE_COMMENT"
     MULTI_LINE_COMMENT = "MULTI_LINE_COMMENT"
+    EOF = "EOF"
 
 
 class Token:
@@ -233,7 +234,7 @@ class Lexer:
                 peek_char = self.stream.peek_char()
                 if peek_char == "-":
                     comment = ""
-                    self.stream.next_char() # consume -
+                    self.stream.next_char()  # consume -
                     peek_char = self.stream.peek_char()
                     while peek_char != "\n" and peek_char is not None:
                         comment += peek_char
@@ -242,8 +243,12 @@ class Lexer:
                     if peek_char is None:
                         self.error("EOF in comment")
                         return None
-                    return Token(type=TokenType.SINGLE_LINE_COMMENT, value=comment, position=self.stream.get_position())
-                    
+                    return Token(
+                        type=TokenType.SINGLE_LINE_COMMENT,
+                        value=comment,
+                        position=self.stream.get_position(),
+                    )
+
             # Multi-line comments
             if char == "(" and peek_char == "*":
                 self.stream.next_char()  # consume '*'
@@ -410,6 +415,7 @@ class Lexer:
         while True:
             token = self.fetch_token()
             if token is None:
+                tokens.append(Token(TokenType.EOF, None, self.stream.get_position()))
                 break
             tokens.append(token)
         return tokens, self.errors
