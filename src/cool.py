@@ -15,6 +15,9 @@ def main():
         help="Output file (default: same as input with .mips extension)",
     )
     parser.add_argument("--lexer", action="store_true", help="Run only the lexer stage")
+    parser.add_argument(
+        "--parser", action="store_true", help="Run only to parsing stage"
+    )
     parser.add_argument("-t", action="store_true", help="Print Tokens from lexer stage")
     parser.add_argument(
         "--log-level", type=str, help="Set the log level (default: INFO)"

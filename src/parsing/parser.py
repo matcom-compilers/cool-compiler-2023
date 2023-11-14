@@ -22,7 +22,6 @@ class Parser:
         self.errors = []
 
     def eat(self, token_type: TokenType):
-        # print(f"eat {token_type}")
         if self.current_token.type != token_type:
             self.errors.append(
                 f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
@@ -176,34 +175,47 @@ class Parser:
         if not left:
             if self.current_token.type == TokenType.OBJECTID:
                 # Assignment, method call or attribute access
-                return self.parse_id_expression()
+                expr = self.parse_id_expression()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.IF:
-                return self.parse_if()
+                expr = self.parse_if()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.WHILE:
-                return self.parse_while()
+                expr = self.parse_while()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.OCUR:
-                return self.parse_block()
+                expr = self.parse_block()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.LET:
-                return self.parse_let()
+                expr = self.parse_let()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.CASE:
-                return self.parse_case()
+                expr = self.parse_case()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.NEW:
-                return self.parse_new()
+                expr = self.parse_new()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.ISVOID:
-                return self.parse_isvoid()
+                expr = self.parse_isvoid()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.TILDE:
-                return self.parse_negate()
+                expr = self.parse_negate()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.INT_CONST:
                 expr = self.parse_integer()
                 return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.STRING_CONST:
-                return self.parse_string()
+                expr = self.parse_string()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.TRUE:
-                return self.parse_true()
+                expr = self.parse_true()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.FALSE:
-                return self.parse_false()
+                expr = self.parse_false()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.NOT:
-                return self.parse_not()
+                expr = self.parse_not()
+                return self.parse_expression(left=expr)
             elif self.current_token.type == TokenType.OPAR:
                 self.eat(TokenType.OPAR)
                 expr = self.parse_expression()
@@ -212,12 +224,13 @@ class Parser:
 
             else:
                 self.errors.append(
-                    f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntaxError: Expected expression, got {self.current_token.type}"
+                    f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
                 )
                 self.eat(self.current_token.type)
         else:
             if self.current_token.type in (TokenType.AT, TokenType.DOT):
-                return self.parse_attribute_access(left)
+                expr = self.parse_attribute_access(left)
+                return self.parse_expression(left=expr)
             else:
                 return self.parse_binary_operation(left)
 
@@ -306,27 +319,36 @@ class Parser:
         while self.current_token.type != TokenType.CCUR:
             expressions.append(self.parse_expression())
             self.eat(TokenType.SEMICOLON)
+
         self.eat(TokenType.CCUR)
         return ast.BlockNode(expressions, location)
 
     def parse_let(self):
-        """
-        let ID : TYPE [<-expr] [[,ID : TYPE [<- expr ]]]*in expr
-        """
         location = ast.Location(*self.current_token.position)
         self.eat(TokenType.LET)
-        identifier = self.current_token.value
-        self.eat(TokenType.OBJECTID)
-        self.eat(TokenType.COLON)
-        formal_type = self.current_token.value
-        self.eat(TokenType.OBJECTID)
-        assign_expr = None
-        if self.current_token.type == TokenType.ASSIGN:
-            self.eat(TokenType.ASSIGN)
-            assign_expr = self.parse_expression()
+        bindings = []
+        while self.current_token.type != TokenType.IN:
+            var_name = self.current_token.value
+
+            if var_name[0].isupper():
+                self.errors.append(
+                    f"({location[0]}, {location[1]}) - SyntacticError: ERROR at or near {var_name}"
+                )
+
+            self.eat(TokenType.OBJECTID)
+            self.eat(TokenType.COLON)
+            var_type = self.current_token.value
+            self.eat(TokenType.OBJECTID)
+            init_expr = None
+            if self.current_token.type == TokenType.ASSIGN:
+                self.eat(TokenType.ASSIGN)
+                init_expr = self.parse_expression()
+            bindings.append((var_name, var_type, init_expr))
+            if self.current_token.type == TokenType.COMMA:
+                self.eat(TokenType.COMMA)
         self.eat(TokenType.IN)
         body = self.parse_expression()
-        return ast.LetNode(identifier, formal_type, assign_expr, body, location)
+        return ast.LetNode(bindings, body, location)
 
     def parse_case(self):
         """

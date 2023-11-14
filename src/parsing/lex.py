@@ -96,6 +96,7 @@ class Token:
         self.type = type
         self.value = value
         self.position = position
+        log.debug(f"Added {type} | {value} | {position}")
 
 
 class Lexer:
@@ -151,19 +152,13 @@ class Lexer:
                     self.stream.next_char()  # consume peek_char
                     peek_char = self.stream.peek_char()
 
-                if identifier in self.keywords:
-                    log.debug(
-                        f"Add Token Keyword {identifier} at {self.stream.get_position()}"
-                    )
+                if identifier.lower() in self.keywords:
                     return Token(
-                        type=self.keywords[identifier],
+                        type=self.keywords[identifier.lower()],
                         value=identifier,
                         position=position,
                     )
                 else:
-                    log.debug(
-                        f"Add Token ObjectID {identifier} at {self.stream.get_position()}"
-                    )
                     return Token(
                         type=TokenType.OBJECTID, value=identifier, position=position
                     )
@@ -173,12 +168,11 @@ class Lexer:
                 number = char
                 while peek_char is not None and peek_char.isdigit():
                     number += peek_char
-                    peek_char = self.stream.next_char()
+                    self.stream.next_char()
+                    peek_char = self.stream.peek_char()
 
                 return Token(
-                    type=TokenType.INT_CONST,
-                    value=int(number),
-                    position=self.stream.get_position(),
+                    type=TokenType.INT_CONST, value=int(number), position=position
                 )
 
             if char == '"':
@@ -221,9 +215,7 @@ class Lexer:
 
                     if char == '"':
                         return Token(
-                            type=TokenType.STRING_CONST,
-                            value=string,
-                            position=self.stream.get_position(),
+                            type=TokenType.STRING_CONST, value=string, position=position
                         )
 
                     string += char  # type: ignore
@@ -245,7 +237,7 @@ class Lexer:
                     return Token(
                         type=TokenType.SINGLE_LINE_COMMENT,
                         value=comment,
-                        position=self.stream.get_position(),
+                        position=position,
                     )
 
             # Multi-line comments
@@ -262,7 +254,7 @@ class Lexer:
                         token = Token(
                             type=TokenType.MULTI_LINE_COMMENT,
                             value=comment,
-                            position=self.stream.get_position(),
+                            position=position,
                         )
                         self.stream.next_char()  # consume ')'
                         return token
@@ -271,139 +263,63 @@ class Lexer:
 
             # Operators and punctuation
             if char == ".":
-                return Token(
-                    type=TokenType.DOT,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.DOT, value=char, position=position)
 
             if char == ",":
-                return Token(
-                    type=TokenType.COMMA,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.COMMA, value=char, position=position)
 
             if char == ":":
-                return Token(
-                    type=TokenType.COLON,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.COLON, value=char, position=position)
 
             if char == ";":
-                return Token(
-                    type=TokenType.SEMICOLON,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.SEMICOLON, value=char, position=position)
 
             if char == "@":
-                return Token(
-                    type=TokenType.AT,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.AT, value=char, position=position)
 
             if char == "~":
-                return Token(
-                    type=TokenType.TILDE,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.TILDE, value=char, position=position)
 
             if char == "+":
-                return Token(
-                    type=TokenType.PLUS,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.PLUS, value=char, position=position)
 
             if char == "-":
-                return Token(
-                    type=TokenType.MINUS,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.MINUS, value=char, position=position)
 
             if char == "*":
-                return Token(
-                    type=TokenType.STAR,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.STAR, value=char, position=position)
 
             if char == "/":
-                return Token(
-                    type=TokenType.DIV,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.DIV, value=char, position=position)
 
             if char == "<":
                 if peek_char == "=":
                     self.stream.next_char()
-                    return Token(
-                        type=TokenType.LEQ,
-                        value="<=",
-                        position=self.stream.get_position(),
-                    )
+                    return Token(type=TokenType.LEQ, value="<=", position=position)
                 elif peek_char == "-":
                     self.stream.next_char()
-                    return Token(
-                        type=TokenType.ASSIGN,
-                        value="<-",
-                        position=self.stream.get_position(),
-                    )
+                    return Token(type=TokenType.ASSIGN, value="<-", position=position)
                 else:
-                    return Token(
-                        type=TokenType.LOWER,
-                        value="<",
-                        position=self.stream.get_position(),
-                    )
+                    return Token(type=TokenType.LOWER, value="<", position=position)
 
             if char == "=":
                 if peek_char == ">":
                     self.stream.next_char()  # consume '>'
-                    return Token(
-                        type=TokenType.DARROW,
-                        value="=>",
-                        position=self.stream.get_position(),
-                    )
+                    return Token(type=TokenType.DARROW, value="=>", position=position)
                 else:
-                    return Token(
-                        type=TokenType.EQUAL,
-                        value="=",
-                        position=self.stream.get_position(),
-                    )
+                    return Token(type=TokenType.EQUAL, value="=", position=position)
 
             if char == "(":
-                return Token(
-                    type=TokenType.OPAR,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.OPAR, value=char, position=position)
 
             if char == ")":
-                return Token(
-                    type=TokenType.CPAR,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.CPAR, value=char, position=position)
 
             if char == "{":
-                return Token(
-                    type=TokenType.OCUR,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.OCUR, value=char, position=position)
 
             if char == "}":
-                return Token(
-                    type=TokenType.CCUR,
-                    value=char,
-                    position=self.stream.get_position(),
-                )
+                return Token(type=TokenType.CCUR, value=char, position=position)
 
             self.error(f'ERROR "{char}"')
             return None

@@ -133,11 +133,9 @@ class BlockNode(ExpressionNode):
 
 
 class LetNode(ExpressionNode):
-    def __init__(self, identifier, type, assign_expr, body, location):
+    def __init__(self, bindings, body, location):
         super().__init__(location)
-        self.identifier = identifier
-        self.type = type
-        self.assign_expr = assign_expr
+        self.bindings = bindings
         self.body = body
 
 
