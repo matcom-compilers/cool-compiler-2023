@@ -19,8 +19,12 @@ class Parser:
         self.errors = []
 
     def eat(self, token_type: TokenType):
+        # print(f"eat {token_type}")
         if self.current_token.type != token_type:
             self.errors.append(
+                f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
+            )
+            print(
                 f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
             )
 
@@ -64,7 +68,7 @@ class Parser:
             features.append(self.parse_feature())
             self.eat(TokenType.SEMICOLON)
         self.eat(TokenType.CCUR)
-
+        self.eat(TokenType.SEMICOLON)
         return ast.ClassNode(class_name, parent, features, location)
 
     def parse_feature(self):
@@ -138,7 +142,7 @@ class Parser:
         self.eat(TokenType.OBJECTID)
         return ast.FormalNode(name, formal_type, location)
 
-    def parse_expression(self):
+    def parse_expression(self, left=None, precedence=0):
         """
         expr ::=ID <- expr
             | expr [@TYPE].ID( [ expr [[ , expr ]]∗] )
@@ -166,45 +170,53 @@ class Parser:
             |true
             |false
         """
-        if self.current_token.type == TokenType.OBJECTID:
-            # Assignment, method call or attribute access
-            return self.parse_id_expression()
-        elif self.current_token.type == TokenType.IF:
-            return self.parse_if()
-        elif self.current_token.type == TokenType.WHILE:
-            return self.parse_while()
-        elif self.current_token.type == TokenType.OCUR:
-            return self.parse_block()
-        elif self.current_token.type == TokenType.LET:
-            return self.parse_let()
-        elif self.current_token.type == TokenType.CASE:
-            return self.parse_case()
-        elif self.current_token.type == TokenType.NEW:
-            return self.parse_new()
-        elif self.current_token.type == TokenType.ISVOID:
-            return self.parse_isvoid()
-        elif self.current_token.type == TokenType.TILDE:
-            return self.parse_negate()
-        elif self.current_token.type == TokenType.INT_CONST:
-            return self.parse_integer()
-        elif self.current_token.type == TokenType.INT_CONST:
-            return self.parse_string()
-        elif self.current_token.type == TokenType.TRUE:
-            return self.parse_true()
-        elif self.current_token.type == TokenType.FALSE:
-            return self.parse_false()
-        elif self.current_token.type == TokenType.NOT:
-            return self.parse_not()
-        elif self.current_token.type == TokenType.OPAR:
-            self.eat(TokenType.OPAR)
-            expr = self.parse_expression()
-            self.eat(TokenType.CPAR)
-            return expr
+        if not left:
+            if self.current_token.type == TokenType.OBJECTID:
+                # Assignment, method call or attribute access
+                return self.parse_id_expression()
+            elif self.current_token.type == TokenType.IF:
+                return self.parse_if()
+            elif self.current_token.type == TokenType.WHILE:
+                return self.parse_while()
+            elif self.current_token.type == TokenType.OCUR:
+                return self.parse_block()
+            elif self.current_token.type == TokenType.LET:
+                return self.parse_let()
+            elif self.current_token.type == TokenType.CASE:
+                return self.parse_case()
+            elif self.current_token.type == TokenType.NEW:
+                return self.parse_new()
+            elif self.current_token.type == TokenType.ISVOID:
+                return self.parse_isvoid()
+            elif self.current_token.type == TokenType.TILDE:
+                return self.parse_negate()
+            elif self.current_token.type == TokenType.INT_CONST:
+                expr = self.parse_integer()
+                return self.parse_expression(left=expr)
+            elif self.current_token.type == TokenType.STRING_CONST:
+                return self.parse_string()
+            elif self.current_token.type == TokenType.TRUE:
+                return self.parse_true()
+            elif self.current_token.type == TokenType.FALSE:
+                return self.parse_false()
+            elif self.current_token.type == TokenType.NOT:
+                return self.parse_not()
+            elif self.current_token.type == TokenType.OPAR:
+                self.eat(TokenType.OPAR)
+                expr = self.parse_expression()
+                self.eat(TokenType.CPAR)
+                return self.parse_expression(left=expr)
+
+            else:
+                self.errors.append(
+                    f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntaxError: Expected expression, got {self.current_token.type}"
+                )
+                self.eat(self.current_token.type)
         else:
-            self.errors.append(
-                f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntaxError: Expected expression, got {self.current_token.type}"
-            )
-            self.eat(self.current_token.type)
+            if self.current_token.type in (TokenType.AT, TokenType.DOT):
+                return self.parse_attribute_access(left)
+            else:
+                return self.parse_binary_operation(left)
 
     def parse_id_expression(self):
         """
@@ -227,6 +239,10 @@ class Parser:
         """
         ID <- expr
         """
+        if name[0].isupper():
+            self.errors.append(
+                f"({location[0]}, {location[1]}) - SyntacticError: ERROR at or near {name}"
+            )
         self.eat(TokenType.ASSIGN)
         expr = self.parse_expression()
         return ast.AssignNode(name, expr, location)
@@ -408,3 +424,71 @@ class Parser:
         location = ast.Location(*self.current_token.position)
         self.eat(TokenType.FALSE)
         return ast.BooleanNode(False, location)
+
+    def parse_attribute_access(self, left):
+        """
+        expr[@TYPE].ID( [ expr [[ , expr ]]∗] )
+        """
+        location = ast.Location(*self.current_token.position)
+        obj_type = None
+        if self.current_token.type == TokenType.AT:
+            self.eat(TokenType.AT)
+            obj_type = self.current_token.value
+            self.eat(TokenType.OBJECTID)
+        self.eat(TokenType.DOT)
+        method = self.current_token.value
+        self.eat(TokenType.OBJECTID)
+        self.eat(TokenType.OPAR)
+        arguments = self.parse_arguments()
+        self.eat(TokenType.CPAR)
+        return ast.DispatchNode(left, method, arguments, location, obj_type)
+
+    def parse_binary_operation(self, left):
+        """
+        expr+expr
+        expr− expr
+        expr∗expr
+        expr/expr
+        expr<expr
+        expr<=expr
+        expr=expr
+        """
+        location = ast.Location(*self.current_token.position)
+        if self.current_token.type == TokenType.PLUS:
+            self.eat(TokenType.PLUS)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(
+                ast.BinaryOperator.PLUS, left, right, location
+            )
+        elif self.current_token.type == TokenType.MINUS:
+            self.eat(TokenType.MINUS)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(
+                ast.BinaryOperator.MINUS, left, right, location
+            )
+        elif self.current_token.type == TokenType.STAR:
+            self.eat(TokenType.STAR)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(
+                ast.BinaryOperator.TIMES, left, right, location
+            )
+        elif self.current_token.type == TokenType.DIV:
+            self.eat(TokenType.DIV)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(
+                ast.BinaryOperator.DIVIDE, left, right, location
+            )
+        elif self.current_token.type == TokenType.LOWER:
+            self.eat(TokenType.LOWER)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(ast.BinaryOperator.LT, left, right, location)
+        elif self.current_token.type == TokenType.LEQ:
+            self.eat(TokenType.LEQ)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(ast.BinaryOperator.LE, left, right, location)
+        elif self.current_token.type == TokenType.EQUAL:
+            self.eat(TokenType.EQUAL)
+            right = self.parse_expression()
+            return ast.BinaryOperatorNode(ast.BinaryOperator.EQ, left, right, location)
+        else:
+            return left

@@ -1,4 +1,5 @@
 from collections import namedtuple
+from enum import Enum
 
 Location = namedtuple("Location", ["line", "column"])
 
@@ -6,6 +7,7 @@ Location = namedtuple("Location", ["line", "column"])
 class Node:
     def __init__(self, location):
         self.location = location
+        print(f"Created Node {self} at {location}")
 
 
 class ProgramNode(Node):
@@ -63,8 +65,35 @@ class AssignNode(ExpressionNode):
         self.expr = expr
 
 
+class DispatchNode(ExpressionNode):
+    def __init__(self, expr, method, args, location, method_type=None):
+        super().__init__(location)
+        self.expr = expr
+        self.method = method
+        self.args = args
+        self.method_type = method_type
+
+
+class BinaryOperator(Enum):
+    PLUS = "+"
+    MINUS = "-"
+    TIMES = "*"
+    DIVIDE = "/"
+    LT = "<"
+    LE = "<="
+    EQ = "=="
+    GT = ">"
+    GE = ">="
+
+
 class BinaryOperatorNode(ExpressionNode):
-    def __init__(self, operator, left, right, location):
+    def __init__(
+        self,
+        operator: BinaryOperator,
+        left: ExpressionNode,
+        right: ExpressionNode,
+        location: Location,
+    ):
         super().__init__(location)
         self.operator = operator
         self.left = left
