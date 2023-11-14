@@ -3,6 +3,7 @@ import logging
 import os
 
 from parsing.lex import Lexer
+from parsing.parser import Parser
 
 
 def main():
@@ -14,6 +15,7 @@ def main():
         help="Output file (default: same as input with .mips extension)",
     )
     parser.add_argument("--lexer", action="store_true", help="Run only the lexer stage")
+    parser.add_argument("-t", action="store_true", help="Print Tokens from lexer stage")
     parser.add_argument(
         "--log-level", type=str, help="Set the log level (default: INFO)"
     )
@@ -45,6 +47,10 @@ def main():
     lexer = Lexer(source_code)
     tokens, errors = lexer.lex()
 
+    if options.t:
+        for t in tokens:
+            print(f"{t.type} | {t.value} | {t.position}")
+
     if errors:
         for error in errors:
             print(error)
@@ -53,9 +59,19 @@ def main():
 
     if options.lexer:
         exit(exit_code)
-    # elif options.parser:
-    #     # Run the parser stage
-    #     pass
+
+    parser = Parser(tokens)
+    program = parser.parse()
+    parser_errors = parser.errors
+    if parser_errors:
+        for error in parser_errors:
+            print(error)
+        exit_code = 1
+        exit(exit_code)
+
+    if options.parser:
+        exit(exit_code)
+
     # else:
     #     # Run the full compilation process
     #     pass

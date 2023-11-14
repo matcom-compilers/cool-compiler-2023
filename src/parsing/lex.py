@@ -62,7 +62,7 @@ class TokenType(Enum):
     LOWER = "LOWER"
     EQUAL = "EQUAL"
     ASSIGN = "ASSIGN"
-    CASSIGN = "CASSIGN"
+    DARROW = "DARROW"
     OPAR = "OPAR"
     CPAR = "CPAR"
     OCUR = "OCUR"
@@ -367,7 +367,7 @@ class Lexer:
                 if peek_char == ">":
                     self.stream.next_char()  # consume '>'
                     return Token(
-                        type=TokenType.CASSIGN,
+                        type=TokenType.DARROW,
                         value="=>",
                         position=self.stream.get_position(),
                     )
