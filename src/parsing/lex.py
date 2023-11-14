@@ -233,26 +233,17 @@ class Lexer:
                 peek_char = self.stream.peek_char()
                 if peek_char == "-":
                     comment = ""
-                    peek_char = self.stream.next_char()
+                    self.stream.next_char() # consume -
+                    peek_char = self.stream.peek_char()
                     while peek_char != "\n" and peek_char is not None:
                         comment += peek_char
-                        peek_char = self.stream.next_char()
-                    import argparse
-                    import logging
-
-                    # Add the following lines to create an argument parser and add an argument for the log level
-                    parser = argparse.ArgumentParser()
-                    parser.add_argument(
-                        "--log-level",
-                        help="Set the log level",
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                        default="INFO",
-                    )
-                    args = parser.parse_args()
-
-                    # Set the log level based on the argument value
-                    logging.basicConfig(level=args.log_level)
-
+                        self.stream.next_char()
+                        peek_char = self.stream.peek_char()
+                    if peek_char is None:
+                        self.error("EOF in comment")
+                        return None
+                    return Token(type=TokenType.SINGLE_LINE_COMMENT, value=comment, position=self.stream.get_position())
+                    
             # Multi-line comments
             if char == "(" and peek_char == "*":
                 self.stream.next_char()  # consume '*'
@@ -260,7 +251,7 @@ class Lexer:
                 while True:
                     char = self.stream.next_char()
                     if char is None:
-                        self.error("EOF in comment")
+                        self.error("EOF in comment", self.stream.get_position())
                         return None
 
                     if char == "*" and self.stream.peek_char() == ")":
