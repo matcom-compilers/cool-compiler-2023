@@ -1,13 +1,17 @@
 from collections import namedtuple
 from enum import Enum
 
+from utils.loggers import LoggerUtility
+
+log = LoggerUtility.get_logger()
+
 Location = namedtuple("Location", ["line", "column"])
 
 
 class Node:
     def __init__(self, location):
         self.location = location
-        print(f"Created Node {self} at {location}")
+        log.debug(f"Created Node {self} at {location}")
 
 
 class ProgramNode(Node):

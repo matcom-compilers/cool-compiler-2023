@@ -3,6 +3,9 @@ from typing import List, Optional
 
 import parsing.ast as ast
 from parsing.lex import Token, TokenType
+from utils.loggers import LoggerUtility
+
+log = LoggerUtility.get_logger()
 
 
 class Parser:
@@ -24,7 +27,7 @@ class Parser:
             self.errors.append(
                 f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
             )
-            print(
+            log.debug(
                 f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
             )
 

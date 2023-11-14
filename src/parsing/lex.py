@@ -132,6 +132,7 @@ class Lexer:
 
     def fetch_token(self):
         while True:
+            position = self.stream.get_position()
             char = self.stream.next_char()
             if char is None:
                 return None
@@ -157,16 +158,14 @@ class Lexer:
                     return Token(
                         type=self.keywords[identifier],
                         value=identifier,
-                        position=self.stream.get_position(),
+                        position=position,
                     )
                 else:
                     log.debug(
                         f"Add Token ObjectID {identifier} at {self.stream.get_position()}"
                     )
                     return Token(
-                        type=TokenType.OBJECTID,
-                        value=identifier,
-                        position=self.stream.get_position(),
+                        type=TokenType.OBJECTID, value=identifier, position=position
                     )
 
             # Numbers
