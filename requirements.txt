@@ -3,4 +3,4 @@ pytest-ordering
 
 
 # For better logging
-colorlog==6.7.0
+coloredlogs==15.0.1
