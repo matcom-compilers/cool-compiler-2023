@@ -12,30 +12,38 @@ class Operators(Token):
         pass
 
 class Add(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="sum"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
 
     def run(self):
         return self.op1 + self.op2
 
 
 class Sub(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="sub"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
 
     def run(self):
         return self.op1 - self.op2
 
 class Mult(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="mult"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
 
     def run(self):
         return self.op1 * self.op2
 
 class Div(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="div"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
 
     def run(self):
         return self.op1 / self.op2
@@ -54,15 +62,15 @@ class Div(Operators):
 #     def run(self):
 #         return self.op1 ** self.op2 
     
-# class Eq(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
+class Eq(Operators):
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="equal"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
 
-#     def run(self):
-#         if self.op1 == self.op2:
-#             return True
-#         else:
-#             return False
+    def run(self):
+        return self.op1 == self.op2
+
         
 # class Neq(Operators):
 #     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
@@ -74,25 +82,25 @@ class Div(Operators):
 #         else:
 #             return False
         
-# class Lt(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
+class Lt(Operators):
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="lessthan"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
     
-#     def run(self):
-#         if self.op1 < self.op2:
-#             return True
-#         else:
-#             return False
+    def run(self):
+        return self.op1 < self.op2
+
         
-# class Leq(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
+class Leq(Operators):
+    def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
+        self.name="lessequal"
+        self.value=None
+        super().__init__(self.name, self.value, line, op1, op2)
     
-#     def run(self):
-#         if self.op1 <= self.op2:
-#             return True
-#         else:
-#             return False
+    def run(self):
+        return self.op1 <= self.op2
+
         
 # class Gt(Operators):
 #     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
