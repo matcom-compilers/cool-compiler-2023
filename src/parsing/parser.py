@@ -5,7 +5,7 @@ import parsing.ast as ast
 from parsing.lex import Token, TokenType
 from utils.loggers import LoggerUtility
 
-log = LoggerUtility.get_logger()
+log = LoggerUtility().get_logger()
 
 
 class Parser:
@@ -22,12 +22,26 @@ class Parser:
         self.errors = []
 
     def eat(self, token_type: TokenType):
+        if self.current_token:
+            log.debug(
+                "Eat: ",
+                extra={
+                    "type": self.current_token.type,
+                    "location": self.current_token.position,
+                    "value": self.current_token.value,
+                },
+            )
         if self.current_token.type != token_type:
             self.errors.append(
                 f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
             )
             log.debug(
-                f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
+                f"(SyntacticError: ERROR at or near {self.current_token.value}",
+                extra={
+                    "type": self.current_token.type,
+                    "location": self.current_token.position,
+                    "value": self.current_token.value,
+                },
             )
 
         self.current_token = next(self.tokens)
@@ -242,6 +256,12 @@ class Parser:
         """
         name = self.current_token.value
         location = ast.Location(*self.current_token.position)
+
+        if name[0].isupper():
+            self.errors.append(
+                f"({location[0]}, {location[1]}) - SyntacticError: ERROR at or near {name}"
+            )
+
         self.eat(TokenType.OBJECTID)
 
         if self.current_token.type == TokenType.ASSIGN:  # ID <- expr
@@ -255,10 +275,7 @@ class Parser:
         """
         ID <- expr
         """
-        if name[0].isupper():
-            self.errors.append(
-                f"({location[0]}, {location[1]}) - SyntacticError: ERROR at or near {name}"
-            )
+
         self.eat(TokenType.ASSIGN)
         expr = self.parse_expression()
         return ast.AssignNode(name, expr, location)
@@ -269,7 +286,6 @@ class Parser:
         """
         self.eat(TokenType.OPAR)
         arguments = self.parse_arguments()
-        self.eat(TokenType.CPAR)
         return ast.MethodCallNode(name, arguments, location)
 
     def parse_arguments(self):
@@ -277,10 +293,29 @@ class Parser:
         [ expr  [[ , expr ]] *]
         """
         arguments = []
-        while self.current_token.type != TokenType.CPAR:
+        while True:
+            if self.current_token.type == TokenType.CPAR:
+                break
             arguments.append(self.parse_expression())
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)
+                if self.current_token.type == TokenType.CPAR:
+                    self.errors.append(
+                        f'({self.current_token.position.line}, {self.current_token.position.column}) - SyntacticError: ERROR at or near "{self.current_token.value}\nExtra comma on arguments"'
+                    )
+                    log.debug(
+                        f"(SyntacticError: ERROR at or near {self.current_token.value}",
+                        extra={
+                            "type": self.current_token.type,
+                            "location": self.current_token.position,
+                            "value": self.current_token.value,
+                        },
+                    )
+                continue
+            else:
+                break
+
+        self.eat(TokenType.CPAR)
         return arguments
 
     def parse_if(self):
@@ -327,25 +362,39 @@ class Parser:
         location = ast.Location(*self.current_token.position)
         self.eat(TokenType.LET)
         bindings = []
-        while self.current_token.type != TokenType.IN:
+        while True:
             var_name = self.current_token.value
 
             if var_name[0].isupper():
+                error_location = self.current_token.position
                 self.errors.append(
-                    f"({location[0]}, {location[1]}) - SyntacticError: ERROR at or near {var_name}"
+                    f"({error_location[0]}, {error_location[1]}) - SyntacticError: ERROR at or near {var_name}:\nObject identifiers starts with a lowercase letter"
                 )
 
             self.eat(TokenType.OBJECTID)
             self.eat(TokenType.COLON)
             var_type = self.current_token.value
+
+            if var_type[0].islower():
+                error_location = self.current_token.position
+                self.errors.append(
+                    f"({error_location[0]}, {error_location[1]}) - SyntacticError: ERROR at or near {var_name}:\nType identifiers starts with a uppercase letter "
+                )
+
             self.eat(TokenType.OBJECTID)
+
             init_expr = None
             if self.current_token.type == TokenType.ASSIGN:
                 self.eat(TokenType.ASSIGN)
                 init_expr = self.parse_expression()
             bindings.append((var_name, var_type, init_expr))
+
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)
+                continue
+            else:
+                break
+
         self.eat(TokenType.IN)
         body = self.parse_expression()
         return ast.LetNode(bindings, body, location)
@@ -465,7 +514,6 @@ class Parser:
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.OPAR)
         arguments = self.parse_arguments()
-        self.eat(TokenType.CPAR)
         return ast.DispatchNode(left, method, arguments, location, obj_type)
 
     def parse_binary_operation(self, left):

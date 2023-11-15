@@ -3,15 +3,27 @@ from enum import Enum
 
 from utils.loggers import LoggerUtility
 
-log = LoggerUtility.get_logger()
+log = LoggerUtility().get_logger()
 
 Location = namedtuple("Location", ["line", "column"])
+
+Location.__str__ = lambda self: f"Ln {self.line}, Col {self.column}"  # type: ignore
 
 
 class Node:
     def __init__(self, location):
         self.location = location
-        log.debug(f"Created Node {self} at {location}")
+        log.debug(
+            "Created Node: ",
+            extra={
+                "location": location,
+                "type": type(self).__name__,
+                "value": str(self),
+            },
+        )
+
+    def value(self):
+        return ""
 
 
 class ProgramNode(Node):
@@ -98,10 +110,13 @@ class BinaryOperatorNode(ExpressionNode):
         right: ExpressionNode,
         location: Location,
     ):
-        super().__init__(location)
         self.operator = operator
         self.left = left
         self.right = right
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return f"{self.left}{self.operator.value}{self.right}"
 
 
 class UnaryOperatorNode(ExpressionNode):
@@ -159,41 +174,62 @@ class NewNode(ExpressionNode):
         super().__init__(location)
         self.type = type
 
+    def value(self):
+        return f"{self.__dict__}"
+
 
 class IsVoidNode(ExpressionNode):
     def __init__(self, expr, location):
-        super().__init__(location)
         self.expr = expr
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return f"isvoid {self.expr}"
 
 
 class NotNode(ExpressionNode):
     def __init__(self, expr, location):
-        super().__init__(location)
         self.expr = expr
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return f"not {self.expr}"
 
 
 class IdentifierNode(ExpressionNode):
     def __init__(self, name, location):
-        super().__init__(location)
         self.name = name
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class IntegerNode(ExpressionNode):
     def __init__(self, value, location):
+        self._value = value
         super().__init__(location)
-        self.value = value
+
+    def __str__(self) -> str:
+        return str(self._value)
 
 
 class StringNode(ExpressionNode):
     def __init__(self, value, location):
+        self._value = value
         super().__init__(location)
-        self.value = value
+
+    def __str__(self) -> str:
+        return str(self._value)
 
 
 class BooleanNode(ExpressionNode):
     def __init__(self, value, location):
+        self._value = value
         super().__init__(location)
-        self.value = value
+
+    def __str__(self) -> str:
+        return str(self._value)
 
 
 class MethodCallNode(ExpressionNode):

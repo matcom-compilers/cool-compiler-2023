@@ -4,6 +4,9 @@ import os
 
 from parsing.lex import Lexer
 from parsing.parser import Parser
+from utils.loggers import LoggerUtility
+
+log = LoggerUtility().get_logger()
 
 
 def main():
@@ -29,9 +32,9 @@ def main():
 
     # Set Log Level
     if options.log_level is not None:
-        logging.basicConfig(level=options.log_level)
+        log.setLevel(options.log_level.upper())
     else:
-        logging.basicConfig(level="INFO")
+        log.setLevel("INFO")
 
     # If no output file is specified, use the input file name with a .mips extension
     if options.output_file is None:
@@ -63,8 +66,11 @@ def main():
     if options.lexer:
         exit(exit_code)
 
+    ### Parsing
+
     parser = Parser(tokens)
     program = parser.parse()
+
     parser_errors = parser.errors
     if parser_errors:
         for error in parser_errors:
@@ -75,9 +81,7 @@ def main():
     if options.parser:
         exit(exit_code)
 
-    # else:
-    #     # Run the full compilation process
-    #     pass
+    ######
 
     exit(exit_code)
 

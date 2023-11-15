@@ -1,9 +1,10 @@
 from collections import namedtuple
 from enum import Enum
-from logging import getLogger
 from typing import Optional
 
-log = getLogger(__name__)
+from utils.loggers import LoggerUtility
+
+log = LoggerUtility().get_logger()
 
 
 CharPosition = namedtuple("CharPosition", ["line", "column"])
@@ -96,7 +97,10 @@ class Token:
         self.type = type
         self.value = value
         self.position = position
-        log.debug(f"Added {type} | {value} | {position}")
+        log.debug(
+            f"Created Token:",
+            extra={"type": type, "location": position, "value": value},
+        )
 
 
 class Lexer:
