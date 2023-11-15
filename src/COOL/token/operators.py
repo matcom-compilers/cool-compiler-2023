@@ -1,5 +1,5 @@
 from numbers import Number as NUM
-from token.token import *
+from src.COOL.token.token import Token,Any
 
 class Operators(Token):
 
@@ -11,7 +11,7 @@ class Operators(Token):
     def run():
         pass
 
-class add(Operators):
+class Add(Operators):
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         super().__init__(name, value, line, op1, op2)
 
@@ -19,128 +19,128 @@ class add(Operators):
         return self.op1 + self.op2
 
 
-class sub(Operators):
+class Sub(Operators):
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         super().__init__(name, value, line, op1, op2)
 
     def run(self):
         return self.op1 - self.op2
 
-class mult(Operators):
+class Mult(Operators):
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         super().__init__(name, value, line, op1, op2)
 
     def run(self):
         return self.op1 * self.op2
 
-class div(Operators):
+class Div(Operators):
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         super().__init__(name, value, line, op1, op2)
 
     def run(self):
         return self.op1 / self.op2
     
-class mod(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Mod(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
 
-    def run(self):
-        return self.op1 % self.op2  
+#     def run(self):
+#         return self.op1 % self.op2  
     
-class pow(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Pow(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
 
-    def run(self):
-        return self.op1 ** self.op2 
+#     def run(self):
+#         return self.op1 ** self.op2 
     
-class eq(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Eq(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
 
-    def run(self):
-        if self.op1 == self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 == self.op2:
+#             return True
+#         else:
+#             return False
         
-class neq(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Neq(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 != self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 != self.op2:
+#             return True
+#         else:
+#             return False
         
-class lt(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Lt(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 < self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 < self.op2:
+#             return True
+#         else:
+#             return False
         
-class leq(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Leq(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 <= self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 <= self.op2:
+#             return True
+#         else:
+#             return False
         
-class gt(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Gt(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 > self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 > self.op2:
+#             return True
+#         else:
+#             return False
         
-class geq(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Geq(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 >= self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 >= self.op2:
+#             return True
+#         else:
+#             return False
         
-class and_(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:bool, op2:bool) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class And_(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:bool, op2:bool) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 and self.op2:
-            return True
-        else:
-            return False    
+#     def run(self):
+#         if self.op1 and self.op2:
+#             return True
+#         else:
+#             return False    
         
-class or_(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:bool, op2:bool) -> None:
-        super().__init__(name, value, line, op1, op2)
+# class Or_(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:bool, op2:bool) -> None:
+#         super().__init__(name, value, line, op1, op2)
     
-    def run(self):
-        if self.op1 or self.op2:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if self.op1 or self.op2:
+#             return True
+#         else:
+#             return False
         
-class not_(Operators):
-    def __init__(self, name: str, value: Any, line: int, op1:bool) -> None:
-        super().__init__(name, value, line, op1, None)
+# class Not_(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:bool) -> None:
+#         super().__init__(name, value, line, op1, None)
     
-    def run(self):
-        if not self.op1:
-            return True
-        else:
-            return False
+#     def run(self):
+#         if not self.op1:
+#             return True
+#         else:
+#             return False
         

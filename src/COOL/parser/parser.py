@@ -1,7 +1,8 @@
 from src.COOL.lexer.sly_lexer import SLYLexer
 from src.COOL.utils import read_yml
 from sly import Parser
-
+from src.COOL.token import Token
+from src.COOL.token.operators import *
 class CoolParser(Parser):
     tokens = SLYLexer.tokens
 
@@ -10,11 +11,11 @@ class CoolParser(Parser):
 
     @_('expr PLUS term')
     def expr(self, p):
-        return p.expr + p.term
+        return Add(p.expr, p.term)
 
     @_('expr MINUS term')
     def expr(self, p):
-        return p.expr - p.term
+        return Sub(p.expr, p.term)
 
     @_('term')
     def expr(self, p):
@@ -22,11 +23,11 @@ class CoolParser(Parser):
 
     @_('term TIMES factor')
     def term(self, p):
-        return p.term * p.factor
+        return Mult(p.term, p.factor)
 
     @_('term DIVIDE factor')
     def term(self, p):
-        return p.term / p.factor
+        return Div(p.term, p.factor)
 
     @_('factor')
     def term(self, p):
