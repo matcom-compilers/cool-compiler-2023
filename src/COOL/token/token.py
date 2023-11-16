@@ -1,6 +1,5 @@
 from typing import Any
 
-
 class Token:
     '''
     Base class for tokens.
@@ -17,3 +16,6 @@ class Token:
     
     def __repr__(self) -> str:
         return f"Token(name=\"{self.name}\", value={self.value})"
+
+
+

@@ -1,6 +1,8 @@
 from src.COOL.run import lexer
+from src.COOL.run import parser
 
-a = lexer.tokenize('(2+ 31) *5 \n       24/3')
 
-for i in a:
+b = parser.parse(lexer.tokenize('2+2*3 \n 3-2'))
+
+for i in b:
     print(i)
