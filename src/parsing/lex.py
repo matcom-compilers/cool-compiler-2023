@@ -15,7 +15,7 @@ class CharacterStream:
         self.source_code = source_code
         self.position = 0
         self.line = 1
-        self.column = 0
+        self.column = 1
         self.previous_position = self.get_position()
 
     def next_char(self) -> Optional[str]:
@@ -42,7 +42,7 @@ class CharacterStream:
     def reset(self):
         self.position = 0
         self.line = 1
-        self.column = 0
+        self.column = 1
 
 
 class TokenType(Enum):

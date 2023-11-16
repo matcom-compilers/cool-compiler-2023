@@ -21,6 +21,15 @@ class Parser:
         self.current_token = next(self.tokens)
         self.errors = []
 
+    def error(self, message, type, location, value):
+        self.errors.append(
+            f"({location[0]}, {location[1]}) - SyntacticError: {message}"
+        )
+        log.debug(
+            f"(SyntacticError: {message}",
+            extra={"type": type, "location": location, "value": value},
+        )
+
     def eat(self, token_type: TokenType):
         if self.current_token:
             log.debug(
@@ -32,16 +41,11 @@ class Parser:
                 },
             )
         if self.current_token.type != token_type:
-            self.errors.append(
-                f"({self.current_token.position[0]}, {self.current_token.position[1]}) - SyntacticError: ERROR at or near {self.current_token.value}"
-            )
-            log.debug(
-                f"(SyntacticError: ERROR at or near {self.current_token.value}",
-                extra={
-                    "type": self.current_token.type,
-                    "location": self.current_token.position,
-                    "value": self.current_token.value,
-                },
+            self.error(
+                f"ERROR at or near {self.current_token.value}",
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
             )
 
         self.current_token = next(self.tokens)
@@ -56,6 +60,16 @@ class Parser:
         """
         program := [[class]]+
         """
+
+        # No program
+        if self.current_token.type == TokenType.EOF:
+            self.error(
+                f"ERROR at or near EOF",
+                self.current_token.type,
+                (0, 0),
+                self.current_token.value,
+            )
+
         classes = []
         location = ast.Location(*self.current_token.position)
         while self.current_token.type != TokenType.EOF:
@@ -69,6 +83,15 @@ class Parser:
         self.eat(TokenType.CLASS)
         location = ast.Location(*self.current_token.position)
         class_name = self.current_token.value
+
+        if isinstance(class_name, str) and class_name[0].islower():
+            self.error(
+                f"ERROR at or near{class_name}\n Class names must begin with uppercase letters",
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
+
         self.eat(TokenType.OBJECTID)
 
         # Check for inheritance
@@ -76,6 +99,13 @@ class Parser:
         if self.current_token.type == TokenType.INHERITS:
             self.eat(TokenType.INHERITS)
             parent = self.current_token.value
+            if isinstance(parent, str) and parent[0].islower():
+                self.error(
+                    f"ERROR at or near{parent}\n Type names must begin with uppercase letters",
+                    self.current_token.type,
+                    self.current_token.position,
+                    self.current_token.value,
+                )
             self.eat(TokenType.OBJECTID)
 
         self.eat(TokenType.OCUR)
@@ -108,11 +138,30 @@ class Parser:
         """
         method := ( [ formal [[, formal]]*] ) : TYPE { expr }
         """
+
+        # Method names must begin with lowercase letters
+        if name[0].isupper():
+            self.error(
+                f"ERROR at or near{name}\n Method names must begin with lowercase letters",
+                TokenType.OBJECTID,
+                location,
+                name,
+            )
+
         self.eat(TokenType.OPAR)
         formals = self.parse_formals()
         self.eat(TokenType.CPAR)
         self.eat(TokenType.COLON)
         return_type = self.current_token.value
+
+        if isinstance(return_type, str) and return_type[0].islower():
+            self.error(
+                f"ERROR at or near{return_type}\n Type names must begin with uppercase letters",
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
+
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.OCUR)
         body = self.parse_expression()
@@ -120,8 +169,23 @@ class Parser:
         return ast.MethodNode(name, formals, return_type, body, location)
 
     def parse_attribute(self, name, location):
+        # Attributes names must begin with lowercase letters
+        if isinstance(name, str) and name[0].isupper():
+            self.error(
+                f"ERROR at or near{name}\n Attributes names must begin with lowercase letters",
+                TokenType.OBJECTID,
+                location,
+                name,
+            )
         self.eat(TokenType.COLON)
         attr_type = self.current_token.value
+        if isinstance(attr_type, str) and attr_type[0].islower():
+            self.error(
+                f"ERROR at or near{name}\n Type names must begin with uppercase letters",
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
         self.eat(TokenType.OBJECTID)
         init = None
         if self.current_token.type == TokenType.ASSIGN:
@@ -140,10 +204,22 @@ class Parser:
 
         """
         formals = []
-        while self.current_token.type != TokenType.CPAR:
+        while True:
+            if self.current_token.type == TokenType.CPAR:
+                break
             formals.append(self.parse_formal())
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)
+                if self.current_token.type == TokenType.CPAR:
+                    self.error(
+                        f'ERROR at or near "{self.current_token.value}\nExtra comma on parameters',
+                        self.current_token.type,
+                        self.current_token.position,
+                        self.current_token.value,
+                    )
+                continue
+            else:
+                break
         return formals
 
     def parse_formal(self):
@@ -152,9 +228,27 @@ class Parser:
         """
         name = self.current_token.value
         location = ast.Location(*self.current_token.position)
+
+        if isinstance(name, str) and name[0].isupper():
+            self.error(
+                f"ERROR at or near {name}\nParameter names must begin with lowercase letters",
+                self.current_token.type,
+                location,
+                name,
+            )
+
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.COLON)
         formal_type = self.current_token.value
+
+        if isinstance(formal_type, str) and formal_type[0].islower():
+            self.error(
+                f"ERROR at or near {formal_type}\nType names must begin with uppercase letters",
+                self.current_token.type,
+                self.current_token.position,
+                formal_type,
+            )
+
         self.eat(TokenType.OBJECTID)
         return ast.FormalNode(name, formal_type, location)
 
@@ -243,7 +337,7 @@ class Parser:
                 self.eat(self.current_token.type)
         else:
             if self.current_token.type in (TokenType.AT, TokenType.DOT):
-                expr = self.parse_attribute_access(left)
+                expr = self.parse_dispatch(left)
                 return self.parse_expression(left=expr)
             else:
                 return self.parse_binary_operation(left)
@@ -300,17 +394,13 @@ class Parser:
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)
                 if self.current_token.type == TokenType.CPAR:
-                    self.errors.append(
-                        f'({self.current_token.position.line}, {self.current_token.position.column}) - SyntacticError: ERROR at or near "{self.current_token.value}\nExtra comma on arguments"'
+                    self.error(
+                        f'ERROR at or near "{self.current_token.value}\nExtra comma on arguments',
+                        self.current_token.type,
+                        self.current_token.position,
+                        self.current_token.value,
                     )
-                    log.debug(
-                        f"(SyntacticError: ERROR at or near {self.current_token.value}",
-                        extra={
-                            "type": self.current_token.type,
-                            "location": self.current_token.position,
-                            "value": self.current_token.value,
-                        },
-                    )
+
                 continue
             else:
                 break
@@ -411,6 +501,13 @@ class Parser:
         while self.current_token.type != TokenType.ESAC:
             branches.append(self.parse_branch())
             self.eat(TokenType.SEMICOLON)
+        if not branches:
+            self.error(
+                f'ERROR at or near "{self.current_token.value}"\nEvery case expression must have at least one branch',
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
         self.eat(TokenType.ESAC)
         return ast.CaseNode(expr, branches, location)
 
@@ -420,9 +517,26 @@ class Parser:
         """
         location = ast.Location(*self.current_token.position)
         identifier = self.current_token.value
+
+        if isinstance(identifier, str) and identifier[0].isupper():
+            self.error(
+                f'ERROR at or near "{identifier}"\nIdentifier names must begin with lowercase letters',
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
+
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.COLON)
         formal_type = self.current_token.value
+        if isinstance(formal_type, str) and formal_type[0].islower():
+            self.error(
+                f'ERROR at or near "{formal_type}"\nType names must begin with uppercase letters',
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
+
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.DARROW)
         expr = self.parse_expression()
@@ -435,6 +549,13 @@ class Parser:
         location = ast.Location(*self.current_token.position)
         self.eat(TokenType.NEW)
         new_type = self.current_token.value
+        if isinstance(new_type, str) and new_type[0].islower():
+            self.error(
+                f'ERROR at or near "{new_type}"\nType names must begin with uppercase letters',
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
         self.eat(TokenType.OBJECTID)
         return ast.NewNode(new_type, location)
 
@@ -499,7 +620,7 @@ class Parser:
         self.eat(TokenType.FALSE)
         return ast.BooleanNode(False, location)
 
-    def parse_attribute_access(self, left):
+    def parse_dispatch(self, left):
         """
         expr[@TYPE].ID( [ expr [[ , expr ]]∗] )
         """
@@ -508,9 +629,27 @@ class Parser:
         if self.current_token.type == TokenType.AT:
             self.eat(TokenType.AT)
             obj_type = self.current_token.value
+
+            if isinstance(obj_type, str) and obj_type[0].islower():
+                self.error(
+                    f'ERROR at or near "{self.current_token.value}"\nType names must begin with uppercase letters.',
+                    self.current_token.type,
+                    self.current_token.position,
+                    self.current_token.value,
+                )
+
             self.eat(TokenType.OBJECTID)
         self.eat(TokenType.DOT)
         method = self.current_token.value
+
+        if isinstance(method, str) and method[0].isupper():
+            self.error(
+                f'ERROR at or near "{self.current_token.value}"\Method names must begin with lowercase letters.',
+                self.current_token.type,
+                self.current_token.position,
+                self.current_token.value,
+            )
+
         self.eat(TokenType.OBJECTID)
         self.eat(TokenType.OPAR)
         arguments = self.parse_arguments()
