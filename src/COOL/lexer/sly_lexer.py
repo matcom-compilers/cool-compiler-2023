@@ -10,9 +10,6 @@ class SLYLexer(Lexer):
         "DIVIDE",
         "LPAREN",
         "RPAREN",
-        "EQUAL",
-        "LESSTHAN",
-        "LESSEQUAL"
     }
 
     ignore = " \t"
@@ -29,6 +26,3 @@ class SLYLexer(Lexer):
     DIVIDE = r"/"
     LPAREN = r"\("
     RPAREN = r"\)"
-    EQUAL = r"=="
-    LESSTHAN = r"<"
-    LESSEQUAL = r"<="

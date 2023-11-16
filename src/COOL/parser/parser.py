@@ -1,15 +1,12 @@
-from src.COOL.lexer.sly_lexer import SLYLexer
-from src.COOL.utils import read_yml
 from sly import Parser
-from src.COOL.token import Token
+
+from src.COOL.lexer import SLYLexer
 from src.COOL.token.operators import *
 
 
 class CoolParser(Parser):
     tokens = SLYLexer.tokens
-
-    # path = '/home/lauren/Documentos/cool-compiler-2023/src/COOL/rules.yml'
-    # tokens = read_yml(path).tokens
+    debugfile = 'parser.out'
 
     @_('expr PLUS term')
     def expr(self, p):
@@ -42,15 +39,3 @@ class CoolParser(Parser):
     @_('LPAREN expr RPAREN')
     def factor(self, p):
         return p.expr
-
-    @_('expr EQUAL expr')
-    def expr(self, p):
-        return Eq(p.lineno, p.expr0, p.expr1)
-
-    @_('expr LESSTHAN expr')
-    def expr(self, p):
-        return Lt(p.lineno, p.expr0, p.expr1)
-
-    @_('expr LESSEQUAL expr')
-    def expr(self, p):
-        return Leq(p.lineno, p.expr0, p.expr1)
