@@ -1,12 +1,26 @@
 from sly import Parser
+from itertools import chain
 
 from src.COOL.lexer import SLYLexer
 from src.COOL.token.operators import *
 
 
+# TODO: make it a generator
 class CoolParser(Parser):
     tokens = SLYLexer.tokens
     debugfile = 'parser.out'
+    
+    @_('expr')
+    def exprs(self, p):
+        return [p.expr]
+
+    @_('exprs expr')
+    def exprs(self, p):
+        return p.exprs + [p.expr]
+    
+    @_('')
+    def exprs(self, p):
+        return []
 
     @_('expr PLUS term')
     def expr(self, p):
