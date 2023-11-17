@@ -1,10 +1,7 @@
 members:
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
+  - name: Eduardo García Maleta
+    github: egmaleta
+    group: C-411
+  - name: Mauro J. Bolado Vizoso
+    github: Mauro-Bolado
+    group: C-411
