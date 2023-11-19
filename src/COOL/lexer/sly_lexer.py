@@ -10,6 +10,7 @@ class SLYLexer(Lexer):
         "DIVIDE",
         "LPAREN",
         "RPAREN",
+        
     }
 
     ignore = " \t"
