@@ -1,8 +1,8 @@
 from sly import Parser
-from itertools import chain
 
 from src.COOL.lexer import SLYLexer
 from src.COOL.token.operators import *
+from src.COOL.token.program import Program
 
 
 # TODO: make it a generator
@@ -10,27 +10,31 @@ class CoolParser(Parser):
     tokens = SLYLexer.tokens
     debugfile = 'parser.out'
     precedence = (
-       ('left', PLUS, MINUS),
-       ('left', TIMES, DIVIDE),
-       ('',LPAREN, RPAREN ),    # level = None (not specified)
-       ('',NUMBER) 
+       ('left', 'PLUS', 'MINUS'),
+       ('left', 'TIMES', 'DIVIDE'),
+       ('', 'LPAREN', 'RPAREN'),    # level = None (not specified)
+       ('', 'NUMBER') 
         )
 
-    @_('program')
+    @_("program")
     def start(self, p):
-        return p.program
+        return Program(p.program)
 
-    @_('class_list')
+    @_('classdef ";"')
     def program(self, p):
-        return [p.class_]
+        yield p.classdef
+    
+    @_('classdef ";" program')
+    def program(self, p):
+        yield p.classdef
 
-    @_('CLASS TYPE INHERITS TYPE { [feature]}')
-    def class_(self, p):
-        return p.class_
+    @_('CLASS TYPE INHERITS TYPE "{" feature "}"')
+    def classdef(self, p):
+        return p.classdef
     
     @_('CLASS TYPE { [feature]}')
-    def class_(self, p):
-        return p.class_
+    def classdef(self, p):
+        return p.classdef
     
     @_('ID : TYPE  ASSIGN expr ')
     def feature(self, p):

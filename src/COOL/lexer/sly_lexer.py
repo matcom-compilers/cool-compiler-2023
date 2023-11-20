@@ -20,8 +20,9 @@ class SLYLexer(Lexer):
         "BOOL",
         "TRUE",
         "FALSE",
-        
     }
+
+    literals = {"(", ")", "{", "}", ";", ":"}
     
     ignore = " \t"
     ignore_comment = r'--.*'
