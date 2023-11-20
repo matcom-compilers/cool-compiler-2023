@@ -1,3 +1,5 @@
 from src.COOL.run import run
 
-run('1')
+run(
+    'class'
+)

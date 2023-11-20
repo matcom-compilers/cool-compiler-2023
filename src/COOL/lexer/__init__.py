@@ -1,1 +1,1 @@
-from .sly_lexer import SLYLexer
+from .lexer import Lexer

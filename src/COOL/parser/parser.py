@@ -1,13 +1,13 @@
 from sly import Parser
 
-from src.COOL.lexer import SLYLexer
+from src.COOL.lexer import Lexer
 from src.COOL.token.operators import *
 from src.COOL.token.program import Program
 
 
 # TODO: make it a generator
 class CoolParser(Parser):
-    tokens = SLYLexer.tokens
+    tokens = Lexer.tokens
     debugfile = 'parser.out'
     
     precedence = (
