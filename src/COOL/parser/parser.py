@@ -9,7 +9,40 @@ from src.COOL.token.operators import *
 class CoolParser(Parser):
     tokens = SLYLexer.tokens
     debugfile = 'parser.out'
+    precedence = (
+       ('left', PLUS, MINUS),
+       ('left', TIMES, DIVIDE),
+       ('',LPAREN, RPAREN ),    # level = None (not specified)
+       ('',NUMBER) 
+        )
+
+    @_('program')
+    def start(self, p):
+        return p.program
+
+    @_('class_list')
+    def program(self, p):
+        return p.class_list
+
+    @_('CLASS TYPE [INHERITS TYPE] { [feature]}')
+    def class_(self, p):
+        return [p.class_]
     
+    @_('ID : TYPE [ ASSIGN expr ]')
+    def feature(self, p):
+        return p.feature
+
+    @_('ID( [ formal [ formal]] ) : TYPE { expr }')
+    def feature(self, p):
+        return p.feature
+    @_(' ID : TYPE')
+    def formal(self,p):
+        return p.expr
+
+    @_('ID <- expr')
+    def expr(self, p):
+        return p.expr
+
     @_('expr')
     def exprs(self, p):
         return [p.expr]
@@ -22,34 +55,34 @@ class CoolParser(Parser):
     def exprs(self, p):
         return []
 
-    @_('expr PLUS term')
+    @_('expr PLUS expr')
     def expr(self, p):
-        return Add(p.lineno, p.expr, p.term)
+        return Add(p.lineno,  p[0], p[1])
 
-    @_('expr MINUS term')
+    @_('expr MINUS expr')
     def expr(self, p):
-        return Sub(p.lineno, p.expr, p.term)
+        return Sub(p.lineno,  p[0], p[1])
 
-    @_('term')
+    # @_('term')
+    # def expr(self, p):
+    #     return p.term
+
+    @_('expr TIMES expr')
     def expr(self, p):
-        return p.term
+        return Mult(p.lineno, p[0], p[1])
 
-    @_('term TIMES factor')
-    def term(self, p):
-        return Mult(p.lineno, p.term, p.factor)
+    @_('expr DIVIDE expr')
+    def expr(self, p):
+        return Div(p.lineno, p[0], p[1])
 
-    @_('term DIVIDE factor')
-    def term(self, p):
-        return Div(p.lineno, p.term, p.factor)
-
-    @_('factor')
-    def term(self, p):
-        return p.factor
+    # @_('factor')
+    # def term(self, p):
+    #     return p.factor
 
     @_('NUMBER')
-    def factor(self, p):
+    def expr(self, p):
         return p.NUMBER
 
     @_('LPAREN expr RPAREN')
-    def factor(self, p):
+    def expr(self, p):
         return p.expr
