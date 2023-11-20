@@ -1,6 +1,7 @@
 from typing import Any
+from abc import ABC, abstractmethod
 
-class Token:
+class Token(ABC):
     '''
     Base class for tokens.
     '''
@@ -16,6 +17,14 @@ class Token:
     
     def __repr__(self) -> str:
         return f"Token(name=\"{self.name}\", value={self.value})"
+    
+    @abstractmethod
+    def execute(self):
+        pass
 
+    @abstractmethod
+    def check(self):
+        pass
 
+    
 

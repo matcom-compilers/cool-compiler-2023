@@ -1,13 +1,15 @@
 from numbers import Number as NUM
 from src.COOL.token.token import Token,Any
-import abc
-class Operators(abc,Token):
+from abc import abstractmethod
+
+class Operators(Token):
 
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         self.op1 = op1
         self.op2 = op2
         super().__init__(name, value, line)
 
+    @abstractmethod
     def run():
         pass
 
