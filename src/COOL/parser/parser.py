@@ -10,10 +10,14 @@ class CoolParser(Parser):
     tokens = SLYLexer.tokens
     debugfile = 'parser.out'
     precedence = (
+       ('left', ASSIGNS),
+       ('left', NOT),
+       ('left', EQUAL, LESS, LESSEQUAL),
        ('left', PLUS, MINUS),
        ('left', TIMES, DIVIDE),
+       ('left', BITWISE),
        ('',LPAREN, RPAREN ),    # level = None (not specified)
-       ('',NUMBER) 
+       ('',NUMBER) ,
         )
 
     @_('program')
@@ -67,21 +71,32 @@ class CoolParser(Parser):
     def expr(self, p):
         return Sub(p.lineno,  p[0], p[1])
 
-    # @_('term')
-    # def expr(self, p):
-    #     return p.term
-
     @_('expr TIMES expr')
     def expr(self, p):
-        return Mult(p.lineno, p[0], p[1])
+        return Times(p.lineno, p[0], p[1])
 
     @_('expr DIVIDE expr')
     def expr(self, p):
         return Div(p.lineno, p[0], p[1])
 
-    # @_('factor')
-    # def term(self, p):
-    #     return p.factor
+    @_('expr LESS expr')
+    def expr(self, p):
+        return Less(p.lineno, p[0], p[1])
+    @_('expr LESSEQUAL expr')
+    def expr(self, p):
+        return LessEqual(p.lineno, p[0], p[1])
+    
+    @_('expr EQUAL expr')
+    def expr(self, p):
+        return Equal(p.lineno, p[0], p[1])
+
+    @_('NOT expr')
+    def expr(self, p):
+        return Not(p.lineno, p[0])
+    
+    @_('BITWISE expr')
+    def expr(self, p):
+        return Bitwise(p.lineno, p[0])
 
     @_('NUMBER')
     def expr(self, p):
