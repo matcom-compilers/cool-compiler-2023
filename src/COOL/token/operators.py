@@ -1,7 +1,7 @@
 from numbers import Number as NUM
 from src.COOL.token.token import Token,Any
-
-class Operators(Token):
+import abc
+class Operators(abc,Token):
 
     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
         self.op1 = op1
@@ -48,19 +48,7 @@ class Div(Operators):
     def run(self):
         return self.op1 / self.op2
     
-# class Mod(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
 
-#     def run(self):
-#         return self.op1 % self.op2  
-    
-# class Pow(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
-
-#     def run(self):
-#         return self.op1 ** self.op2 
     
 class Eq(Operators):
     def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
@@ -72,16 +60,7 @@ class Eq(Operators):
         return self.op1 == self.op2
 
         
-# class Neq(Operators):
-#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
-#         super().__init__(name, value, line, op1, op2)
-    
-#     def run(self):
-#         if self.op1 != self.op2:
-#             return True
-#         else:
-#             return False
-        
+
 class Lt(Operators):
     def __init__(self, line: int, op1:NUM, op2:NUM) -> None:
         self.name="lessthan"
@@ -100,7 +79,33 @@ class Leq(Operators):
     
     def run(self):
         return self.op1 <= self.op2
+    
+# class Neq(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
+    
+#     def run(self):
+#         if self.op1 != self.op2:
+#             return True
+#         else:
+#             return False
+        
 
+
+
+# class Mod(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
+
+#     def run(self):
+#         return self.op1 % self.op2  
+    
+# class Pow(Operators):
+#     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
+#         super().__init__(name, value, line, op1, op2)
+
+#     def run(self):
+#         return self.op1 ** self.op2 
         
 # class Gt(Operators):
 #     def __init__(self, name: str, value: Any, line: int, op1:NUM, op2:NUM) -> None:
