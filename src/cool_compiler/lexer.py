@@ -39,7 +39,8 @@ class CoolLexer(Lexer):
 
     # error
     def error(self, t):
-        print(f'Illegal character \'{t.value[0]}\'')
+        print(
+            f'cool lexer error: illegal character \'{t.value[0]}\' at (line {self.lineno}, column {self.index}).')
         self.index += 1
 
     # keywords and special identifiers
