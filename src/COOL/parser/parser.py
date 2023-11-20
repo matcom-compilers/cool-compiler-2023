@@ -12,8 +12,8 @@ class CoolParser(Parser):
     precedence = (
        ('left', PLUS, MINUS),
        ('left', TIMES, DIVIDE),
-       ('none',LPAREN, RPAREN ),    # level = None (not specified)
-       ('none',NUMBER) 
+       ('',LPAREN, RPAREN ),    # level = None (not specified)
+       ('',NUMBER) 
         )
 
     @_('program')
