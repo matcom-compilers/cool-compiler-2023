@@ -1,20 +1,20 @@
-from sly import Lexer
+from sly import Lexer as Lex
 
 
-class SLYLexer(Lexer):
+class Lexer(Lex):
     tokens = {
         "NUMBER",
         "PLUS",
         "MINUS",
         "TIMES",
         "DIVIDE",
-        "LESS"
-        "LESSEQUAL"
-        "EQUAL" 
-        "NOT"
-        "BITWISE"       
+        "LESS",
+        "LESSEQUAL",
+        "EQUAL",
+        "NOT",
+        "BITWISE",
         "LPAREN",
-        "RPAREN",      
+        "RPAREN",
         "ID",
         "TYPE",
         "CLASS",
@@ -25,25 +25,23 @@ class SLYLexer(Lexer):
         "BOOL",
         "TRUE",
         "FALSE",
-        
     }
+
+    literals = {"(", ")", "{", "}", ";", ":"}
     
     ignore = " \t"
     ignore_comment = r'--.*'
     ignore_comment_paren = r'\(\*.*\*\)'
-
-    ignore_newline = r'\n+'
-    # Special handling rules
+    
     @_(r"\n+")
     def newline(self, t):
         self.lineno += t.value.count("\n")
 
     @_(r'\d+')
     def NUMBER(self, t):
-        t.value = int(t.value)   # Convert to a numeric value
+        t.value = int(t.value)
         return t
 
-    # NUMBER = r"\d+"
     PLUS = r"\+"
     MINUS = r"-"
     TIMES = r"\*"
@@ -65,6 +63,3 @@ class SLYLexer(Lexer):
     BOOL = r"Bool"
     TRUE = r"true"
     FALSE = r"false"
-
-
-
