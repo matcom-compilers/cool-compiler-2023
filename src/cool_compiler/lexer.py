@@ -30,6 +30,18 @@ class CoolLexer(Lexer):
         "STRING"
     }
 
+    # ignore
+    ignore = r' \t'
+    ignore_newline = r'\n+'
+
+    def ignore_newline(self, t):
+        self.lineno += t.value.count('\n')
+
+    # error
+    def error(self, t):
+        print(f'Illegal character \'{t.value[0]}\'')
+        self.index += 1
+
     # keywords and special identifiers
     CASE = r'case'
     CLASS = r'class'
