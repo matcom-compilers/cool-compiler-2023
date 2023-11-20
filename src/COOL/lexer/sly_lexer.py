@@ -14,12 +14,20 @@ class SLYLexer(Lexer):
         "TYPE",
         "CLASS",
         "INHERITS",
-        "ASSIGN"
+        "ASSIGN",
+        "INT",
+        "STRING",
+        "BOOL",
+        "TRUE",
+        "FALSE",
         
     }
     
     ignore = " \t"
+    ignore_comment = r'--.*'
+    ignore_comment_paren = r'\(\*.*\*\)'
 
+    ignore_newline = r'\n+'
     # Special handling rules
     @_(r"\n+")
     def newline(self, t):
@@ -30,7 +38,7 @@ class SLYLexer(Lexer):
         t.value = int(t.value)   # Convert to a numeric value
         return t
 
-    NUMBER = r"\d+"
+    # NUMBER = r"\d+"
     PLUS = r"\+"
     MINUS = r"-"
     TIMES = r"\*"
@@ -42,5 +50,11 @@ class SLYLexer(Lexer):
     CLASS = r"class"
     INHERITS = r"inherits"
     ASSIGN = r"<-"
+    INT = r"Int"
+    STRING = r"String"
+    BOOL = r"Bool"
+    TRUE = r"true"
+    FALSE = r"false"
+
 
 
