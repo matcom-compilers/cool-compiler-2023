@@ -10,7 +10,7 @@ class CoolParser(Parser):
     tokens = SLYLexer.tokens
     debugfile = 'parser.out'
     precedence = (
-       ('left', ASSIGNS),
+       ('left', ASSIGN),
        ('left', NOT),
        ('left', EQUAL, LESS, LESSEQUAL),
        ('left', PLUS, MINUS),
