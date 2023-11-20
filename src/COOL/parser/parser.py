@@ -22,13 +22,17 @@ class CoolParser(Parser):
 
     @_('class_list')
     def program(self, p):
-        return p.class_list
-
-    @_('CLASS TYPE [INHERITS TYPE] { [feature]}')
-    def class_(self, p):
         return [p.class_]
+
+    @_('CLASS TYPE INHERITS TYPE { [feature]}')
+    def class_(self, p):
+        return p.class_
     
-    @_('ID : TYPE [ ASSIGN expr ]')
+    @_('CLASS TYPE { [feature]}')
+    def class_(self, p):
+        return p.class_
+    
+    @_('ID : TYPE  ASSIGN expr ')
     def feature(self, p):
         return p.feature
 
