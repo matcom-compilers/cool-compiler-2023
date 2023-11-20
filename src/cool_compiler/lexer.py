@@ -24,7 +24,10 @@ class CoolLexer(Lexer):
         "SELF_TYPE",
         "THEN",
         "TRUE",
-        "WHILE"
+        "WHILE",
+        "ID",
+        "INTEGER",
+        "STRING"
     }
 
     # keywords and special identifiers
@@ -49,3 +52,18 @@ class CoolLexer(Lexer):
     THEN = r'then'
     TRUE = r'true'
     WHILE = r'while'
+
+    # identifier and literals
+    ID = r'[a-zA-Z_][a-zA-Z_\d]*'
+    INTEGER = r'(0|-?[1-9]\d*)'
+    STRING = r'"([^"\\\n]|\\[\n\S])*"'
+
+    # string literal normalization
+    def STRING(self, t):
+        t.value = t.value[1:-1]\
+            .replace('\\n', '\n')\
+            .replace('\\\n', '\n')\
+            .replace('\\b', '\b')\
+            .replace('\\t', '\t')\
+            .replace('\\f', '\f')\
+            .replace('\\', '')
