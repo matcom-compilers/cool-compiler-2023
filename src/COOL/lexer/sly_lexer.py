@@ -8,6 +8,11 @@ class SLYLexer(Lexer):
         "MINUS",
         "TIMES",
         "DIVIDE",
+        "LESS"
+        "LESSEQUAL"
+        "EQUAL" 
+        "NOT"
+        "BITWISE"       
         "LPAREN",
         "RPAREN",      
         "ID",
@@ -44,6 +49,11 @@ class SLYLexer(Lexer):
     MINUS = r"-"
     TIMES = r"\*"
     DIVIDE = r"/"
+    LESS = r"<"
+    LESSEQUAL = r"<="
+    EQUAL = r"="
+    NOT = r"not"
+    BITWISE= r"~"
     LPAREN = r"\("
     RPAREN = r"\)"
     ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
