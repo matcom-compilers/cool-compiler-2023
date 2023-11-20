@@ -1,22 +1,23 @@
+from abc import ABC
+from abc import abstractmethod
 from typing import Any
-from abc import ABC, abstractmethod
+
 
 class Token(ABC):
     '''
     Base class for tokens.
     '''
-    name: str
-    value: Any
     line: int
     position: int
 
-    def __init__(self, name: str, value: Any, line: int) -> None:
-        self.name = name
-        self.value = value
+    def __init__(self, line: int) -> None:
         self.line = line
     
     def __repr__(self) -> str:
-        return f"Token(name=\"{self.name}\", value={self.value})"
+        return f"Token(name=\"{self.__name__}\")"
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self.execute(*args, **kwds)
     
     @abstractmethod
     def execute(self):
@@ -25,6 +26,3 @@ class Token(ABC):
     @abstractmethod
     def check(self):
         pass
-
-    
-
