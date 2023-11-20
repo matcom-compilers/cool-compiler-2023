@@ -1,7 +1,7 @@
-from sly import Lexer as Lex
+from sly import Lexer
 
 
-class Lexer(Lex):
+class CoolLexer(Lexer):
     tokens = {
         "NUMBER",
         "PLUS",
@@ -13,8 +13,6 @@ class Lexer(Lex):
         "EQUAL",
         "NOT",
         "BITWISE",
-        "LPAREN",
-        "RPAREN",
         "ID",
         "TYPE",
         "CLASS",
@@ -51,8 +49,6 @@ class Lexer(Lex):
     EQUAL = r"="
     NOT = r"not"
     BITWISE= r"~"
-    LPAREN = r"\("
-    RPAREN = r"\)"
     ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
     TYPE = r"[A-Z][a-zA-Z0-9_]*"
     CLASS = r"class"
