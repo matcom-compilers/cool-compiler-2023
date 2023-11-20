@@ -1,5 +1,18 @@
-from src.COOL.run import run
+from src.COOL import CoolLexer
+from src.COOL import CoolParser
+from src.COOL import Semantic
+from src.COOL import Codegen
+from src.COOL.token import Program
+from src.COOL.utils import load_file
 
-run(
-    'class'
-)
+
+file = "class"
+
+lexer = CoolLexer()
+ast = lexer.tokenize(file)
+
+# parser = CoolParser()
+# program: Program  = parser.parse(ast)
+
+# Semantic.check(program)
+# Codegen.check(program)
