@@ -13,8 +13,6 @@ class CoolLexer(Lexer):
         "EQUAL",
         "NOT",
         "BITWISE",
-        "ID",
-        "TYPE",
         "CLASS",
         "INHERITS",
         "ASSIGN",
@@ -23,6 +21,8 @@ class CoolLexer(Lexer):
         "BOOL",
         "TRUE",
         "FALSE",
+        "TYPE",
+        "ID",
     }
 
     literals = {"(", ")", "{", "}", ";", ":"}
@@ -49,8 +49,6 @@ class CoolLexer(Lexer):
     EQUAL = r"="
     NOT = r"not"
     BITWISE= r"~"
-    ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
-    TYPE = r"[A-Z][a-zA-Z0-9_]*"
     CLASS = r"class"
     INHERITS = r"inherits"
     ASSIGN = r"<-"
@@ -59,3 +57,6 @@ class CoolLexer(Lexer):
     BOOL = r"Bool"
     TRUE = r"true"
     FALSE = r"false"
+    TYPE = r"[A-Z][a-zA-Z0-9_]*"
+    ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
+

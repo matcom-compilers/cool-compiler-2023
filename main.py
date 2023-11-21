@@ -10,9 +10,10 @@ file = "class"
 
 lexer = CoolLexer()
 ast = lexer.tokenize(file)
-
-# parser = CoolParser()
-# program: Program  = parser.parse(ast)
+for i in ast:
+    print(i)
+parser = CoolParser()
+program: Program  = parser.parse(ast)
 
 # Semantic.check(program)
 # Codegen.check(program)
