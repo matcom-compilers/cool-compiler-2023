@@ -16,6 +16,9 @@ class Operator(Token):
     def operator(self):
         pass
 
+    def check(self):
+        raise NotImplementedError()
+
 class Add(Operator):
     def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
         super().__init__(line, expr1, expr2)
