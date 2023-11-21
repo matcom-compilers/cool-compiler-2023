@@ -13,8 +13,8 @@ class Token(ABC):
     def __init__(self, line: int) -> None:
         self.line = line
     
-    def __repr__(self) -> str:
-        return f"Token(name=\"{self.__name__}\")"
+    # def __repr__(self) -> str:
+    #     return f"Token(name=\"{self.__name__}\")"
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.execute(*args, **kwds)
