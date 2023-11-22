@@ -1,5 +1,6 @@
 from collections import namedtuple
 from enum import Enum
+from typing import List
 
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
@@ -25,7 +26,7 @@ class Node:
 
     def value(self):
         return ""
-    
+
     def accept(self, visitor: Visitor):
         visitor.visit(self)
 
@@ -33,7 +34,7 @@ class Node:
 class ProgramNode(Node):
     def __init__(self, classes, location):
         super().__init__(location)
-        self.classes = classes
+        self.classes: List[ClassNode] = classes
 
 
 class ClassNode(Node):
