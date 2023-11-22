@@ -1,9 +1,8 @@
-from typing import Any
 from typing import List
 
 from src.COOL.token import Token
-from src.COOL.token.method import Method
-from src.COOL.token.attribute import Attribute
+from src.COOL.token.feature import Method
+from src.COOL.token.feature import Attribute
 
 
 class Class(Token):
