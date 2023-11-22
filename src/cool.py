@@ -103,6 +103,11 @@ def main():
             print(error)
         exit_code = 1
 
+    log.debug(
+        type_builder.context,
+        extra={"type": "cool.py", "location": "cool.py", "value": ""},
+    )
+
     ######
 
     exit(exit_code)

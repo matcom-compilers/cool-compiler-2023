@@ -91,7 +91,84 @@ class TypeBuilder(Visitor):
             self.visit(feature)
 
     def visit__AttributeNode(self, node: AttributeNode):
-        pass
+        if not self.context.type_exists(node.attr_type):
+            self.error(
+                f"TypeError: Type {node.attr_type} of attribute {node.name} is undefined.",
+                node.location,
+                "AttributeNode",
+                node.attr_type,
+            )
+            return
+
+        if self.current_type.is_attribute_defined(node.name):
+            attr = self.current_type.get_attribute(node.name)
+            attr_parent = self.current_type.get_attribute_parent(node.name)
+            if attr_parent == self.current_type:
+                self.error(
+                    f"SemanticError: Redefinition of parent class {attr_parent.name} attribute {node.name}.\nFirst defined at ({attr.location[0], attr.location[1]})",
+                    node.location,
+                    "AttributeNode",
+                    node.attr_type,
+                )
+            else:
+                self.error(
+                    f"SemanticError: Attribute {node.name} is multiple defined.\nFirst defined at ({attr.location[0], attr.location[1]})",
+                    node.location,
+                    "AttributeNode",
+                    node.attr_type,
+                )
+            return
+
+        attr_type = self.context.get_type(node.attr_type)
+        self.current_type.define_attribute(node.name, attr_type, node.location)
 
     def visit__MethodNode(self, node: MethodNode):
-        pass
+        if self.current_type.is_method_defined(node.name):
+            method = self.current_type.get_method(node.name)
+            method_parent = self.current_type.get_method_parent(node.name)
+            if method_parent == self.current_type:
+                self.error(
+                    f"SemanticError: Redefinition of parent class {method_parent.name} method {node.name}.\nFirst defined at ({method.location[0], method.location[1]})",
+                    node.location,
+                    "MethodNode",
+                    node.name,
+                )
+            else:
+                self.error(
+                    f"SemanticError: Method {node.name} is multiple defined.\nFirst defined at ({method.location[0], method.location[1]})",
+                    node.location,
+                    "MethodNode",
+                    node.name,
+                )
+            return
+
+        param_types = []
+        param_names = []
+        for param in node.formals:
+            if not self.context.type_exists(param.formal_type):
+                self.error(
+                    f"TypeError: Type {param.formal_type} of parameter {param.name} is undefined.",
+                    param.location,
+                    "MethodNode",
+                    param.name,
+                )
+                return
+            param_type = self.context.get_type(param.formal_type)
+            param_types.append(param_type)
+            param_names.append(param.name)
+
+        return_type = None
+        if node.return_type:
+            if not self.context.type_exists(node.return_type):
+                self.error(
+                    f"TypeError: Type {node.return_type} of method {node.name} return value is undefined.",
+                    node.location,
+                    "MethodNode",
+                    node.name,
+                )
+                return
+            return_type = self.context.get_type(node.return_type)
+
+        self.current_type.define_method(
+            node.name, param_names, param_types, return_type, node.location
+        )

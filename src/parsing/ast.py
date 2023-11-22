@@ -51,7 +51,7 @@ class FeatureNode(Node):
 
 
 class MethodNode(FeatureNode):
-    def __init__(self, name, formals, return_type, body, location):
+    def __init__(self, name, formals: List["FormalNode"], return_type, body, location):
         super().__init__(location)
         self.name = name
         self.formals = formals

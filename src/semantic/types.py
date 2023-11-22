@@ -6,9 +6,10 @@ class SemanticError(Exception):
 
 
 class Attribute:
-    def __init__(self, name, typex):
+    def __init__(self, name, typex, location):
         self.name = name
         self.type = typex
+        self.location = location
 
     def __str__(self):
         return f"[attr] {self.name} : {self.type.name};"
@@ -18,11 +19,12 @@ class Attribute:
 
 
 class Method:
-    def __init__(self, name, param_names, params_types, return_type):
+    def __init__(self, name, param_names, params_types, return_type, location):
         self.name = name
         self.param_names = param_names
         self.param_types = params_types
         self.return_type = return_type
+        self.location = location
 
     def __str__(self):
         params = ", ".join(
@@ -49,6 +51,13 @@ class Type:
 
     def set_parent(self, parent):
         self.parent = parent
+
+    def is_attribute_defined(self, name: str):
+        try:
+            self.get_attribute(name)
+            return True
+        except SemanticError:
+            return False
 
     def get_attribute(self, name: str):
         try:
@@ -81,17 +90,17 @@ class Type:
                     f'Attribute "{name}" is not defined in {self.name}.'
                 )
 
-    def define_attribute(self, name: str, typex):
+    def define_attribute(self, name: str, typex, location):
+        attribute = Attribute(name, typex, location)
+        self.attributes.append(attribute)
+        return attribute
+
+    def is_method_defined(self, name):
         try:
-            self.get_attribute(name)
+            self.get_method(name)
+            return True
         except SemanticError:
-            attribute = Attribute(name, typex)
-            self.attributes.append(attribute)
-            return attribute
-        else:
-            raise SemanticError(
-                f'Attribute "{name}" is already defined in {self.name}.'
-            )
+            return False
 
     def get_method(self, name: str):
         try:
@@ -117,12 +126,12 @@ class Type:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
     def define_method(
-        self, name: str, param_names: list, param_types: list, return_type
+        self, name: str, param_names: list, param_types: list, return_type, location
     ):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
 
-        method = Method(name, param_names, param_types, return_type)
+        method = Method(name, param_names, param_types, return_type, location)
         self.methods.append(method)
         return method
 

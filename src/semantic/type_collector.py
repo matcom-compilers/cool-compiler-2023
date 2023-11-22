@@ -28,24 +28,26 @@ def define_builtin_types(context: Context):
     bool_type = context.types["Bool"] = BoolType()
     self_type = context.types["SELF_TYPE"] = SelfType()
 
-    object_type.define_method("abort", [], [], object_type)
-    object_type.define_method("type_name", [], [], string_type)
-    object_type.define_method("copy", [], [], self_type)
+    object_type.define_method("abort", [], [], object_type, (0, 0))
+    object_type.define_method("type_name", [], [], string_type, (0, 0))
+    object_type.define_method("copy", [], [], self_type, (0, 0))
 
     int_type.set_parent(object_type)
 
     string_type.set_parent(object_type)
-    string_type.define_method("length", [], [], int_type)
-    string_type.define_method("concat", ["s"], [string_type], string_type)
-    string_type.define_method("substr", ["i", "l"], [int_type, int_type], string_type)
+    string_type.define_method("length", [], [], int_type, (0, 0))
+    string_type.define_method("concat", ["s"], [string_type], string_type, (0, 0))
+    string_type.define_method(
+        "substr", ["i", "l"], [int_type, int_type], string_type, (0, 0)
+    )
 
     bool_type.set_parent(object_type)
 
     io_type.set_parent(object_type)
-    io_type.define_method("out_string", ["x"], [string_type], self_type)
-    io_type.define_method("out_int", ["x"], [int_type], self_type)
-    io_type.define_method("in_string", [], [], string_type)
-    io_type.define_method("in_int", [], [], int_type)
+    io_type.define_method("out_string", ["x"], [string_type], self_type, (0, 0))
+    io_type.define_method("out_int", ["x"], [int_type], self_type, (0, 0))
+    io_type.define_method("in_string", [], [], string_type, (0, 0))
+    io_type.define_method("in_int", [], [], int_type, (0, 0))
 
 
 class TypeCollector(Visitor):
