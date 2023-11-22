@@ -23,7 +23,7 @@ from src.COOL.token.object import String
 
 
 # TODO: make it a generator
-# TODO: add the last tokens(if, while, ...)
+# TODO: fix return clases
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
     debugfile = 'parser.out'
@@ -123,6 +123,18 @@ class CoolParser(Parser):
             id=p.ID,
             type=p.TYPE
         )
+    
+    @_('expr "," exprs')
+    def exprs(self, p: SlyToken):
+        return [p.expr] + p.exprs
+    
+    @_('expr')
+    def exprs(self, p: SlyToken):
+        return [p.expr]
+    
+    @_("")
+    def exprs(self, p: SlyToken):
+        return []
 
     @_('ID ASSIGN expr')
     def expr(self, p: SlyToken):
@@ -131,6 +143,102 @@ class CoolParser(Parser):
             id=p.ID,
             expr=p.expr
         )
+    
+    @_('expr "." ID "(" exprs ")"')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('expr "@" TYPE "." ID "(" exprs ")"')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+    
+    @_('ID "(" exprs ")"')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('IF expr THEN expr ELSE expr FI')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('WHILE expr LOOP expr POOL')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('"{" nested_expr "}"')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('expr ";" nested_expr')
+    def nested_expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('expr')
+    def nested_expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('LET let_list IN expr')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('let_expr "," let_list')
+    def let_list(self, p: SlyToken):
+        #TODO
+        pass
+    
+    @_('let_expr')
+    def let_list(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('ID ":" TYPE ASSIGN expr')
+    def let_expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('ID ":" TYPE')
+    def let_expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    # FIX and add the others
+    @_('CASE expr OF cases ESAC')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('case ";" cases')
+    def cases(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('case ";"')
+    def cases(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('ID ":" TYPE CASE_ARROW expr')
+    def case(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('NEW TYPE')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('ISVOID expr')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
 
     @_('expr PLUS expr')
     def expr(self, p: SlyToken):
@@ -175,11 +283,27 @@ class CoolParser(Parser):
     @_('STRING')
     def expr(self, p: SlyToken):
         return String(line=p.lineno, value=p.STRING)
-
-
+    
     @_('"(" expr ")"')
     def expr(self, p: SlyToken):
-        return p.expr
+        #TODO
+        pass
+    
+    @_('ID')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('TRUE')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
+    @_('FALSE')
+    def expr(self, p: SlyToken):
+        #TODO
+        pass
+
 
     def error(self, p):
         if p:
