@@ -1,4 +1,3 @@
-from typing import Any
 from typing import List
 
 from src.COOL.token import Token

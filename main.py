@@ -6,21 +6,16 @@ from src.COOL.token import Program
 from src.COOL.utils import load_file
 
 
-
-
 file =\
 """
+
+-- test class with atributtes
 class A {
-    a: A; -- comment
+    a: A;
     b: B <- 3;
 };
 
-(*
-    comment
-    comment
-*)
-
-
+-- test class with inheritance and methods
 class B inherits A {
     c(): C {
         3
@@ -30,6 +25,11 @@ class B inherits A {
         3
     };
 };
+
+-- test
+class C{
+
+}
 
 """
 
