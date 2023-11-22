@@ -4,6 +4,7 @@ import os
 
 from parsing.lex import Lexer
 from parsing.parser import Parser
+from semantic.type_collector import TypeCollector
 from utils.loggers import LoggerUtility
 
 log = LoggerUtility().get_logger()
@@ -79,6 +80,17 @@ def main():
         exit(exit_code)
 
     if options.parser:
+        exit(exit_code)
+
+    assert program is not None
+    ### Collect types
+    type_collector = TypeCollector()
+    program.accept(type_collector)
+
+    if type_collector.errors:
+        for error in type_collector.errors:
+            print(error)
+        exit_code = 1
         exit(exit_code)
 
     ######

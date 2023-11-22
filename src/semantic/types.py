@@ -39,12 +39,13 @@ class Method:
 
 
 class Type:
-    def __init__(self, name: str):
+    def __init__(self, name: str, defined_location=None):
         self.name = name
         self.attributes = []
         self.methods = []
         self.parent = None
         self.ref = True
+        self.defined_location = defined_location
 
     def set_parent(self, parent):
         self.parent = parent
@@ -150,6 +151,10 @@ class Type:
     def bypass(self):
         return False
 
+    @staticmethod
+    def is_builtin_type(name: str):
+        return name in ["Object", "IO", "Int", "String", "Bool"]
+
     def __str__(self):
         output = f"type {self.name}"
         parent = "" if self.parent is None else f" : {self.parent.name}"
@@ -165,3 +170,71 @@ class Type:
 
     def __repr__(self):
         return str(self)
+
+
+class ErrorType(Type):
+    def __init__(self):
+        Type.__init__(self, "<error>")
+
+    def conforms_to(self, other):
+        return True
+
+    def bypass(self):
+        return True
+
+    def __eq__(self, other):
+        return isinstance(other, ErrorType)
+
+
+class ObjectType(Type):
+    def __init__(self):
+        Type.__init__(self, "Object")
+
+    def __eq__(self, other):
+        return other.name == self.name or isinstance(other, ObjectType)
+
+
+class IntType(Type):
+    def __init__(self):
+        Type.__init__(self, "Int")
+        Type.set_parent(self, ObjectType())
+        self.ref = False
+
+    def __eq__(self, other):
+        return other.name == self.name or isinstance(other, IntType)
+
+
+class StringType(Type):
+    def __init__(self):
+        Type.__init__(self, "String")
+        Type.set_parent(self, ObjectType())
+
+    def __eq__(self, other):
+        return other.name == self.name or isinstance(other, StringType)
+
+
+class BoolType(Type):
+    def __init__(self):
+        Type.__init__(self, "Bool")
+        Type.set_parent(self, ObjectType())
+        self.ref = False
+
+    def __eq__(self, other):
+        return other.name == self.name or isinstance(other, BoolType)
+
+
+class SelfType(Type):
+    def __init__(self):
+        Type.__init__(self, "SELF_TYPE")
+
+    def __eq__(self, other):
+        return isinstance(other, SelfType)
+
+
+class IOType(Type):
+    def __init__(self):
+        Type.__init__(self, "IO")
+        Type.set_parent(self, ObjectType())
+
+    def __eq__(self, other):
+        return isinstance(other, IOType)
