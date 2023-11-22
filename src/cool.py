@@ -4,6 +4,7 @@ import os
 
 from parsing.lex import Lexer
 from parsing.parser import Parser
+from semantic.type_builder import TypeBuilder
 from semantic.type_collector import TypeCollector
 from utils.loggers import LoggerUtility
 
@@ -87,11 +88,20 @@ def main():
     type_collector = TypeCollector()
     program.accept(type_collector)
 
-    if type_collector.errors:
-        for error in type_collector.errors:
+    log.debug(
+        type_collector.context,
+        extra={"type": "cool.py", "location": "cool.py", "value": ""},
+    )
+
+    ### Build types
+    assert type_collector.context
+    type_builder = TypeBuilder(type_collector.context, type_collector.errors)
+    program.accept(type_builder)
+
+    if type_builder.errors:
+        for error in type_builder.errors:
             print(error)
         exit_code = 1
-        exit(exit_code)
 
     ######
 

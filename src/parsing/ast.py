@@ -38,7 +38,7 @@ class ProgramNode(Node):
 
 
 class ClassNode(Node):
-    def __init__(self, name, parent, features, location):
+    def __init__(self, name: str, parent: str, features: List["FeatureNode"], location):
         super().__init__(location)
         self.name = name
         self.parent = parent
