@@ -6,9 +6,9 @@ class Visitor:
         #TODO to define an error for repeated classes and inheritance of undefined classes
         for cls in node.classes:
             if not cls.inherits in class_names:
-                error('the class it inherits from is not defined')
+                raise Exception('the class it inherits from is not defined')
             if cls.name in class_names: 
-                error('Repeated class name')
+                raise Exception('Repeated class name')
             class_names.add(cls.type)
 
     def visit_class(self, node):
