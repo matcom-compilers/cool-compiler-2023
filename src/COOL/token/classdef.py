@@ -1,6 +1,7 @@
 from typing import Any
 from typing import List
 
+from src.COOL.semantic.visitor import Visitor
 from src.COOL.token import Token
 from src.COOL.token.method import Method
 from src.COOL.token.attribute import Attribute
@@ -22,5 +23,7 @@ class Class(Token):
     def execute(self):
         raise NotImplementedError()
     
-    def check(self):
-        raise NotImplementedError()
+    def check(self, visitor:Visitor):
+        visitor.visit_class(self)
+        for feature in self.features:
+            feature.check(visitor)
