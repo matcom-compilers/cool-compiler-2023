@@ -33,7 +33,10 @@ class CoolLexer(Lexer):
     
     ignore = " \t"
     ignore_comment = r'--.*'
-    ignore_comment_multiline = r'\(\*.*\*\)'
+
+    @_(r'\(\*(.|\n)*?\*\)')
+    def ignore_comment_multiline(self, t):
+        self.lineno += t.value.count("\n")
     
     @_(r"\n+")
     def newline(self, t):

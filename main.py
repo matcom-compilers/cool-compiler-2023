@@ -15,7 +15,10 @@ class A {
     b: B <- 3;
 };
 
-(* commentcomment *)
+(*
+    comment
+    comment
+*)
 
 
 class B inherits A {
@@ -40,6 +43,7 @@ program: Program  = parser.parse(lexer.tokenize(file))
 
 for i in program.classes:
     print("class: ", i.type)
+    print("line: ", i.line)
     print("inherits: ", i.inherits)
     # print("features: ", i.features)
     for j in i.features:
