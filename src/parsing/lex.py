@@ -27,6 +27,8 @@ class CharacterStream:
         if char == "\n":
             self.line += 1
             self.column = 1
+        elif char == "\t":
+            self.column += 4
         else:
             self.column += 1
         return char
