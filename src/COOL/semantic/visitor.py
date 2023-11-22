@@ -3,7 +3,7 @@ class Visitor:
 
     def visit_program(self,node):
         class_names = set()
-        #TODO to define an error for repeated classes and inheritance of undefined classes
+        #TODO to define an error for repeated classes, inheritance of undefined classes and inheritance cycle
         for cls in node.classes:
             if not cls.inherits in class_names:
                 raise Exception('The class it inherits from is not defined')
