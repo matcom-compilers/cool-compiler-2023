@@ -30,7 +30,7 @@
 
 ##### assignment
 
-- verificar que el tipo de la expresión sea compatible con el tipo de la variable a la que se le asigna.
+- verificar que el tipo de la expresión sea compatible con el tipo de la variable a la que se le asigna o cumpla el principio de sustitución de tipos en la herencia.
 
 
 
