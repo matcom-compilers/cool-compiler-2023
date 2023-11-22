@@ -2,6 +2,7 @@ from collections import namedtuple
 from enum import Enum
 
 from utils.loggers import LoggerUtility
+from utils.visitor import Visitor
 
 log = LoggerUtility().get_logger()
 
@@ -24,6 +25,9 @@ class Node:
 
     def value(self):
         return ""
+    
+    def accept(self, visitor: Visitor):
+        visitor.visit(self)
 
 
 class ProgramNode(Node):
