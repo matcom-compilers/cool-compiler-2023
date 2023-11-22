@@ -61,13 +61,12 @@ class CoolLexer(Lexer):
     
     # Symbols
     TYPE = r"[A-Z][a-zA-Z0-9_]*"
-    ID = r"[a-z][a-zA-Z0-9_]*"
+    ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
 
     @_(r'\d+')
     def NUMBER(self, t):
         t.value = int(t.value)
         return t
-
     @_(r'\".*?\"')
     def STRING(self, t):
         t.value = str(t.value).strip('\'')

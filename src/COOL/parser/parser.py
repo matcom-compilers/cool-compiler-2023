@@ -43,8 +43,12 @@ class CoolParser(Parser):
        ('nonassoc', 'EQUAL', 'LESS', 'LESSEQUAL'),
        ('left', 'PLUS', 'MINUS'),
        ('left', 'TIMES', 'DIVIDE'),
+       ('right', 'ISVOID'),
        ('left', 'BITWISE'),
+       ('nonassoc', '@'),
        ('nonassoc', 'NUMBER'),
+       ('nonassoc', '(',')'),
+       ('nonassoc', '.'),
     )
 
     @_("program")
