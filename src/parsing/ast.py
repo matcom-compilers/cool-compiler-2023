@@ -27,8 +27,16 @@ class Node:
     def value(self):
         return ""
 
-    def accept(self, visitor: Visitor):
-        visitor.visit(self)
+    def accept(self, visitor: Visitor, *args, **kwargs):
+        log.debug(
+            f"Visitor {visitor.__class__.__name__} on {type(self).__name__}",
+            extra={
+                "location": self.location,
+                "type": type(self).__name__,
+                "value": visitor.__class__.__name__,
+            },
+        )
+        return visitor.visit(self, *args, **kwargs)
 
 
 class ProgramNode(Node):
@@ -80,7 +88,7 @@ class ExpressionNode(Node):
 
 
 class AssignNode(ExpressionNode):
-    def __init__(self, name, expr, location):
+    def __init__(self, name, expr: ExpressionNode, location):
         super().__init__(location)
         self.name = name
         self.expr = expr

@@ -1,7 +1,17 @@
-from parsing.ast import AttributeNode, ClassNode, MethodNode, NewNode, ProgramNode
+from parsing.ast import (
+    AssignNode,
+    AttributeNode,
+    BooleanNode,
+    ClassNode,
+    IntegerNode,
+    MethodNode,
+    NewNode,
+    ProgramNode,
+    StringNode,
+)
 from semantic.context import Context
 from semantic.scope import Scope
-from semantic.types import ErrorType, SelfType
+from semantic.types import BoolType, ErrorType, IntType, SelfType, StringType
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
 
@@ -56,7 +66,7 @@ class TypeChecker(Visitor):
             if not expr_type.conforms_to(attr_type):
                 self.error(
                     f"TypeError: Inferred type {expr_type.name} of initialization of attribute {node.name} does not conform to declared type {attr_type.name}.",
-                    location=node.location,
+                    location=node.init.location,
                     type="Attribute",
                     value=expr_type,
                 )
@@ -100,8 +110,19 @@ class TypeChecker(Visitor):
                 value=node.name,
             )
 
-    def visit__AssignNode(self, node, scope):
-        return SelfType()
+    def visit__AssignNode(self, node: AssignNode, scope: Scope):
+        assert self.current_type
+        assig_type = node.expr.accept(self, scope=scope)
+        assig_type = assig_type if assig_type != SelfType() else self.current_type
+
+        if node.name == "self":
+            self.error(
+                "SemanticError: 'self' is readonly",
+                location=node.location,
+                type="Assignment",
+                value=f"{node.name}:{assig_type.name}",
+            )
+        return assig_type
 
     def visit__DispatchNode(self, node, scope):
         return SelfType()
@@ -151,14 +172,14 @@ class TypeChecker(Visitor):
     def visit__IdentifierNode(self, node, scope):
         return SelfType()
 
-    def visit__IntegerNode(self, node, scope):
-        return SelfType()
+    def visit__IntegerNode(self, node: IntegerNode, scope: Scope):
+        return IntType()
 
-    def visit__StringNode(self, node, scope):
-        return SelfType()
+    def visit__StringNode(self, node: StringNode, scope: Scope):
+        return StringType()
 
-    def visit__BooleanNode(self, node, scope):
-        return SelfType()
+    def visit__BooleanNode(self, node: BooleanNode, scope: Scope):
+        return BoolType()
 
     def visit__MethodCallNode(self, node, scope):
         return SelfType()
