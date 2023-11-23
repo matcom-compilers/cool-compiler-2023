@@ -285,39 +285,73 @@ class CoolParser(Parser):
 
     @_('expr PLUS expr')
     def expr(self, p: SlyToken):
-        return Add(p.lineno,  p[0], p[1])
+        return Add(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr MINUS expr')
     def expr(self, p: SlyToken):
-        return Sub(p.lineno,  p[0], p[1])
+        return Sub(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr TIMES expr')
     def expr(self, p: SlyToken):
-        return Times(p.lineno, p[0], p[1])
+        return Times(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr DIVIDE expr')
     def expr(self, p: SlyToken):
-        return Div(p.lineno, p[0], p[1])
+        return Div(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr LESS expr')
     def expr(self, p: SlyToken):
-        return Less(p.lineno, p[0], p[1])
+        return Less(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr LESSEQUAL expr')
     def expr(self, p: SlyToken):
-        return LessEqual(p.lineno, p[0], p[1])
+        return LessEqual(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
     
     @_('expr EQUAL expr')
     def expr(self, p: SlyToken):
-        return Equal(p.lineno, p[0], p[1])
+        return Equal(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('NOT expr')
     def expr(self, p: SlyToken):
-        return Not(p.lineno, p[0])
+        return Not(
+            line=p.lineno,
+            expr=p.expr,
+        )
     
     @_('BITWISE expr')
     def expr(self, p: SlyToken):
-        return Bitwise(p.lineno, p[0])
+        return Bitwise(
+            line=p.lineno,
+            expr=p.expr,
+        )
 
     @_('NUMBER')
     def expr(self, p: SlyToken):
@@ -346,8 +380,6 @@ class CoolParser(Parser):
 
     def error(self, p):
         if p:
-            print("Syntax error at token", p.type)
-            # Just discard the token and tell the parser it's okay.
-            self.errok()
+            raise SystemExit(f"\nSyntax error at token: {p.type}, line: {p.lineno}")
         else:
-            print("Syntax error at EOF")
+            raise SystemExit("Syntax error at EOF")

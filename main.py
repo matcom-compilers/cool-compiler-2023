@@ -11,25 +11,30 @@ file =\
 
 -- test class with atributtes
 class A {
-    a: A;
-    b: B <- 3;
+    a: Int;
+    b: Int <- 2+2;
+    c: Int <- 2-2;
+    d: Int <- 2*2;
+    e: Int <- 2/2;
+    f: Int <- ~2;
+    g: Bool <- not true;
+    h: Bool <- 2<2;
+    i: Bool <- 2<=2;
+    j: Bool <- 2=2;
 };
 
 -- test class with inheritance and methods
 class B inherits A {
-    c(): C {
-        3
-    };
-
-    d(a: A, b: B): D {
-        3
-    };
+    a(): Int { 2 };
+    b(aa: Int, bb: Int): Int { 2 };
 };
 
 -- test
 class C{
-
-}
+    a(): Int {
+        2
+    };
+};
 
 """
 
@@ -37,7 +42,7 @@ print("\n    COOL Compiler")
 print("\n    =====================")
 lexer = CoolLexer()
 
-print("    Parser:")
+print("\n    Parser:")
 parser = CoolParser()
 program: Program  = parser.parse(lexer.tokenize(file))
 
