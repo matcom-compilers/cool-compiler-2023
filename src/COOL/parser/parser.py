@@ -206,8 +206,8 @@ class CoolParser(Parser):
     @_('expr ";" nested_expr')
     def nested_expr(self, p: SlyToken):
         return [p.expr] + p.nested_expr
-
-    @_('expr')
+    
+    @_('expr ";"')
     def nested_expr(self, p: SlyToken):
         return [p.expr]
 

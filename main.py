@@ -8,7 +8,6 @@ from src.COOL.utils import load_file
 
 file =\
 """
-
 -- test class with atributtes
 class A {
     a: Int;
@@ -21,18 +20,35 @@ class A {
     h: Bool <- 2<2;
     i: Bool <- 2<=2;
     j: Bool <- 2=2;
-};
+    a: String <- "string";
+}; -- 14
 
 -- test class with inheritance and methods
 class B inherits A {
     a(): Int { 2 };
     b(aa: Int, bb: Int): Int { 2 };
-};
+}; -- 20
 
 -- test
 class C{
     a(): Int {
-        2
+        {
+            if 1=1 then 2+2 else 3+3 fi;
+            while true loop true pool;
+            let a: Int in 2;
+            let a: Int, b: Int in 2;
+            let a: Int <- 3 in 2;
+            case true of a: Int => 2; esac;
+            case true of a: Int => 2; b: Int => 3; esac;
+            new B;
+            isvoid 2+2;
+            a;
+            2+2.a();
+            2+2.a(true, 2);
+            2+2@Int.a();
+            a();
+            a(true, 1);
+        }
     };
 };
 
