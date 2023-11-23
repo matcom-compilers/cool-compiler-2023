@@ -1,4 +1,7 @@
+from parsing.ast import AttributeNode, ClassNode, MethodNode, NewNode, ProgramNode
 from semantic.context import Context
+from semantic.scope import Scope
+from semantic.types import ErrorType, SelfType
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
 
@@ -18,77 +21,144 @@ class TypeChecker(Visitor):
             extra={"type": type, "location": location, "value": value},
         )
 
-    def visit_ProgramNode(self, node):
-        pass  # TODO: Implement
+    def visit__ProgramNode(self, node: ProgramNode, scope=None):
+        scope = scope if scope else Scope()
+        for cls in node.classes:
+            cls.accept(self, scope=scope.create_child(cls.name))
+        return scope
 
-    def visit_ClassNode(self, node):
-        pass  # TODO: Implement
+    def visit__ClassNode(self, node: ClassNode, scope: Scope):
+        self.current_type = self.context.get_type(node.name)
+        scope.define_variable("self", self.current_type)
 
-    def visit_FeatureNode(self, node):
-        pass  # TODO: Implement
+        for feature in node.features:
+            feature.accept(self, scope=scope)
 
-    def visit_MethodNode(self, node):
-        pass  # TODO: Implement
+    def visit__AttributeNode(self, node: AttributeNode, scope: Scope):
+        assert self.current_type
+        if node.name == "self":
+            self.error(
+                f"SemanticError: Attribute name cannot be self",
+                node.location,
+                "Attribute",
+                "self",
+            )
 
-    def visit_AttributeNode(self, node):
-        pass  # TODO: Implement
+        attr_type = self.current_type.get_attribute(node.name).type
+        if attr_type == SelfType():
+            attr_type = self.current_type
 
-    def visit_FormalNode(self, node):
-        pass  # TODO: Implement
+        if node.init:
+            expr_type = node.init.accept(self, scope=scope)
+            if expr_type == SelfType():
+                expr_type = self.current_type
 
-    def visit_ExpressionNode(self, node):
-        pass  # TODO: Implement
+            if not expr_type.conforms_to(attr_type):
+                self.error(
+                    f"TypeError: Inferred type {expr_type.name} of initialization of attribute {node.name} does not conform to declared type {attr_type.name}.",
+                    location=node.location,
+                    type="Attribute",
+                    value=expr_type,
+                )
 
-    def visit_AssignNode(self, node):
-        pass  # TODO: Implement
+    def visit__MethodNode(self, node: MethodNode, scope: Scope):
+        assert self.current_type
+        self.current_method = self.current_type.get_method(node.name)
+        child_scope = scope.create_child(scope.class_name, self.current_method.name)
 
-    def visit_DispatchNode(self, node):
-        pass  # TODO: Implement
+        index = 0
+        for param_name, param_type in zip(
+            self.current_method.param_names, self.current_method.param_types
+        ):
+            if param_name != "self":
+                child_scope.define_variable(param_name, param_type)
+            else:
+                self.error(
+                    "SemanticError: self can not be the name of a formal parameter",
+                    location=node.location,
+                    type="InvalidFormal",
+                    value=f"{param_name} : {param_type}",
+                )
+            index += 1
 
-    def visit_BinaryOperatorNode(self, node):
-        pass  # TODO: Implement
+        return_type_exp = node.body.accept(self, scope=child_scope)
 
-    def visit_UnaryOperatorNode(self, node):
-        pass  # TODO: Implement
+        return_type_exp = (
+            return_type_exp if return_type_exp != SelfType() else self.current_type
+        )
+        return_type_met = (
+            self.current_method.return_type
+            if self.current_method.return_type != SelfType()
+            else self.current_type
+        )
 
-    def visit_IfNode(self, node):
-        pass  # TODO: Implement
+        if not return_type_exp.conforms_to(return_type_met):
+            self.error(
+                f"TypeError: Inferred return type {return_type_exp.name} of method {node.name} does not conform to declared return type {return_type_met.name}",
+                location=node.location,
+                type="Method",
+                value=node.name,
+            )
 
-    def visit_WhileNode(self, node):
-        pass  # TODO: Implement
+    def visit__AssignNode(self, node, scope):
+        return SelfType()
 
-    def visit_BlockNode(self, node):
-        pass  # TODO: Implement
+    def visit__DispatchNode(self, node, scope):
+        return SelfType()
 
-    def visit_LetNode(self, node):
-        pass  # TODO: Implement
+    def visit__BinaryOperatorNode(self, node, scope):
+        return SelfType()
 
-    def visit_CaseNode(self, node):
-        pass  # TODO: Implement
+    def visit__UnaryOperatorNode(self, node, scope):
+        return SelfType()
 
-    def visit_CaseOptionNode(self, node):
-        pass  # TODO: Implement
+    def visit__IfNode(self, node, scope):
+        return SelfType()
 
-    def visit_NewNode(self, node):
-        pass  # TODO: Implement
+    def visit__WhileNode(self, node, scope):
+        return SelfType()
 
-    def visit_IsVoidNode(self, node):
-        pass  # TODO: Implement
+    def visit__BlockNode(self, node, scope):
+        return SelfType()
 
-    def visit_NotNode(self, node):
-        pass  # TODO: Implement
+    def visit__LetNode(self, node, scope):
+        return SelfType()
 
-    def visit_IdentifierNode(self, node):
-        pass  # TODO: Implement
+    def visit__CaseNode(self, node, scope):
+        return SelfType()
 
-    def visit_IntegerNode(self, node):
-        pass  # TODO: Implement
+    def visit__CaseOptionNode(self, node, scope):
+        return SelfType()
 
-    def visit_StringNode(self, node):
-        pass  # TODO: Implement
+    def visit__NewNode(self, node: NewNode, scope: Scope):
+        if not self.context.type_exists(node.type):
+            self.error(
+                f"SemanticError: Type {node.type} does not exist",
+                location=node.location,
+                type="New",
+                value=node.type,
+            )
+            return ErrorType()
 
-    def visit_BooleanNode(self, node):
-        pass  # TODO: Implement
+        return self.context.get_type(node.type)
 
-    def visit_MethodCallNode(self, node):
-        pass  # TODO: Implement
+    def visit__IsVoidNode(self, node, scope):
+        return SelfType()
+
+    def visit__NotNode(self, node, scope):
+        return SelfType()
+
+    def visit__IdentifierNode(self, node, scope):
+        return SelfType()
+
+    def visit__IntegerNode(self, node, scope):
+        return SelfType()
+
+    def visit__StringNode(self, node, scope):
+        return SelfType()
+
+    def visit__BooleanNode(self, node, scope):
+        return SelfType()
+
+    def visit__MethodCallNode(self, node, scope):
+        return SelfType()

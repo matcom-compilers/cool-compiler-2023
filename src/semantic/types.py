@@ -59,7 +59,7 @@ class Type:
         except SemanticError:
             return False
 
-    def get_attribute(self, name: str):
+    def get_attribute(self, name: str) -> Attribute:
         try:
             return next(attr for attr in self.attributes if attr.name == name)
         except StopIteration:
