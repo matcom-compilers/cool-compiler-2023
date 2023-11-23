@@ -71,7 +71,7 @@ class CoolLexer(Lexer):
     
     @_(r'\".*?\"')
     def STRING(self, t):
-        t.value = str(t.value).strip('\'')
+        t.value = str(t.value).strip('\"')
         return t
 
     # Error handling rule
@@ -80,4 +80,4 @@ class CoolLexer(Lexer):
             Error.error(self.lineno, self.index, "LexicographicError", f"Error \"{t.value[0]}\"")
             self.index += 1
         else:
-            pass
+            print('HERE')
