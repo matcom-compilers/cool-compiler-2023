@@ -1,4 +1,5 @@
 from sly import Lexer
+from error import Error
 
 
 # TODO: Set lexer error
@@ -75,4 +76,8 @@ class CoolLexer(Lexer):
 
     # Error handling rule
     def error(self, t):
-        raise SystemExit("Illegal character '%s'" % t.value[0])
+        if t:
+            Error.error(self.lineno, self.index, "LexicographicError", f"Error \"{t.value[0]}\"")
+            self.index += 1
+        else:
+            pass

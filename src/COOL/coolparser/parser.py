@@ -1,33 +1,33 @@
 from sly import Parser
 from sly.lex import Token as SlyToken
 
-from src.COOL.lexer import CoolLexer
+from coollexer import CoolLexer
 
-from src.COOL.token.operators import Add
-from src.COOL.token.operators import Sub
-from src.COOL.token.operators import Times
-from src.COOL.token.operators import Div
-from src.COOL.token.operators import Less
-from src.COOL.token.operators import LessEqual
-from src.COOL.token.operators import Equal
-from src.COOL.token.operators import Not
-from src.COOL.token.operators import Bitwise
+from tokens.operators import Add
+from tokens.operators import Sub
+from tokens.operators import Times
+from tokens.operators import Div
+from tokens.operators import Less
+from tokens.operators import LessEqual
+from tokens.operators import Equal
+from tokens.operators import Not
+from tokens.operators import Bitwise
 
-from src.COOL.token.program import Program
-from src.COOL.token.classdef import Class
-from src.COOL.token.feature import Attribute
-from src.COOL.token.feature import Method
-from src.COOL.token.feature import ExecuteMethod
-from src.COOL.token.object import Interger
-from src.COOL.token.object import String
-from src.COOL.token.object import Boolean
-from src.COOL.token.expr import If
-from src.COOL.token.expr import While
-from src.COOL.token.expr import Let
-from src.COOL.token.expr import Case
-from src.COOL.token.expr import New
-from src.COOL.token.expr import Isvoid
-from src.COOL.token.expr import Expr
+from tokens.program import Program
+from tokens.classdef import Class
+from tokens.feature import Attribute
+from tokens.feature import Method
+from tokens.feature import ExecuteMethod
+from tokens.object import Interger
+from tokens.object import String
+from tokens.object import Boolean
+from tokens.expr import If
+from tokens.expr import While
+from tokens.expr import Let
+from tokens.expr import Case
+from tokens.expr import New
+from tokens.expr import Isvoid
+from tokens.expr import Expr
 
 
 # TODO: make it a generator
@@ -35,7 +35,7 @@ from src.COOL.token.expr import Expr
 # TODO: fix and check precedence
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
-    debugfile = 'parser.out'
+    # debugfile = 'parser.out'
     
     precedence = (
        ('right', 'ASSIGN'),

@@ -1,4 +1,4 @@
-from src.COOL.token import Program
+from tokens import Program
 
 class Semantic:
     @classmethod

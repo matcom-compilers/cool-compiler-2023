@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.COOL.token import Token
+from tokens import Token
 
 
 class Object(Token):

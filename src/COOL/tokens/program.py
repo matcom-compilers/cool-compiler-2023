@@ -1,7 +1,7 @@
 from typing import List
 
-from src.COOL.token import Token
-from src.COOL.token.classdef import Class
+from tokens import Token
+from tokens.classdef import Class
 
 
 class Program(Token):
