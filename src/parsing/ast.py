@@ -2,6 +2,7 @@ from collections import namedtuple
 from enum import Enum
 from typing import List
 
+from parsing.lex import TokenType
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
 
@@ -41,16 +42,29 @@ class Node:
 
 class ProgramNode(Node):
     def __init__(self, classes, location):
-        super().__init__(location)
         self.classes: List[ClassNode] = classes
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return "\n".join(str(c) for c in self.classes)
 
 
 class ClassNode(Node):
     def __init__(self, name: str, parent: str, features: List["FeatureNode"], location):
-        super().__init__(location)
         self.name = name
         self.parent = parent
         self.features = features
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        s = f"class {self.name} "
+        if self.parent:
+            s += f"inherits {self.parent}"
+        s += "{\n"
+        for feature in self.features:
+            s += str(feature)
+        s += "\n};"
+        return s
 
 
 class FeatureNode(Node):
@@ -59,16 +73,35 @@ class FeatureNode(Node):
 
 
 class MethodNode(FeatureNode):
-    def __init__(self, name, formals: List["FormalNode"], return_type, body, location):
-        super().__init__(location)
+    def __init__(
+        self,
+        name,
+        formals: List["FormalNode"],
+        return_type,
+        body: "ExpressionNode",
+        location,
+    ):
         self.name = name
         self.formals = formals
         self.return_type = return_type
         self.body = body
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        s = f"    {self.name}("
+        for formal in self.formals:
+            s += f"{formal.name}: {formal.formal_type},"
+        if len(self.formals):
+            s = s[:-1]
+        s += f"): {self.return_type} "
+        s += "{\n\t"
+        s += str(self.body)
+        s += "\n\t};\n"
+        return s
 
 
 class AttributeNode(FeatureNode):
-    def __init__(self, name, attr_type, init, location):
+    def __init__(self, name, attr_type, init: "ExpressionNode", location):
         super().__init__(location)
         self.name = name
         self.attr_type = attr_type
@@ -95,7 +128,14 @@ class AssignNode(ExpressionNode):
 
 
 class DispatchNode(ExpressionNode):
-    def __init__(self, expr, method, args, location, method_type=None):
+    def __init__(
+        self,
+        expr: ExpressionNode,
+        method,
+        args: List[ExpressionNode],
+        location,
+        method_type=None,
+    ):
         super().__init__(location)
         self.expr = expr
         self.method = method
@@ -110,7 +150,7 @@ class BinaryOperator(Enum):
     DIVIDE = "/"
     LT = "<"
     LE = "<="
-    EQ = "=="
+    EQ = "="
     GT = ">"
     GE = ">="
 
@@ -140,7 +180,13 @@ class UnaryOperatorNode(ExpressionNode):
 
 
 class IfNode(ExpressionNode):
-    def __init__(self, condition, then_expr, else_expr, location):
+    def __init__(
+        self,
+        condition: ExpressionNode,
+        then_expr: ExpressionNode,
+        else_expr: ExpressionNode,
+        location,
+    ):
         super().__init__(location)
         self.condition = condition
         self.then_expr = then_expr
@@ -155,7 +201,7 @@ class WhileNode(ExpressionNode):
 
 
 class BlockNode(ExpressionNode):
-    def __init__(self, expressions, location):
+    def __init__(self, expressions: List[ExpressionNode], location):
         super().__init__(location)
         self.expressions = expressions
 
@@ -168,7 +214,7 @@ class LetNode(ExpressionNode):
 
 
 class CaseNode(ExpressionNode):
-    def __init__(self, expr, cases, location):
+    def __init__(self, expr, cases: List["CaseOptionNode"], location):
         super().__init__(location)
         self.expr = expr
         self.cases = cases
@@ -192,7 +238,7 @@ class NewNode(ExpressionNode):
 
 
 class IsVoidNode(ExpressionNode):
-    def __init__(self, expr, location):
+    def __init__(self, expr: ExpressionNode, location):
         self.expr = expr
         super().__init__(location)
 
@@ -201,12 +247,21 @@ class IsVoidNode(ExpressionNode):
 
 
 class NotNode(ExpressionNode):
-    def __init__(self, expr, location):
+    def __init__(self, expr: ExpressionNode, location):
         self.expr = expr
         super().__init__(location)
 
     def __str__(self) -> str:
         return f"not {self.expr}"
+
+
+class PrimeNode(ExpressionNode):
+    def __init__(self, expr: ExpressionNode, location):
+        self.expr = expr
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return f"`{self.expr}"
 
 
 class IdentifierNode(ExpressionNode):
@@ -233,7 +288,7 @@ class StringNode(ExpressionNode):
         super().__init__(location)
 
     def __str__(self) -> str:
-        return str(self._value)
+        return self._value
 
 
 class BooleanNode(ExpressionNode):
@@ -247,6 +302,43 @@ class BooleanNode(ExpressionNode):
 
 class MethodCallNode(ExpressionNode):
     def __init__(self, method, args, location):
-        super().__init__(location)
         self.method = method
         self.args = args
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        s = f"{self.method}("
+        for arg in self.args:
+            s += f"{arg},"
+        if len(self.args):
+            s = s[:-1]
+        s += ")"
+        return s
+
+
+class ErrorExpresion(ExpressionNode):
+    def __init__(self, location):
+        super().__init__(location)
+
+
+def get_operan_precedence(operand):
+    PRECEDENCE_MAP = {
+        "DOT": 9,
+        "AT": 8,
+        "TILDE": 7,
+        "VOID": 6,
+        TokenType.STAR: 5,
+        TokenType.DIV: 5,
+        TokenType.PLUS: 4,
+        TokenType.MINUS: 4,
+        TokenType.LEQ: 3,
+        TokenType.LOWER: 3,
+        TokenType.EQUAL: 3,
+        "NOT": 2,
+        "ASSIGN": 1,
+        None: 0,
+    }
+
+    if operand in PRECEDENCE_MAP:
+        return PRECEDENCE_MAP[operand]
+    return 0
