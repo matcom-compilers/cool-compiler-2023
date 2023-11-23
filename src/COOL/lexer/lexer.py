@@ -75,4 +75,4 @@ class CoolLexer(Lexer):
 
     # Error handling rule
     def error(self, t):
-        raise Exception("Illegal character '%s'" % t.value[0])
+        raise SystemExit("Illegal character '%s'" % t.value[0])
