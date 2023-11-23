@@ -1,32 +1,41 @@
 from sly import Parser
 from sly.lex import Token as SlyToken
-from itertools import chain
 
-from src.COOL.lexer import CoolLexer
+from coollexer import CoolLexer
 
-from src.COOL.token.operators import Add
-from src.COOL.token.operators import Sub
-from src.COOL.token.operators import Times
-from src.COOL.token.operators import Div
-from src.COOL.token.operators import Less
-from src.COOL.token.operators import LessEqual
-from src.COOL.token.operators import Equal
-from src.COOL.token.operators import Not
-from src.COOL.token.operators import Bitwise
+from tokens.operators import Add
+from tokens.operators import Sub
+from tokens.operators import Times
+from tokens.operators import Div
+from tokens.operators import Less
+from tokens.operators import LessEqual
+from tokens.operators import Equal
+from tokens.operators import Not
+from tokens.operators import Bitwise
 
-from src.COOL.token.program import Program
-from src.COOL.token.classdef import Class
-from src.COOL.token.attribute import Attribute
-from src.COOL.token.method import Method
-from src.COOL.token.object import Interger
-from src.COOL.token.object import String
+from tokens.program import Program
+from tokens.classdef import Class
+from tokens.feature import Attribute
+from tokens.feature import Method
+from tokens.feature import ExecuteMethod
+from tokens.object import Interger
+from tokens.object import String
+from tokens.object import Boolean
+from tokens.expr import If
+from tokens.expr import While
+from tokens.expr import Let
+from tokens.expr import Case
+from tokens.expr import New
+from tokens.expr import Isvoid
+from tokens.expr import Expr
 
 
 # TODO: make it a generator
 # TODO: fix return clases
+# TODO: fix and check precedence
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
-    debugfile = 'parser.out'
+    # debugfile = 'parser.out'
     
     precedence = (
        ('right', 'ASSIGN'),
@@ -34,8 +43,12 @@ class CoolParser(Parser):
        ('nonassoc', 'EQUAL', 'LESS', 'LESSEQUAL'),
        ('left', 'PLUS', 'MINUS'),
        ('left', 'TIMES', 'DIVIDE'),
+       ('right', 'ISVOID'),
        ('left', 'BITWISE'),
+       ('nonassoc', '@'),
        ('nonassoc', 'NUMBER'),
+       ('nonassoc', '(',')'),
+       ('nonassoc', '.'),
     )
 
     @_("program")
@@ -92,7 +105,6 @@ class CoolParser(Parser):
             type=p.TYPE
         )
 
-    # TODO
     @_('ID "(" formals ")" ":" TYPE "{" expr "}"')
     def feature(self, p: SlyToken):
         return Method(
@@ -115,7 +127,6 @@ class CoolParser(Parser):
     def formals(self, p: SlyToken):
         return []
 
-    # TODO: make formal class?
     @_('ID ":" TYPE')
     def formal(self, p: SlyToken):
         return Attribute(
@@ -146,135 +157,201 @@ class CoolParser(Parser):
     
     @_('expr "." ID "(" exprs ")"')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Expr(
+            line=p.lineno,
+            expr=p.expr,
+            id=p.ID,
+            exprs=p.exprs
+        )
 
     @_('expr "@" TYPE "." ID "(" exprs ")"')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Expr(
+            line=p.lineno,
+            expr=p.expr,
+            id=p.ID,
+            type=p.TYPE,
+            exprs=p.exprs
+        )
     
     @_('ID "(" exprs ")"')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return ExecuteMethod(
+            line=p.lineno,
+            id=p.ID,
+            exprs=p.exprs
+        )
 
     @_('IF expr THEN expr ELSE expr FI')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return If(
+            line=p.lineno,
+            if_expr=p.expr0,
+            then_expr=p.expr1,
+            else_expr=p.expr2
+        )
 
     @_('WHILE expr LOOP expr POOL')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return While(
+            line=p.lineno,
+            while_expr=p.expr0,
+            loop_expr=p.expr1
+        )
 
     @_('"{" nested_expr "}"')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return p.nested_expr
 
     @_('expr ";" nested_expr')
     def nested_expr(self, p: SlyToken):
-        #TODO
-        pass
-
-    @_('expr')
+        return [p.expr] + p.nested_expr
+    
+    @_('expr ";"')
     def nested_expr(self, p: SlyToken):
-        #TODO
-        pass
+        return [p.expr]
 
     @_('LET let_list IN expr')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Let(
+            line=p.lineno,
+            let_list=p.let_list,
+            expr=p.expr
+        )
 
     @_('let_expr "," let_list')
     def let_list(self, p: SlyToken):
-        #TODO
-        pass
+        return [p.let_expr] + p.let_list
     
     @_('let_expr')
     def let_list(self, p: SlyToken):
-        #TODO
-        pass
+        return [p.let_expr]
 
     @_('ID ":" TYPE ASSIGN expr')
     def let_expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Attribute(
+            line=p.lineno,
+            id=p.ID,
+            type=p.TYPE,
+            expr=p.expr
+        )
 
     @_('ID ":" TYPE')
     def let_expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Attribute(
+            line=p.lineno,
+            id=p.ID,
+            type=p.TYPE
+        )
 
-    # FIX and add the others
     @_('CASE expr OF cases ESAC')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Case(
+            line=p.lineno,
+            expr=p.expr,
+            cases=p.cases
+        )   
 
     @_('case ";" cases')
     def cases(self, p: SlyToken):
-        #TODO
-        pass
+        return [p.case] + p.cases
 
     @_('case ";"')
     def cases(self, p: SlyToken):
-        #TODO
-        pass
+        return [p.case]
 
     @_('ID ":" TYPE CASE_ARROW expr')
     def case(self, p: SlyToken):
-        #TODO
-        pass
+        return Attribute(
+            line=p.lineno,
+            id=p.ID,
+            type=p.TYPE,
+            expr=p.expr
+        )
 
     @_('NEW TYPE')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return New(
+            line=p.lineno,
+            type=p.TYPE
+        )
 
     @_('ISVOID expr')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Isvoid(
+            line=p.lineno,
+            expr=p.expr
+        )
 
     @_('expr PLUS expr')
     def expr(self, p: SlyToken):
-        return Add(p.lineno,  p[0], p[1])
+        return Add(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr MINUS expr')
     def expr(self, p: SlyToken):
-        return Sub(p.lineno,  p[0], p[1])
+        return Sub(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr TIMES expr')
     def expr(self, p: SlyToken):
-        return Times(p.lineno, p[0], p[1])
+        return Times(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr DIVIDE expr')
     def expr(self, p: SlyToken):
-        return Div(p.lineno, p[0], p[1])
+        return Div(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr LESS expr')
     def expr(self, p: SlyToken):
-        return Less(p.lineno, p[0], p[1])
+        return Less(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('expr LESSEQUAL expr')
     def expr(self, p: SlyToken):
-        return LessEqual(p.lineno, p[0], p[1])
+        return LessEqual(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
     
     @_('expr EQUAL expr')
     def expr(self, p: SlyToken):
-        return Equal(p.lineno, p[0], p[1])
+        return Equal(
+            line=p.lineno,
+            expr1=p.expr0,
+            expr2=p.expr1
+        )
 
     @_('NOT expr')
     def expr(self, p: SlyToken):
-        return Not(p.lineno, p[0])
+        return Not(
+            line=p.lineno,
+            expr=p.expr,
+        )
     
     @_('BITWISE expr')
     def expr(self, p: SlyToken):
-        return Bitwise(p.lineno, p[0])
+        return Bitwise(
+            line=p.lineno,
+            expr=p.expr,
+        )
 
     @_('NUMBER')
     def expr(self, p: SlyToken):
@@ -286,29 +363,23 @@ class CoolParser(Parser):
     
     @_('"(" expr ")"')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return p.expr
     
     @_('ID')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Attribute(line=p.lineno, id=p.ID)
 
     @_('TRUE')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Boolean(line=p.lineno, value=True)
 
     @_('FALSE')
     def expr(self, p: SlyToken):
-        #TODO
-        pass
+        return Boolean(line=p.lineno, value=False)
 
 
     def error(self, p):
         if p:
-            print("Syntax error at token", p.type)
-            # Just discard the token and tell the parser it's okay.
-            self.errok()
+            raise SystemExit(f"\nSyntax error at token: {p.type}, line: {p.lineno}")
         else:
-            print("Syntax error at EOF")
+            raise SystemExit("Syntax error at EOF")

@@ -1,8 +1,8 @@
-from typing import Any
 from typing import List
-from src.COOL.semantic.visitor import Visitor
-from src.COOL.token import Token
-from src.COOL.token.classdef import Class
+
+from semantic.visitor import Visitor
+from tokens import Token
+from tokens.classdef import Class
 
 
 class Program(Token):
@@ -17,7 +17,7 @@ class Program(Token):
     def check(self):
         self.visitor.visit_program(self)
 
-        for class_ in self.classes.keys():
+        for class_ in self.classes:
             class_.inherits = self.classes[class_.inherits]
 
         self.classes = {i.type: i for i in self.classes}

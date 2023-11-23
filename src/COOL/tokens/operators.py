@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from src.COOL.token import Token
+from tokens import Token
 
 
 class Operator(Token):
