@@ -1,4 +1,5 @@
 import itertools
+from typing import Optional
 
 from semantic.types import Type
 
@@ -10,9 +11,9 @@ class VariableInfo:
 
 
 class Scope:
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional["Scope"] = None):
         self.locals = []
-        self.parent = parent
+        self.parent: Optional["Scope"] = parent
         self.children = []
         self.index = 0 if parent is None else len(parent)
         self.class_name = None
@@ -36,7 +37,7 @@ class Scope:
     def remove_variable(self, vname):
         self.locals = [v for v in self.locals if v.name == vname]
 
-    def find_variable(self, vname, index=None):
+    def find_variable(self, vname, index=None) -> Optional[VariableInfo]:
         locals = self.locals if index is None else itertools.islice(self.locals, index)
         try:
             return next(x for x in locals if x.name == vname)

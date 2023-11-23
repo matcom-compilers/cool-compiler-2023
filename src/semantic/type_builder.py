@@ -83,6 +83,7 @@ class TypeBuilder(Visitor):
                     "Cyclical inheritance",
                     node.parent,
                 )
+                return
 
         if self.current_type != ObjectType():
             self.current_type.set_parent(parent)
@@ -123,27 +124,27 @@ class TypeBuilder(Visitor):
         self.current_type.define_attribute(node.name, attr_type, node.location)
 
     def visit__MethodNode(self, node: MethodNode):
+        defined_in_parent = False
+        method_in_parent = None
         if self.current_type.is_method_defined(node.name):
             method = self.current_type.get_method(node.name)
             method_parent = self.current_type.get_method_parent(node.name)
             if method_parent == self.current_type:
-                self.error(
-                    f"SemanticError: Redefinition of parent class {method_parent.name} method {node.name}.\nFirst defined at ({method.location[0], method.location[1]})",
-                    node.location,
-                    "MethodNode",
-                    node.name,
-                )
-            else:
                 self.error(
                     f"SemanticError: Method {node.name} is multiple defined.\nFirst defined at ({method.location[0], method.location[1]})",
                     node.location,
                     "MethodNode",
                     node.name,
                 )
-            return
+                return
+            else:
+                defined_in_parent = True
+                method_in_parent = method
 
         param_types = []
         param_names = []
+        param_names_set = set()
+        index = 0
         for param in node.formals:
             if not self.context.type_exists(param.formal_type):
                 self.error(
@@ -152,10 +153,46 @@ class TypeBuilder(Visitor):
                     "MethodNode",
                     param.name,
                 )
-                return
+                continue
             param_type = self.context.get_type(param.formal_type)
+
+            if (
+                defined_in_parent
+                and method_in_parent
+                and len(method_in_parent.param_types) >= index + 1
+                and method_in_parent.param_types[index] != param_type
+            ):
+                self.error(
+                    f"SemanticError: In redefined method {node.name}, parameter type {param.name} is different from original type {method_in_parent.param_types[index].name}.",
+                    param.location,
+                    "MethodNode",
+                    param.name,
+                )
+
             param_types.append(param_type)
             param_names.append(param.name)
+            if param.name in param_names_set:
+                self.error(
+                    f"SemanticError: Formal parameter {param.name} is multiply defined.",
+                    param.location,
+                    "MethodNode",
+                    param.name,
+                )
+            else:
+                param_names_set.add(param.name)
+            index += 1
+
+        if (
+            defined_in_parent
+            and method_in_parent
+            and len(method_in_parent.param_names) != len(param_names)
+        ):
+            self.error(
+                f"SemanticError: Incompatible number of formal parameters in redefined method {node.name}.",
+                node.location,
+                "MethodNode",
+                node.name,
+            )
 
         return_type = None
         if node.return_type:
@@ -166,8 +203,19 @@ class TypeBuilder(Visitor):
                     "MethodNode",
                     node.name,
                 )
-                return
-            return_type = self.context.get_type(node.return_type)
+            else:
+                return_type = self.context.get_type(node.return_type)
+                if (
+                    defined_in_parent
+                    and method_in_parent
+                    and method_in_parent.return_type != return_type
+                ):
+                    self.error(
+                        f"SemanticError: In redefined method {node.name}, return type {return_type.name} is different from original type {method_in_parent.return_type.name}.",
+                        node.location,
+                        "MethodNode",
+                        return_type.name,
+                    )
 
         self.current_type.define_method(
             node.name, param_names, param_types, return_type, node.location
