@@ -22,10 +22,7 @@ class Program(Token):
 
         self.classes = {i.type: i for i in self.classes}
 
-        self.visitor.types = self.classes
+        self.visitor.types.update(self.classes)
 
         for _class in self.classes:
             _class.check(self.visitor)
-
-
-
