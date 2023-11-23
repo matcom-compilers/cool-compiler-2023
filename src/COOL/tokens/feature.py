@@ -1,6 +1,6 @@
 from typing import List
 
-from src.COOL.token import Token
+from tokens import Token
 
 
 class Method(Token):

@@ -1,6 +1,6 @@
-from src.COOL.token import Program
+from tokens import Program
 
 class Codegen:
     @classmethod
-    def check(program: Program):
+    def execute(program: Program, output_path: str):
         program.execute()

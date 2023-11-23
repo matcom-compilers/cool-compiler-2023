@@ -1,8 +1,12 @@
+import sys
+module = "./src/COOL/"
+sys.path.append(module)
+
 from src.COOL import CoolLexer
 from src.COOL import CoolParser
 from src.COOL import Semantic
 from src.COOL import Codegen
-from src.COOL.token import Program
+from src.COOL.tokens import Program
 from src.COOL.utils import load_file
 
 
@@ -51,7 +55,6 @@ class C{
         }
     };
 };
-
 """
 
 print("\n    COOL Compiler")
