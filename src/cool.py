@@ -5,6 +5,7 @@ import os
 from parsing.lex import Lexer
 from parsing.parser import Parser
 from semantic.type_builder import TypeBuilder
+from semantic.type_checker import TypeChecker
 from semantic.type_collector import TypeCollector
 from utils.loggers import LoggerUtility
 
@@ -93,20 +94,37 @@ def main():
         extra={"type": "cool.py", "location": "cool.py", "value": ""},
     )
 
+    if type_collector.errors:
+        for error in type_collector.errors:
+            print(error)
+        exit_code = 1
+        exit(exit_code)
+
     ### Build types
     assert type_collector.context
-    type_builder = TypeBuilder(type_collector.context, type_collector.errors)
+    type_builder = TypeBuilder(type_collector.context)
     program.accept(type_builder)
 
     if type_builder.errors:
         for error in type_builder.errors:
             print(error)
         exit_code = 1
+        exit(exit_code)
 
     log.debug(
         type_builder.context,
         extra={"type": "cool.py", "location": "cool.py", "value": ""},
     )
+
+    ### Check Types
+    assert type_builder.context
+    type_checker = TypeChecker(type_builder.context)
+    scope = program.accept(type_checker)
+
+    if type_checker.errors:
+        for error in type_checker.errors:
+            print(error)
+        exit_code = 1
 
     ######
 

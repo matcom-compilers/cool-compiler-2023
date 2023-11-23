@@ -102,7 +102,7 @@ class Type:
         except SemanticError:
             return False
 
-    def get_method(self, name: str):
+    def get_method(self, name: str) -> Method:
         try:
             return next(method for method in self.methods if method.name == name)
         except StopIteration:
@@ -176,6 +176,34 @@ class Type:
         output += "\n" if self.methods else ""
         output += "}\n"
         return output
+
+    @staticmethod
+    def find_parent_type(type1, type2, self_type):
+        if type1 == SelfType():
+            type1 = self_type
+        if type2 == SelfType():
+            type2 = self_type
+
+        if type1 == type2:
+            return type1
+        elif type1 == ErrorType() or type2 == ErrorType():
+            return ErrorType()
+        elif type1 == ObjectType() or type2 == ObjectType():
+            return ObjectType()
+
+        parent1 = Type.find_parent_type(type1.parent, type2, self_type)
+        parent2 = Type.find_parent_type(type1, type2.parent, self_type)
+        parent3 = Type.find_parent_type(type1.parent, type2.parent, self_type)
+
+        if parent1.conforms_to(parent2):
+            temp = parent1
+        else:
+            temp = parent2
+
+        if temp.conforms_to(parent3):
+            return temp
+        else:
+            return parent3
 
     def __repr__(self):
         return str(self)
