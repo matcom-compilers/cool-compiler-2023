@@ -34,11 +34,10 @@ from nodes.expr import Expr
 # TODO: make it a generator
 # TODO: fix return clases
 # TODO: fix and check precedence
-# TODO: column of tokens
-# TODO: test parser from block to case, operation
+# TODO: test parser dispatch2, method4, mixed3, mixed6(column)
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
-    # debugfile = 'parser.out'
+    debugfile = 'parser.out'
     
     precedence = (
        ('right', 'ASSIGN'),
@@ -117,6 +116,16 @@ class CoolParser(Parser):
             formals=p.formals,
             expr=p.expr
         )
+    
+    @_('ID "(" ")" ":" TYPE "{" expr "}"')
+    def feature(self, p: Token):
+        return Method(
+            line=p.lineno,
+            id=p.ID,
+            type=p.TYPE,
+            formals=[],
+            expr=p.expr
+        )
 
     @_('formal "," formals')
     def formals(self, p: Token):
@@ -125,10 +134,6 @@ class CoolParser(Parser):
     @_('formal')
     def formals(self, p: Token):
         return [p.formal]
-    
-    @_("")
-    def formals(self, p: Token):
-        return []
 
     @_('ID ":" TYPE')
     def formal(self, p: Token):
@@ -145,10 +150,6 @@ class CoolParser(Parser):
     @_('expr')
     def exprs(self, p: Token):
         return [p.expr]
-    
-    @_("")
-    def exprs(self, p: Token):
-        return []
 
     @_('ID ASSIGN expr')
     def expr(self, p: Token):
@@ -166,6 +167,15 @@ class CoolParser(Parser):
             id=p.ID,
             exprs=p.exprs
         )
+    
+    @_('expr "." ID "(" ")"')
+    def expr(self, p: Token):
+        return Expr(
+            line=p.lineno,
+            expr=p.expr,
+            id=p.ID,
+            exprs=[]
+        )
 
     @_('expr "@" TYPE "." ID "(" exprs ")"')
     def expr(self, p: Token):
@@ -177,12 +187,30 @@ class CoolParser(Parser):
             exprs=p.exprs
         )
     
+    @_('expr "@" TYPE "." ID "(" ")"')
+    def expr(self, p: Token):
+        return Expr(
+            line=p.lineno,
+            expr=p.expr,
+            id=p.ID,
+            type=p.TYPE,
+            exprs=[]
+        )
+    
     @_('ID "(" exprs ")"')
     def expr(self, p: Token):
         return ExecuteMethod(
             line=p.lineno,
             id=p.ID,
             exprs=p.exprs
+        )
+    
+    @_('ID "(" ")"')
+    def expr(self, p: Token):
+        return ExecuteMethod(
+            line=p.lineno,
+            id=p.ID,
+            exprs=[]
         )
 
     @_('IF expr THEN expr ELSE expr FI')
@@ -263,7 +291,7 @@ class CoolParser(Parser):
     def cases(self, p: Token):
         return [p.case]
 
-    @_('ID ":" TYPE CASE_ARROW expr')
+    @_('ID ":" TYPE DARROW expr')
     def case(self, p: Token):
         return Attribute(
             line=p.lineno,
@@ -380,15 +408,23 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Boolean(line=p.lineno, value=False)
 
-    # FIX: change some tokens from value to tipe e.g. <- to ASSIGN
     def error(self, p: Token):
+        rename = CoolLexer.rename
         if p:
-            Error.error(
-            line=p.lineno,
-            column=p.column,
-            error_type="SyntacticError",
-            message=f"ERROR at or near \"{p.value}\""
-        )
+            if isinstance(p.value, str) and p.value.lower() in rename:
+                Error.error(
+                    line=p.lineno,
+                    column=p.column,
+                    error_type="SyntacticError",
+                    message=f"ERROR at or near {rename[p.value.lower()]}"
+                )
+            else:
+                Error.error(
+                    line=p.lineno,
+                    column=p.column,
+                    error_type="SyntacticError",
+                    message=f"ERROR at or near \"{p.value}\""
+                )
         else:
             Error.error(
                 line=0,

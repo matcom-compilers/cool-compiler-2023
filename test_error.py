@@ -30,16 +30,13 @@ for _cl, _out in zip(cls, out):
         pass
     print()
 
-    # break
 
 
-
-# file = "./tests/lexer/string3.cl"
+# file = "./tests/lexer/string1.cl"
 # loaded_file = load_file(file)
 
 # lexer = CoolLexer()
-# # parser = CoolParser()
-
+# parser = CoolParser()
 
 # for i in lexer.tokenize(loaded_file):
 #     pass
