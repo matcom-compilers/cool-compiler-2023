@@ -17,12 +17,13 @@ class Program(Token):
     def check(self):
         self.visitor.visit_program(self)
 
-        for class_ in self.classes:
-            class_.inherits = self.classes[class_.inherits]
+        # self.classes = {i.type: i for i in self.classes}
+        self.classes = self.visitor.types
 
-        self.classes = {i.type: i for i in self.classes}
+        for class_ in self.classes.values():
+            if class_:
+                class_.inherits = self.classes[class_.inherits] if class_.inherits else None
 
-        self.visitor.types.update(self.classes)
-
-        for _class in self.classes:
-            _class.check(self.visitor)
+        for _class in self.classes.values():
+            if _class:
+                _class.check(self.visitor)

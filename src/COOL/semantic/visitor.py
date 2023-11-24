@@ -1,29 +1,27 @@
 
 class Visitor:
-    
-    def __init__(self, types:dict={'object':None, 'IO':None, 'Int':None, 'String':None, 'Bool':None}):
-        self.types = types
-    
 
-    
+    def __init__(self, types: dict = {'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}):
+        self.types = types
+
     def visit_program(self, node):
         class_names = set()
         # TODO to define an error for repeated classes, inheritance of undefined classes and inheritance cycle
         for cls in node.classes:
-            if not cls.inherits in class_names:
+            if cls.inherits and (not cls.inherits in class_names):
                 raise Exception('The class it inherits from is not defined')
 
-            if cls.name in class_names:
+            if cls.type in class_names:
                 raise Exception('Repeated class name')
-
+            self.types[cls.type] = cls
             inherit_cls = []
             inherit_cls.append(cls.type)
             cls_now = cls
             while cls_now.inherits:
                 if cls_now.inherits in inherit_cls:
                     raise Exception('Inheritance cycle')
-                cls_now = cls_now.inherits
-                inherit_cls.append(cls_now.type)
+                cls_now = self.types[cls_now.inherits]
+                inherit_cls.append(cls_now)
 
             class_names.add(cls.type)
 
