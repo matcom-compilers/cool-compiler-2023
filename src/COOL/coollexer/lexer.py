@@ -1,3 +1,5 @@
+import re
+
 from coollexer.sly_lexer import Lexer
 from sly.lex import Token as SlyToken
 
@@ -19,16 +21,41 @@ class CoolLexer(Lexer):
         'CLASS', "INHERITS", "IF", "THEN", "ELSE", "FI", "WHILE", "LOOP", "POOL", "LET", "IN", "CASE", "OF", "ESAC", "NEW", "ISVOID", "TRUE", "FALSE",
     }
     literals = {"(", ")", "{", "}", ";", ":", ",", ".", "@"}
-    
+
     # Comments
     ignore = " \t"
     ignore_comment = r'--.*'
-    @_(r'\(\*(.|\n)*?\*\)')
+    
+    ignore_comment_multiline = r'\(\*'
     def ignore_comment_multiline(self, t):
-        self.lineno += t.value.count("\n")
+        nested_comments = 1
+        while True:
+            text = self.text[self.index:]
+            newline = re.match(r'\n+', text)
+            if newline:
+                self.lineno += newline.group().count("\n")
+                self.index += newline.end()
+            elif re.match(r'\(\*', text):
+                nested_comments += 1
+                self.index += 2
+            elif re.match(r'\*\)', text):
+                nested_comments -= 1
+                self.index += 2
+                if nested_comments == 0:
+                    return
+            else:
+                self.index += 1
+                if self.index >= len(self.text):
+                    Error.error(
+                        line=self.lineno,
+                        column=self.find_column(self.text, self.index),
+                        error_type="LexicographicError",
+                        message="EOF in comment"
+                    )
+                    return
     
     # Newline
-    @_(r"\n+")
+    newline = r'\n+'
     def newline(self, t):
         self.lineno += t.value.count("\n")
 
@@ -107,40 +134,77 @@ class CoolLexer(Lexer):
     TYPE[_true] = "TRUE"
     TYPE[_false] = "FALSE"
 
-    @_(r'\d+')
+    NUMBER = r'\d+'
     def NUMBER(self, t):
         t.value = int(t.value)
         return t
     
-    # FIX: string regex
-    # "((?:[^"\\]|\\.)*?)"
-    @_(r'\".*?\"')
+    STRING = r'\"'
     def STRING(self, t):
-        t.value = str(t.value).strip('\"')
-        return t
+        string = ""
+        while True:
+            text = self.text[self.index:]
+            if re.match(r'\\"', text):
+                self.index += 2
+                string += "\""
+            elif re.match(r'\\', text) and re.match(r'\n', text[1:]):
+                self.index += 2
+                self.lineno += 1
+                string += "\\\n"
+            elif re.match(r'"', text):
+                self.index += 1
+                t.value = string
+                return t
+            else:
+                self.index += 1
+                if self.index >= len(self.text):
+                    Error.error(
+                        line=self.lineno,
+                        column=self.find_column(self.text, self.index),
+                        error_type="LexicographicError",
+                        message="EOF in string constant"
+                    )
+                    return
+                elif self.text[self.index] == "\n":
+                    Error.error(
+                        line=self.lineno,
+                        column=self.find_column(self.text, self.index),
+                        error_type="LexicographicError",
+                        message="Unterminated string constant"
+                    )
+                    return
+                elif '\x00' == text[0]:
+                    string += text[0]
+                    Error.error(
+                        line=self.lineno,
+                        column=self.find_column(self.text, self.index),
+                        error_type="LexicographicError",
+                        message="String contains null character"
+                    )
+                else:
+                    string += text[0]
 
-    # FIX: detect missing " and *) at the end
+
     # Error handling rule
     def error(self, t: SlyToken):
         self.index += 1
-        index = self.find_column(self.text, t)
         Error.error(
             line=self.lineno,
-            column=index,
+            column=self.find_column(self.text, t.index),
             error_type="LexicographicError",
             message=f"Error \"{t.value[0]}\""
         )
     
-    def find_column(self, text: str, token: SlyToken):
-        last_cr = text.rfind('\n', 0, token.index)
+    def find_column(self, text: str, index: int):
+        last_cr = text.rfind('\n', 0, index)
         if last_cr < 0:
             last_cr = 0
-        column = (token.index - last_cr)
+        column = (index - last_cr)
         return column
 
     def generate_token(self, token: SlyToken, text: str):
         new_token = Token()
-        new_token.column = self.find_column(text, token)
+        new_token.column = self.find_column(text, token.index)
         new_token.type = token.type
         new_token.value = token.value
         new_token.lineno = token.lineno
