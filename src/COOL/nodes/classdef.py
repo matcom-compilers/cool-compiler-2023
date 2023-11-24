@@ -1,11 +1,11 @@
 from typing import List
 
-from tokens import Token
-from tokens.feature import Method
-from tokens.feature import Attribute
+from nodes import Node
+from nodes.feature import Method
+from nodes.feature import Attribute
 
 
-class Class(Token):
+class Class(Node):
     def __init__(
         self,
         line: int,

@@ -1,7 +1,7 @@
 from sly import Lexer
 from sly.lex import Token as SlyToken
 
-from coollexer.tokens import LexToken
+from tokens import Token
 from error import Error
 
 
@@ -101,7 +101,7 @@ class CoolLexer(Lexer):
         return column
 
     def generate_token(self, token: SlyToken, text: str):
-        new_token = LexToken()
+        new_token = Token()
         new_token.column = self.find_column(text, token)
         new_token.type = token.type
         new_token.value = token.value

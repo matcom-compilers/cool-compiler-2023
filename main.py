@@ -6,7 +6,7 @@ from src.COOL import CoolLexer
 from src.COOL import CoolParser
 from src.COOL import Semantic
 from src.COOL import Codegen
-from src.COOL.tokens import Program
+from src.COOL.nodes import Program
 from src.COOL.utils import load_file
 
 

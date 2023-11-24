@@ -1,14 +1,14 @@
 from typing import List
 
-from tokens import Token
+from nodes import Node
 
 
-class Method(Token):
-    def __init__(self, line: int, id: str, type: str, expr: Token, formals: List[Token]) -> None:
+class Method(Node):
+    def __init__(self, line: int, id: str, type: str, expr: Node, formals: List[Node]) -> None:
         self.type: str = type
-        self.expr: Token = expr
+        self.expr: Node = expr
         self.id = id
-        self.formals: List[Token] = formals
+        self.formals: List[Node] = formals
         super().__init__(line)
 
     def execute(self):
@@ -18,9 +18,9 @@ class Method(Token):
         raise NotImplementedError()
 
 
-class ExecuteMethod(Token):
-    def __init__(self, line: int, id: str, exprs: List[Token]) -> None:
-        self.exprs: List[Token] = exprs
+class ExecuteMethod(Node):
+    def __init__(self, line: int, id: str, exprs: List[Node]) -> None:
+        self.exprs: List[Node] = exprs
         self.id = id
         super().__init__(line)
 
@@ -31,8 +31,8 @@ class ExecuteMethod(Token):
         raise NotImplementedError()
 
 
-class Attribute(Token):
-    def __init__(self, line: int, id: str, type: str = None, expr: Token = None) -> None:
+class Attribute(Node):
+    def __init__(self, line: int, id: str, type: str = None, expr: Node = None) -> None:
         self.type = type
         self.expr = expr
         self.id = id

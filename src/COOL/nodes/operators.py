@@ -1,12 +1,12 @@
 from abc import abstractmethod
 
-from tokens import Token
+from nodes import Node
 
 
-class Operator(Token):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
-        self.expr1: Token = expr1
-        self.expr2: Token = expr2
+class Operator(Node):
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
+        self.expr1: Node = expr1
+        self.expr2: Node = expr2
         super().__init__(line)
     
     def execute(self):
@@ -20,56 +20,56 @@ class Operator(Token):
         raise NotImplementedError()
 
 class Add(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x + y
 
 class Sub(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x - y
 
 class Div(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x / y
 
 class Times(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x * y
 
 class Less(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x < y
 
 class LessEqual(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x <= y
 
 class Equal(Operator):
-    def __init__(self, line: int, expr1: Token, expr2: Token) -> None:
+    def __init__(self, line: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, expr1, expr2)
     
     def operator(self):
         return lambda x, y: x == y
 
 class Not(Operator):
-    def __init__(self, line: int, expr: Token) -> None:
+    def __init__(self, line: int, expr: Node) -> None:
         self.expr = expr
     
     def execute(self):
@@ -79,7 +79,7 @@ class Not(Operator):
         return lambda x: not x
 
 class Bitwise(Operator):
-    def __init__(self, line: int, expr: Token) -> None:
+    def __init__(self, line: int, expr: Node) -> None:
         self.expr = expr
     
     def execute(self):
