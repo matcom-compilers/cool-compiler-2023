@@ -1,6 +1,7 @@
 from typing import List
 
 from nodes import Node
+from semantic.visitor import Visitor
 
 
 class Method(Node):
@@ -13,9 +14,9 @@ class Method(Node):
 
     def execute(self):
         raise NotImplementedError()
-    
-    def check(self):
-        raise NotImplementedError()
+
+    def check(self, visitor: Visitor):
+        visitor.visit_method(self)
 
 
 class ExecuteMethod(Node):
@@ -26,7 +27,7 @@ class ExecuteMethod(Node):
 
     def execute(self):
         raise NotImplementedError()
-    
+
     def check(self):
         raise NotImplementedError()
 
@@ -40,6 +41,6 @@ class Attribute(Node):
 
     def execute(self):
         raise NotImplementedError()
-    
-    def check(self):
-        raise NotImplementedError()
+
+    def check(self, visitor: Visitor):
+        visitor.visit_attribute(self)

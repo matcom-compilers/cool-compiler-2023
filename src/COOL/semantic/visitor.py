@@ -3,7 +3,9 @@ class Visitor:
 
     def __init__(self, types: dict = {'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}):
         self.types = types
+        self.tree = {}  #is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         #TODO make a tree of types to represent inheritance and check for cycles
+        #TODO check if i need basic types in the types dict or i can put thm in another dict because they are not aviable inherits classes 
 
     def visit_program(self, node):
         class_names = set()
@@ -18,6 +20,7 @@ class Visitor:
             inherit_cls = []
             inherit_cls.append(cls.type)
             cls_now = cls
+            #TODO check for inheritance cycle not working right
             while cls_now.inherits:
                 if cls_now.inherits in inherit_cls:
                     raise Exception('Inheritance cycle')
@@ -29,7 +32,6 @@ class Visitor:
     def visit_class(self, node):
         # TODO to define an error for repeated attributes and methods
         # TODO verify if the type of the attribute is defined
-        # TODO verify if exist any conflict between this attributes and inherited attributes
         features_node = set()
         for feat in node.features:
             if feat.id in features_node:
@@ -49,12 +51,15 @@ class Visitor:
 
     def visit_method(self, node):
         pass
+    #TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
-    def visit_variable(self, node):
-        pass
-
-    # def visit_attribute(self, node):
+    # def visit_variable(self, node):
     #     pass
+
+    def visit_attribute(self, node):
+        if node.expr:
+            if not node.expr.type == node.type:
+                raise Exception(f'The attribute {node.id} is not conform to the type {node.type}')
 
     # def visit_expression(self, node):
     #     pass
