@@ -1,6 +1,7 @@
 from sly import Parser
 from sly.lex import Token as SlyToken
 
+from error import Error
 from coollexer import CoolLexer
 
 from tokens.operators import Add
@@ -33,6 +34,8 @@ from tokens.expr import Expr
 # TODO: make it a generator
 # TODO: fix return clases
 # TODO: fix and check precedence
+# TODO: column of tokens
+# TODO: test parser from block to case
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
     # debugfile = 'parser.out'
@@ -51,7 +54,7 @@ class CoolParser(Parser):
        ('nonassoc', '.'),
     )
 
-    @_("program")
+    @_('program')
     def start(self, p: SlyToken):
         return Program(classes=p.program)
 
@@ -378,8 +381,13 @@ class CoolParser(Parser):
         return Boolean(line=p.lineno, value=False)
 
 
-    def error(self, p):
+    def error(self, p: SlyToken):
         if p:
-            raise SystemExit(f"\nSyntax error at token: {p.type}, line: {p.lineno}")
+            Error.error(
+            line=p.lineno,
+            column=p.column,
+            error_type="SyntacticError",
+            message=f"ERROR at or near \"{p.value}\""
+        )
         else:
             raise SystemExit("Syntax error at EOF")

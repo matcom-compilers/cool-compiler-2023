@@ -1,9 +1,14 @@
 from sly import Lexer
+from sly.lex import Token as SlyToken
+
+from coollexer.tokens import LexToken
 from error import Error
 
 
 # TODO: Set lexer error
 # TODO: INT, BOOL and others are types?
+# FIX: comments and string to accept everything
+# TODO: test lexer commets, mised, string
 class CoolLexer(Lexer):
     tokens = {
         # Symbols
@@ -69,15 +74,41 @@ class CoolLexer(Lexer):
         t.value = int(t.value)
         return t
     
+    # FIX: string regex
+    # "((?:[^"\\]|\\.)*?)"
     @_(r'\".*?\"')
     def STRING(self, t):
         t.value = str(t.value).strip('\"')
         return t
 
+    # FIX: detect missing " and *) at the end
     # Error handling rule
-    def error(self, t):
-        if t:
-            Error.error(self.lineno, self.index, "LexicographicError", f"Error \"{t.value[0]}\"")
-            self.index += 1
-        else:
-            print('HERE')
+    def error(self, t: SlyToken):
+        self.index += 1
+        index = self.find_column(self.text, t)
+        Error.error(
+            line=self.lineno,
+            column=index,
+            error_type="LexicographicError",
+            message=f"Error \"{t.value[0]}\""
+        )
+    
+    def find_column(self, text: str, token: SlyToken):
+        last_cr = text.rfind('\n', 0, token.index)
+        if last_cr < 0:
+            last_cr = 0
+        column = (token.index - last_cr)
+        return column
+
+    def generate_token(self, token: SlyToken, text: str):
+        new_token = LexToken()
+        new_token.column = self.find_column(text, token)
+        new_token.type = token.type
+        new_token.value = token.value
+        new_token.lineno = token.lineno
+        new_token.index = token.index
+        new_token.end = token.end
+        return new_token
+
+    def tokenize(self, text: str):
+        return (self.generate_token(t, text) for t in super().tokenize(text))
