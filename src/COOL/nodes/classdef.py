@@ -27,7 +27,6 @@ class Class(Node):
     def check(self, visitor: Visitor):
         visitor.visit_class(self)
 
-        self.features = {i.id: i for i in self.features}
-        raise Exception("LLegue al fin de class")
-        for feature in self.features:
-            feature.check(visitor)
+        # raise Exception("LLegue al fin de class")
+        # for feature in self.features:
+        #     feature.check(visitor)
