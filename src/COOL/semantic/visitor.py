@@ -36,11 +36,11 @@ class Visitor:
             if feat.type not in self.types:
                 raise Exception('Undefined type')
             features_node.add(feat)
-
-        for inh_attr in node.inherits.features.keys():
-            if inh_attr in node.attributes and not (node.inherits.attributes[inh_attr].type == node.attributes[inh_attr].type):
-                raise Exception(
-                    'Can not subscribe a attribute with different type')
+        if node.inherits:
+            for inh_attr in node.inherits.features.keys():
+                if inh_attr in node.attributes and not (node.inherits.attributes[inh_attr].type == node.attributes[inh_attr].type):
+                    raise Exception(
+                        'Can not subscribe a attribute with different type')
 
     def visit_method(self, node):
         pass
