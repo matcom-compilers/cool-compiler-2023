@@ -17,7 +17,7 @@ class Class(Node):
         self.type = type
         self.inherits = inherits
         self.features = features
-        self.methods= [i for i in features if isinstance(i, Method)]
+        self.methods = [i for i in features if isinstance(i, Method)]
         self.attributes = [i for i in features if isinstance(i, Attribute)]
         super().__init__(line)
 
@@ -27,7 +27,6 @@ class Class(Node):
     def check(self, visitor: Visitor):
         visitor.visit_class(self)
 
-        self.features = {i.id: i for i in self.features}
-
-        for feature in self.features:
-            feature.check(visitor)
+        # raise Exception("LLegue al fin de class")
+        # for feature in self.features:
+        #     feature.check(visitor)
