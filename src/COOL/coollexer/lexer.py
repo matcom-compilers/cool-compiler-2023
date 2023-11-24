@@ -1,4 +1,4 @@
-from sly import Lexer
+from coollexer.sly_lexer import Lexer
 from sly.lex import Token as SlyToken
 
 from tokens import Token
@@ -16,7 +16,7 @@ class CoolLexer(Lexer):
         # Arithmetic Operators
         "PLUS", "MINUS", "TIMES", "DIVIDE", "LESS", "LESSEQUAL", "EQUAL", "NOT", "BITWISE", "ASSIGN", "CASE_ARROW",
         # Reserved words
-        "CLASS", "INHERITS", "IF", "THEN", "ELSE", "FI", "WHILE", "LOOP", "POOL", "LET", "IN", "CASE", "OF", "ESAC", "NEW", "ISVOID", "TRUE", "FALSE",
+        'CLASS', "INHERITS", "IF", "THEN", "ELSE", "FI", "WHILE", "LOOP", "POOL", "LET", "IN", "CASE", "OF", "ESAC", "NEW", "ISVOID", "TRUE", "FALSE",
     }
     literals = {"(", ")", "{", "}", ";", ":", ",", ".", "@"}
     
@@ -45,29 +45,67 @@ class CoolLexer(Lexer):
     NOT = r"not"
     BITWISE= r"~"
 
-    # Reserved words
-    CLASS = r"class"
-    INHERITS = r"inherits"
-    IF = r"if"
-    THEN = r"then"
-    ELSE = r"else"
-    FI = r"fi"
-    WHILE = r"while"
-    LOOP = r"loop"
-    POOL = r"pool"
-    LET = r"let"
-    IN = r"in"
-    CASE = r"case"
-    OF = r"of"
-    ESAC = r"esac"
-    NEW = r"new"
-    ISVOID = r"isvoid"
-    TRUE = r"true"
-    FALSE = r"false"
-    
     # Symbols
-    TYPE = r"[A-Z][a-zA-Z0-9_]*"
-    ID = r"[a-z][a-zA-Z0-9_]*"
+    TYPE = r'[A-Z][a-zA-Z0-9_]*'
+    ID = r'[a-z][a-zA-Z0-9_]*'
+
+    # Reserved words
+    _class = r'(?i)class'
+    _inherits = r'(?i)inherits'
+    _if = r'(?i)if'
+    _then = r'(?i)then'
+    _else = r'(?i)else'
+    _fi = r'(?i)fi'
+    _while = r'(?i)while'
+    _loop = r'(?i)loop'
+    _pool = r'(?i)pool'
+    _let = r'(?i)let'
+    _in = r'(?i)in'
+    _case = r'(?i)case'
+    _of = r'(?i)of'
+    _esac = r'(?i)esac'
+    _new = r'(?i)new'
+    _isvoid = r'(?i)isvoid'
+    _true = r'(?i)true'
+    _false = r'(?i)false'
+
+    ID[_class] = "CLASS"
+    ID[_inherits] = "INHERITS"
+    ID[_if] = "IF"
+    ID[_then] = "THEN"
+    ID[_else] = "ELSE"
+    ID[_fi] = "FI"
+    ID[_while] = "WHILE"
+    ID[_loop] = "LOOP"
+    ID[_pool] = "POOL"
+    ID[_let] = "LET"
+    ID[_in] = "IN"
+    ID[_case] = "CASE"
+    ID[_of] = "OF"
+    ID[_esac] = "ESAC"
+    ID[_new] = "NEW"
+    ID[_isvoid] = "ISVOID"
+    ID[_true] = "TRUE"
+    ID[_false] = "FALSE"
+
+    TYPE[_class] = "CLASS"
+    TYPE[_inherits] = "INHERITS"
+    TYPE[_if] = "IF"
+    TYPE[_then] = "THEN"
+    TYPE[_else] = "ELSE"
+    TYPE[_fi] = "FI"
+    TYPE[_while] = "WHILE"
+    TYPE[_loop] = "LOOP"
+    TYPE[_pool] = "POOL"
+    TYPE[_let] = "LET"
+    TYPE[_in] = "IN"
+    TYPE[_case] = "CASE"
+    TYPE[_of] = "OF"
+    TYPE[_esac] = "ESAC"
+    TYPE[_new] = "NEW"
+    TYPE[_isvoid] = "ISVOID"
+    TYPE[_true] = "TRUE"
+    TYPE[_false] = "FALSE"
 
     @_(r'\d+')
     def NUMBER(self, t):

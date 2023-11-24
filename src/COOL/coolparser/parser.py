@@ -35,7 +35,7 @@ from nodes.expr import Expr
 # TODO: fix return clases
 # TODO: fix and check precedence
 # TODO: column of tokens
-# TODO: test parser from block to case
+# TODO: test parser from block to case, operation
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
     # debugfile = 'parser.out'
@@ -380,7 +380,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Boolean(line=p.lineno, value=False)
 
-
+    # FIX: change some tokens from value to tipe e.g. <- to ASSIGN
     def error(self, p: Token):
         if p:
             Error.error(
@@ -390,4 +390,9 @@ class CoolParser(Parser):
             message=f"ERROR at or near \"{p.value}\""
         )
         else:
-            raise SystemExit("Syntax error at EOF")
+            Error.error(
+                line=0,
+                column=0,
+                error_type="SyntacticError",
+                message=f"ERROR at or near EOF"
+            )
