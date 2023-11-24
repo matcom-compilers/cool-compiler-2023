@@ -3,6 +3,7 @@ class Visitor:
 
     def __init__(self, types: dict = {'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}):
         self.types = types
+        #TODO make a tree of types to represent inheritance and check for cycles
 
     def visit_program(self, node):
         class_names = set()
@@ -31,16 +32,20 @@ class Visitor:
         # TODO verify if exist any conflict between this attributes and inherited attributes
         features_node = set()
         for feat in node.features:
-            if feat in features_node:
-                raise Exception('Repeated feature name')
-            if feat.type not in self.types:
-                raise Exception('Undefined type')
-            features_node.add(feat)
+            if feat.id in features_node:
+                raise Exception(f'Repeated feature name {feat.id} in {node.type}')
+            if feat.type not in self.types.keys():
+                raise Exception(f'Undefined type {feat.type}')
+            features_node.add(feat.id)
 
-        for inh_attr in node.inherits.features.keys():
-            if inh_attr in node.attributes and not (node.inherits.attributes[inh_attr].type == node.attributes[inh_attr].type):
-                raise Exception(
-                    'Can not subscribe a attribute with different type')
+        node.features = {i.id: i for i in node.features}
+
+        if node.inherits:
+            for inh_attr in node.inherits.features.keys():
+                if inh_attr in node.features.keys():
+                    if not (node.inherits.features[inh_attr].type == node.features[inh_attr].type):
+                        raise Exception(
+                            f'Can not subscribe the attribute {inh_attr} with different type in {node.type} and {node.inherits.type}')
 
     def visit_method(self, node):
         pass
