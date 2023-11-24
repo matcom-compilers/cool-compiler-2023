@@ -1,4 +1,4 @@
-from .tokens import Token
+from .nodes import Node
 from .coollexer import CoolLexer
 from .coolparser import CoolParser
 from .semantic import Semantic

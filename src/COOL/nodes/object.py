@@ -1,9 +1,9 @@
 from typing import Any
 
-from tokens import Token
+from nodes import Node
 
 
-class Object(Token):
+class Object(Node):
     def __init__(self, line: int, value: Any) -> None:
         self.value = value
         super().__init__(line)

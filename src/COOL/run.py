@@ -5,7 +5,7 @@ from coollexer import CoolLexer
 from coolparser import CoolParser
 from semantic import Semantic
 from codegen import Codegen
-from tokens import Program
+from nodes import Program
 from utils import load_file
 
 

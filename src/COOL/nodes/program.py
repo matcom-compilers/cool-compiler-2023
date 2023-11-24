@@ -1,11 +1,11 @@
 from typing import List
 
 from semantic.visitor import Visitor
-from tokens import Token
-from tokens.classdef import Class
+from nodes import Node
+from nodes.classdef import Class
 
 
-class Program(Token):
+class Program(Node):
     def __init__(self, classes: List[Class]) -> None:
         self.visitor = Visitor()
         self.classes = classes

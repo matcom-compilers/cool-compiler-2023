@@ -1,4 +1,4 @@
-from tokens import Program
+from nodes import Program
 
 class Semantic:
     @classmethod
