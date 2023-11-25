@@ -33,7 +33,75 @@
 - verificar que el tipo de la expresión sea compatible con el tipo de la variable a la que se le asigna o cumpla el principio de sustitución de tipos en la herencia.
 
 
+# Important
+- todos los atributos tienen alcance local a la clase y todos los métodos tienen alcance global => la única forma de proporcionar acceso al estado del objeto en Cool es a través de métodos. 
 
+- Los nombres de las características deben comenzar con una letra minúscula.
+
+- Los nombres de las clases deben comenzar con una letra mayúscula.
+
+- Ningún nombre de método puede definirse varias veces en una clase y ningún nombre de atributo puede definirse varias veces en una clase, pero un método y un atributo pueden tener el mismo nombre.
+
+ - La variable especial self se refiere al objeto en el que se despachó el método, que, en el ejemplo, es c mismo. $???????$ Hay una forma especial new C que genera un objeto nuevo de la clase C.
+
+-  Una clase solo puede heredar de una sola clase; esto se llama acertadamente "herencia única".
+<!-- 
+- La clase Object es la clase raíz de todas las clases en Cool.
+
+- La clase IO es la clase que define las operaciones de entrada y salida estándar.
+-->
+-  hay un tipo SELF TYPE que se puede usar en circunstancias especiales. $????????$
+
+
+- Cada variable debe tener un 
+declaración de tipo en el punto en que se introduce, ya sea en un let, case o como el parámetro formal de un método.
+
+- si C hereda de P, directa o indirectamente, entonces un C se puede usar donde un P sería suficiente. 
+
+- El tipo SELF TYPE se utiliza para referirse al tipo de la variable self.
+
+- SELF TYPE puede utilizarse en los siguientes lugares: new SELF TYPE, como el tipo de retorno de un 
+método, como el tipo declarado de una variable let, o como el tipo declarado de un atributo. No se permiten otros usos de SELF TYPE.
+
+-  el verificador de tipos infiere un tipo para cada expresión en el programa. 
+
+- istinguir entre el tipo asignado por el verificador de tipos a una expresión en tiempo de compilación, al que llamaremos el tipo estático de la expresión, y el o los tipos a los que la expresión puede evaluarse durante la ejecución, a los que llamaremos tipos dinámicos. $??????$
+
+##### - No entendi lo de tipos estaticos y dinamicos en coolya entendi OK
+
+- Cuando se crea un nuevo objeto de una clase, todos los atributos heredados y locales deben inicializarse. 
+
+- El orden de inicialización de los atributos es el siguiente: primero se inicializan los atributos heredados, en orden de declaración en la clase padre, luego se inicializan los atributos locales, en orden de declaración en la clase actual.
+
+- Todas las variables en Cool se inicializan para contener valores del tipo apropiado. El valor especial void 
+es un miembro de todos los tipos y se utiliza como la inicialización predeterminada para las variables donde no se proporciona inicialización por parte del usuario. 
+
+- Puede haber cero o más parámetros formales. Los identificadores utilizados en la lista de parámetros formales deben ser distintos entre sí.
+
+- si una clase C hereda un método f de una clase ancestro P, entonces C puede anular la definición heredada de f siempre que el número de argumentos, los tipos de los parámetros formales y el tipo de retorno sean exactamente los mismos en ambas definiciones. 
+
+- Las expresiones más simples son las constantes. Las constantes booleanas son true y false. Las constantes enteras son cadenas de dígitos no signadas, como 0, 123 y 007. Las constantes de cadena son secuencias de caracteres encerradas entre comillas dobles, como "Esto es una cadena". Las constantes de cadena pueden tener como máximo 1024 caracteres de longitud. 
+
+- Las constantes pertenecen a las clases básicas Bool, Int y String. El valor de una constante es un objeto de la clase básica correspondiente. 
+
+- Los nombres de las variables locales, los parámetros formales de los métodos, self y los atributos de clase son todas expresiones. 
+
+- El identificador self puede ser referenciado, pero es un error asignar a self o vincular self en un let, un case o como parámetro formal. También es ilegal tener atributos con el nombre self. 
+
+- el tipo est'atico de la expresi'on debe ajustarse al tipo declarado del identificador 
+
+- Existen tres formas de despacho(llamada a metodo) en Cool: despacho estático, despacho dinámico y despacho automático.
+
+- 
+Las otras formas de despacho son: 
+<id>(<expr>,...,<expr>) 
+<expr>@<type>.id(<expr>,...,<expr>) 
+ 
+La primera forma es una forma abreviada de self.<id>(<expr>,...,<expr>). 
+ 
+La segunda forma proporciona una forma de acceder a métodos de clases padre que han sido ocultados por redefiniciones en clases hijas. En lugar de utilizar la clase de la expresión más a la izquierda para determinar el método, se utiliza el método de la clase especificada explícitamente. Por ejemplo, e@B.f() invoca el método f en la clase B en el objeto que es el valor de e. Para esta forma de despacho, el tipo estático a la izquierda de "@" debe ajustarse al tipo especificado a la derecha de "@".
+
+- 
 
 
 
