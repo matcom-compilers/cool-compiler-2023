@@ -1,4 +1,5 @@
 from sly import Parser
+from typing import List
 
 from error import Error
 from coollexer import CoolLexer
@@ -31,10 +32,8 @@ from nodes.expr import Isvoid
 from nodes.expr import Expr
 
 
-# TODO: make it a generator
 # TODO: fix return clases
 # TODO: fix and check precedence
-# TODO: test parser dispatch2, method4, mixed3, mixed6(column)
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
     debugfile = 'parser.out'
@@ -432,3 +431,6 @@ class CoolParser(Parser):
                 error_type="SyntacticError",
                 message=f"ERROR at or near EOF"
             )
+
+    def parse(self, tokens: List[Token]):
+        return super().parse((t for t in tokens))

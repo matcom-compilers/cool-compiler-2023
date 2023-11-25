@@ -1,13 +1,19 @@
 import os
 import sys
 
-from coollexer import CoolLexer
-from coolparser import CoolParser
-from semantic import Semantic
-from codegen import Codegen
-from nodes import Program
-from utils import load_file
+from COOL.coollexer import CoolLexer
+from COOL.coolparser import CoolParser
+from COOL.semantic import Semantic
+from COOL.codegen import Codegen
+from COOL.nodes import Program
+from COOL.utils import load_file
 
+
+def check_errors(errors):
+    if errors:
+        for error in errors:
+            print(error)
+        exit(1)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -26,8 +32,11 @@ if __name__ == "__main__":
     file_content = load_file(file_path)
 
     lexer = CoolLexer()
+    tokens, errors = lexer.tokenize(file_content)
+    check_errors(errors)
+
     parser = CoolParser()
-    program: Program = parser.parse(lexer.tokenize(file_content))
-    Semantic.check(program)
-    Codegen.execute(program, output_path)
-    print("Compilation finished successfully!")
+    ast, errors = parser.parse(tokens)
+    check_errors(errors)
+
+    exit(0)

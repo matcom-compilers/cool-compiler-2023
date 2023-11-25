@@ -1,4 +1,6 @@
 import re
+from typing import Tuple
+from typing import List
 from sly import Lexer
 from sly.lex import Token as SlyToken
 
@@ -7,11 +9,11 @@ from error import Error
 
 
 # TODO: INT, BOOL and others are types?
-# TODO: check sting1, string3
 class CoolLexer(Lexer):
     def __init__(self):
         super().__init__()
         self.index = 0
+        self.errors = []
 
     tokens = {
         # Symbols
@@ -51,17 +53,19 @@ class CoolLexer(Lexer):
                 nested_comments -= 1
                 self.index += 2
                 if nested_comments == 0:
-                    return
+                    break
             else:
                 self.index += 1
                 if self.index >= len(self.text):
-                    Error.error(
-                        line=self.lineno,
-                        column=self.find_column(self.text, self.index),
-                        error_type="LexicographicError",
-                        message="EOF in comment"
+                    self.errors.append(
+                        Error.error(
+                            line=self.lineno,
+                            column=self.find_column(self.text, self.index),
+                            error_type="LexicographicError",
+                            message="EOF in comment"
+                        )
                     )
-                    return
+                    break
     
     # Newline
     newline = r'\n+'
@@ -122,29 +126,36 @@ class CoolLexer(Lexer):
                 return t
             else:
                 if self.index >= len(self.text):
-                    Error.error(
-                        line=self.lineno,
-                        column=self.find_column(self.text, self.index),
-                        error_type="LexicographicError",
-                        message="EOF in string constant"
+                    self.errors.append(
+                        Error.error(
+                            line=self.lineno,
+                            column=self.find_column(self.text, self.index),
+                            error_type="LexicographicError",
+                            message="EOF in string constant"
+                        )
                     )
-                    return
+                    break
                 elif self.text[self.index] == "\n":
-                    Error.error(
-                        line=self.lineno,
-                        column=self.find_column(self.text, self.index),
-                        error_type="LexicographicError",
-                        message="Unterminated string constant"
+                    self.errors.append(
+                        Error.error(
+                            line=self.lineno,
+                            column=self.find_column(self.text, self.index),
+                            error_type="LexicographicError",
+                            message="Unterminated string constant"
+                        )
                     )
+                    self.lineno += 1
                     self.index += 1
-                    return
+                    break
                 elif '\x00' == text[0]:
                     string += text[0]
-                    Error.error(
-                        line=self.lineno,
-                        column=self.find_column(self.text, self.index),
-                        error_type="LexicographicError",
-                        message="String contains null character"
+                    self.errors.append(
+                        Error.error(
+                            line=self.lineno,
+                            column=self.find_column(self.text, self.index),
+                            error_type="LexicographicError",
+                            message="String contains null character"
+                        )
                     )
                     self.index += 1
                 else:
@@ -154,11 +165,13 @@ class CoolLexer(Lexer):
     # Error handling rule
     def error(self, t: SlyToken):
         self.index += 1
-        Error.error(
-            line=self.lineno,
-            column=self.find_column(self.text, t.index),
-            error_type="LexicographicError",
-            message=f"Error \"{t.value[0]}\""
+        self.errors.append(
+            Error.error(
+                line=self.lineno,
+                column=self.find_column(self.text, t.index),
+                error_type="LexicographicError",
+                message=f"Error \"{t.value[0]}\""
+            )
         )
 
     def find_column(self, text: str, index: int):
@@ -178,5 +191,5 @@ class CoolLexer(Lexer):
         new_token.end = token.end
         return new_token
 
-    def tokenize(self, text: str):
-        return (self.generate_token(t, text) for t in super().tokenize(text))
+    def tokenize(self, text: str) -> Tuple[List[Token], List[Error]]:
+        return [self.generate_token(t, text) for t in super().tokenize(text)], self.errors
