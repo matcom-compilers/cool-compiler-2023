@@ -9,21 +9,37 @@ class Visitor:
             'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
         self.types['object'] = None
         self.types['IO'] = None
-        # Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
-        self.tree = {}
-        self.error = Error()
+        self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
 
-    def _check_cycle(self, class_):
+
+    def _check_cycle(self, class_:str):
         temp_class = class_
         lineage = set()
         lineage.add(class_)
         while temp_class in self.tree.keys():
-            if temp_class in self.tree.keys():
-                if self.types[temp_class].inherits in lineage:
-                    raise Exception(f'Inheritance cycle {class_}')
-                lineage.add(self.types[temp_class].inherits)
-                temp_class = self.tree[temp_class]
+            # if temp_class in self.tree.keys():
+            if self.types[temp_class].inherits in lineage:
+                raise Exception(f'Inheritance cycle {class_}')
+            lineage.add(self.types[temp_class].inherits)
+            temp_class = self.tree[temp_class]
 
+    def _search_lineage(self,class_:str):
+        temp_class = class_
+        lineage = []
+        lineage.add(class_)
+        while temp_class in self.tree.keys():
+            lineage.append(self.types[temp_class].inherits)
+            temp_class = self.tree[temp_class]
+        return lineage
+
+    def _search_feature_name_in_lineage(self,lineage:list,feature:str,type_:type):
+        feature_equals=[]
+        for i in lineage:
+            if feature in self.types[i].features.keys():
+                if type(self.types[i].features[feature]) == type_:
+                    feature_equals.append((self.types[i],self.types[i].features[feature]))
+        return feature_equals
+    
     def visit_program(self, node):
         for i in node.classes:
             if i.type in self.types.keys():
@@ -46,15 +62,31 @@ class Visitor:
         # TODO to define an error for repeated attributes and methods
         # TODO verify if the type of the attribute is defined
         # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
-        features_node = set()
-        for feat in node.features:
-            if feat.id in features_node:
-                raise Exception(
-                    f'Repeated feature name {feat.id} in {node.type}')
-            if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
-                raise Exception(f'Undefined type {feat.type}')
-            features_node.add(feat.id)
+        # features_node = set()
+        # for feat in node.features:
+        #     if feat.id in features_node:
+        #         raise Exception(
+        #             f'Repeated feature name {feat.id} in {node.type}')
+        #     if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
+        #         raise Exception(f'Undefined type {feat.type}')
+        #     features_node.add(feat.id)
 
+        lineage = self._search_lineage(node.type)
+        for meth in node.methods:
+            equals_methods = self._search_feature_name_in_lineage(lineage,meth.id,type(meth))
+            if len(equals_methods) > 0:
+                for i in equals_methods:
+                    if len(meth.formals) != len(i[1].formals):
+                        raise Exception(f'Incompatible number of formals in {meth.id} in {node.type}')
+                    for j in range(len(meth.formals)):
+                        if meth.formals[j].type != i[1].formals[j].type:
+                            raise Exception(f'Incompatible type of formals in {meth.id} in {node.type}')
+                    if meth.type != i[1].type:
+                        raise Exception(f'Incompatible return type in {meth.id} in {node.type}')
+            
+
+        node.methods={i.id:i for i in node.methods}
+        node.attributes={i.id:i for i in node.attributes}
         node.features = {i.id: i for i in node.features}
 
         if node.inherits:
