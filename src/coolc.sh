@@ -1,6 +1,6 @@
 
 echo "Cool 1.0.0"
-echo "Copyright (c) 2023: Dennis, Lauren"
+echo "Copyright (c) 2023: Lauren Guerra, Dennis Fiallo"
 
 INPUT_FILE=$1
 if [ -z "$1" ]; then
@@ -10,5 +10,4 @@ fi
 OUTPUT_FILE=${INPUT_FILE:0: -2}mips
 
 
-cd ./COOL/
 python run.py $INPUT_FILE $OUTPUT_FILE

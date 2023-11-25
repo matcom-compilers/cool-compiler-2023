@@ -1,8 +1,8 @@
 from typing import List
 
-from semantic.visitor import Visitor
-from nodes import Node
-from nodes.classdef import Class
+from COOL.semantic.visitor import Visitor
+from COOL.nodes import Node
+from COOL.nodes.classdef import Class
 
 
 class Program(Node):
