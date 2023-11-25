@@ -1,4 +1,4 @@
-from nodes import Program
+from COOL.nodes import Program
 
 class Codegen:
     @classmethod

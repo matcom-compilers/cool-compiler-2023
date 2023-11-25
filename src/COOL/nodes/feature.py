@@ -1,7 +1,7 @@
 from typing import List
 
-from nodes import Node
-from semantic.visitor import Visitor
+from COOL.nodes import Node
+from COOL.semantic.visitor import Visitor
 
 
 class Method(Node):

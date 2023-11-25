@@ -1,4 +1,4 @@
-from error import Error
+from COOL.error import Error
 
 
 class Visitor:

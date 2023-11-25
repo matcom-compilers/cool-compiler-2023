@@ -1,9 +1,9 @@
 from typing import List
 
-from semantic.visitor import Visitor
-from nodes import Node
-from nodes.feature import Method
-from nodes.feature import Attribute
+from COOL.semantic.visitor import Visitor
+from COOL.nodes import Node
+from COOL.nodes.feature import Method
+from COOL.nodes.feature import Attribute
 
 
 class Class(Node):

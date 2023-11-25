@@ -1,6 +1,6 @@
-from nodes import Program
+
 
 class Semantic:
     @classmethod
-    def check(program: Program):
+    def check(program):
         program.check()

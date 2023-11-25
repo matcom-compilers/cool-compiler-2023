@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from nodes import Node
+from COOL.nodes import Node
 
 
 class UnaryOperator(Node):
@@ -102,7 +102,7 @@ class Not(UnaryOperator):
 
 class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
-        super.__init__(line, column, expr)
+        super().__init__(line, column, expr)
 
     def operator(self):
         return lambda x: ~x
