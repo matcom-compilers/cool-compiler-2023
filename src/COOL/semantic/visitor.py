@@ -9,23 +9,9 @@ class Visitor:
             'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
         self.types['object'] = None
         self.types['IO'] = None
-        # is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
+        # Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.tree = {}
         self.error = Error()
-        # TODO make a tree of types to represent inheritance and check for cycles
-        # TODO check if i need basic types in the types dict or i can put thm in another dict because they are not aviable inherits classes
-
-    def ___check_cycle(self, class_):
-        temp_class = class_
-        lineage = set()
-        lineage.add(class_)
-        while temp_class in self.tree.keys():
-            if self.types[temp_class].inherits:
-                if self.types[temp_class].inherits in lineage:
-                    raise Exception(
-                        f'Inheritance cycle {self.types[temp_class].inherits}')
-                lineage.add(self.types[temp_class].inherits)
-                temp_class = self.types[temp_class].inherits
 
     def _check_cycle(self, class_):
         temp_class = class_
@@ -49,16 +35,18 @@ class Visitor:
             if cls.inherits:
                 if not cls.inherits in self.types.keys():
                     if cls.inherits in self.basic_types:
-                        raise Exception(f'can not heritance from a  Class {cls.type} cannot inherit class {cls.inherits}.')
-                    raise Exception(f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
-                self.tree[cls.type]=cls.inherits
+                        raise Exception(
+                            f'Class {cls.type} cannot inherit class {cls.inherits}. ')
+                    raise Exception(
+                        f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
+                self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type)
 
     def visit_class(self, node):
         # TODO to define an error for repeated attributes and methods
         # TODO verify if the type of the attribute is defined
         # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
-        features_node=set()
+        features_node = set()
         for feat in node.features:
             if feat.id in features_node:
                 raise Exception(
@@ -67,7 +55,7 @@ class Visitor:
                 raise Exception(f'Undefined type {feat.type}')
             features_node.add(feat.id)
 
-        node.features={i.id: i for i in node.features}
+        node.features = {i.id: i for i in node.features}
 
         if node.inherits:
             for inh_attr in node.inherits.features.keys():

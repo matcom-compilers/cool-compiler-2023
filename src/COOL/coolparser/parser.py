@@ -69,6 +69,7 @@ class CoolParser(Parser):
     def classdef(self, p: Token):
         return Class(
             line=p.lineno,
+            column=p.column,
             type=p.TYPE,
             features=p.features
         )
@@ -77,6 +78,7 @@ class CoolParser(Parser):
     def classdef(self, p: Token):
         return Class(
             line=p.lineno,
+            column=p.column,
             features=p.features,
             type=p.TYPE0,
             inherits=p.TYPE1
@@ -94,6 +96,7 @@ class CoolParser(Parser):
     def feature(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE,
             expr=p.expr
@@ -103,6 +106,7 @@ class CoolParser(Parser):
     def feature(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE
         )
@@ -111,6 +115,7 @@ class CoolParser(Parser):
     def feature(self, p: Token):
         return Method(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE,
             formals=p.formals,
@@ -121,6 +126,7 @@ class CoolParser(Parser):
     def feature(self, p: Token):
         return Method(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE,
             formals=[],
@@ -139,6 +145,7 @@ class CoolParser(Parser):
     def formal(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE
         )
@@ -155,6 +162,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             expr=p.expr
         )
@@ -163,6 +171,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Expr(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
             id=p.ID,
             exprs=p.exprs
@@ -172,6 +181,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Expr(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
             id=p.ID,
             exprs=[]
@@ -181,6 +191,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Expr(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
             id=p.ID,
             type=p.TYPE,
@@ -191,6 +202,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Expr(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
             id=p.ID,
             type=p.TYPE,
@@ -201,6 +213,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return ExecuteMethod(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             exprs=p.exprs
         )
@@ -209,6 +222,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return ExecuteMethod(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             exprs=[]
         )
@@ -217,6 +231,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return If(
             line=p.lineno,
+            column=p.column,
             if_expr=p.expr0,
             then_expr=p.expr1,
             else_expr=p.expr2
@@ -226,6 +241,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return While(
             line=p.lineno,
+            column=p.column,
             while_expr=p.expr0,
             loop_expr=p.expr1
         )
@@ -246,6 +262,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Let(
             line=p.lineno,
+            column=p.column,
             let_list=p.let_list,
             expr=p.expr
         )
@@ -262,6 +279,7 @@ class CoolParser(Parser):
     def let_expr(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE,
             expr=p.expr
@@ -271,6 +289,7 @@ class CoolParser(Parser):
     def let_expr(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE
         )
@@ -279,6 +298,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Case(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
             cases=p.cases
         )   
@@ -295,6 +315,7 @@ class CoolParser(Parser):
     def case(self, p: Token):
         return Attribute(
             line=p.lineno,
+            column=p.column,
             id=p.ID,
             type=p.TYPE,
             expr=p.expr
@@ -304,6 +325,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return New(
             line=p.lineno,
+            column=p.column,
             type=p.TYPE
         )
 
@@ -311,6 +333,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Isvoid(
             line=p.lineno,
+            column=p.column,
             expr=p.expr
         )
 
@@ -318,6 +341,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Add(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -326,6 +350,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Sub(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -334,6 +359,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Times(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -342,6 +368,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Div(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -350,6 +377,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Less(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -358,6 +386,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return LessEqual(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -366,6 +395,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Equal(
             line=p.lineno,
+            column=p.column,
             expr1=p.expr0,
             expr2=p.expr1
         )
@@ -374,6 +404,7 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Not(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
         )
     
@@ -381,16 +412,17 @@ class CoolParser(Parser):
     def expr(self, p: Token):
         return Bitwise(
             line=p.lineno,
+            column=p.column,
             expr=p.expr,
         )
 
     @_('NUMBER')
     def expr(self, p: Token):
-        return Interger(line=p.lineno, value=p.NUMBER)
+        return Interger(line=p.lineno, column=p.column, value=p.NUMBER)
     
     @_('STRING')
     def expr(self, p: Token):
-        return String(line=p.lineno, value=p.STRING)
+        return String(line=p.lineno, column=p.column, value=p.STRING)
     
     @_('"(" expr ")"')
     def expr(self, p: Token):
@@ -398,15 +430,15 @@ class CoolParser(Parser):
     
     @_('ID')
     def expr(self, p: Token):
-        return Attribute(line=p.lineno, id=p.ID)
+        return Attribute(line=p.lineno, column=p.column, id=p.ID)
 
     @_('TRUE')
     def expr(self, p: Token):
-        return Boolean(line=p.lineno, value=True)
+        return Boolean(line=p.lineno, column=p.column, value=True)
 
     @_('FALSE')
     def expr(self, p: Token):
-        return Boolean(line=p.lineno, value=False)
+        return Boolean(line=p.lineno, column=p.column, value=False)
 
     def error(self, p: Token):
         rename = CoolLexer.rename
