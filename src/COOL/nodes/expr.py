@@ -1,6 +1,6 @@
 from typing import List
 
-from nodes import Node
+from COOL.nodes import Node
 
 
 class If(Node):

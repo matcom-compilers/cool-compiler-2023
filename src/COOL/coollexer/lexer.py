@@ -4,8 +4,8 @@ from typing import List
 from sly import Lexer
 from sly.lex import Token as SlyToken
 
-from tokens import Token
-from error import Error
+from COOL.tokens import Token
+from COOL.error import Error
 
 
 # TODO: INT, BOOL and others are types?
@@ -180,7 +180,7 @@ class CoolLexer(Lexer):
             last_cr = 0
         column = (index - last_cr)
         return column if column > 0 else 1
-
+    
     def generate_token(self, token: SlyToken, text: str):
         new_token = Token()
         new_token.column = self.find_column(text, token.index)
