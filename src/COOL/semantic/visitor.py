@@ -1,44 +1,73 @@
+from error import Error
+
 
 class Visitor:
 
-    def __init__(self, types: dict = {'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}):
+    def __init__(self, types: dict = {}):
         self.types = types
-        #TODO make a tree of types to represent inheritance and check for cycles
+        self.basic_types: dict = {
+            'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
+        self.types['object'] = None
+        self.types['IO'] = None
+        # is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
+        self.tree = {}
+        self.error = Error()
+        # TODO make a tree of types to represent inheritance and check for cycles
+        # TODO check if i need basic types in the types dict or i can put thm in another dict because they are not aviable inherits classes
+
+    def ___check_cycle(self, class_):
+        temp_class = class_
+        lineage = set()
+        lineage.add(class_)
+        while temp_class in self.tree.keys():
+            if self.types[temp_class].inherits:
+                if self.types[temp_class].inherits in lineage:
+                    raise Exception(
+                        f'Inheritance cycle {self.types[temp_class].inherits}')
+                lineage.add(self.types[temp_class].inherits)
+                temp_class = self.types[temp_class].inherits
+
+    def _check_cycle(self, class_):
+        temp_class = class_
+        lineage = set()
+        lineage.add(class_)
+        while temp_class in self.tree.keys():
+            if temp_class in self.tree.keys():
+                if self.types[temp_class].inherits in lineage:
+                    raise Exception(f'Inheritance cycle {class_}')
+                lineage.add(self.types[temp_class].inherits)
+                temp_class = self.tree[temp_class]
 
     def visit_program(self, node):
-        class_names = set()
-        # TODO to define an error for repeated classes, inheritance of undefined classes and inheritance cycle
-        for cls in node.classes:
-            if cls.inherits and (not cls.inherits in class_names):
-                raise Exception('The class it inherits from is not defined')
-
-            if cls.type in class_names:
+        for i in node.classes:
+            if i.type in self.types.keys():
                 raise Exception('Repeated class name')
-            self.types[cls.type] = cls
-            inherit_cls = []
-            inherit_cls.append(cls.type)
-            cls_now = cls
-            while cls_now.inherits:
-                if cls_now.inherits in inherit_cls:
-                    raise Exception('Inheritance cycle')
-                cls_now = self.types[cls_now.inherits]
-                inherit_cls.append(cls_now)
+            self.types[i.type] = i
 
-            class_names.add(cls.type)
+        for cls in node.classes:
+
+            if cls.inherits:
+                if not cls.inherits in self.types.keys():
+                    if cls.inherits in self.basic_types:
+                        raise Exception(f'can not heritance from a  Class {cls.type} cannot inherit class {cls.inherits}.')
+                    raise Exception(f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
+                self.tree[cls.type]=cls.inherits
+                self._check_cycle(cls.type)
 
     def visit_class(self, node):
         # TODO to define an error for repeated attributes and methods
         # TODO verify if the type of the attribute is defined
-        # TODO verify if exist any conflict between this attributes and inherited attributes
-        features_node = set()
+        # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
+        features_node=set()
         for feat in node.features:
             if feat.id in features_node:
-                raise Exception(f'Repeated feature name {feat.id} in {node.type}')
-            if feat.type not in self.types.keys():
+                raise Exception(
+                    f'Repeated feature name {feat.id} in {node.type}')
+            if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
                 raise Exception(f'Undefined type {feat.type}')
             features_node.add(feat.id)
 
-        node.features = {i.id: i for i in node.features}
+        node.features={i.id: i for i in node.features}
 
         if node.inherits:
             for inh_attr in node.inherits.features.keys():
@@ -49,12 +78,16 @@ class Visitor:
 
     def visit_method(self, node):
         pass
+    # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
-    def visit_variable(self, node):
-        pass
-
-    # def visit_attribute(self, node):
+    # def visit_variable(self, node):
     #     pass
+
+    def visit_attribute(self, node):
+        if node.expr:
+            if not node.expr.type == node.type:
+                raise Exception(
+                    f'The attribute {node.id} is not conform to the type {node.type}')
 
     # def visit_expression(self, node):
     #     pass
