@@ -10,6 +10,7 @@ class Class(Node):
     def __init__(
         self,
         line: int,
+        column: int,
         features: List[Method | Attribute],
         type: str,
         inherits: str = None
@@ -19,7 +20,7 @@ class Class(Node):
         self.features = features
         self.methods = [i for i in features if isinstance(i, Method)]
         self.attributes = [i for i in features if isinstance(i, Attribute)]
-        super().__init__(line)
+        super().__init__(line,column)
 
     def execute(self):
         raise NotImplementedError()
@@ -27,6 +28,5 @@ class Class(Node):
     def check(self, visitor: Visitor):
         visitor.visit_class(self)
 
-        # raise Exception("LLegue al fin de class")
-        # for feature in self.features:
-        #     feature.check(visitor)
+        for feature in self.features.values():
+            feature.check(visitor)

@@ -17,7 +17,6 @@ class Program(Node):
     def check(self):
         self.visitor.visit_program(self)
 
-        # self.classes = {i.type: i for i in self.classes}
         self.classes = self.visitor.types
 
         for class_ in self.classes.values():
