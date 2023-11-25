@@ -118,34 +118,69 @@ class Dispatch(Expr):
         return f'<Dispatch {self.id}>'
 
 class If(Expr):
-    pass
+    def __init__(self, predicate, if_branch, else_branch):
+        self.predicate = predicate
+        self.if_branch = if_branch
+        self.else_branch = else_branch
 
 class While(Expr):
-    pass
+    def __init__(self, predicate, body):
+        self.predicate = predicate
+        self.body = body
 
 class Block(Expr):
-    pass
+    def __init__(self, expr_list = NodeContainer()):
+        self.expr_list = expr_list
+        
+    def __repr__(self):
+        return f'<Block({len(self.expr_list)})>'
 
 class LetVar(Expr):
-    pass
+    def __init__(self, id, type, opt_expr_init):
+        self.id = id
+        self.type = type
+        self.opt_expr_init = opt_expr_init
+
+    def __repr__(self):
+        return f'<LetVar {self.id}>'
 
 class Let(Expr):
-    pass
+    def __init__(self, let_list, body):
+        self.let_list = let_list
+        self.body = body
 
 class CaseVar(Expr):
-    pass
+    def __init__(self, id, type):
+        self.id = id
+        self.type = type
+
+    def __repr__(self):
+        return f'<CaseVar {self.id}>'
 
 class CaseBranch(Expr):
-    pass
+    def __init__(self, case_var, expr):
+        self.case_var = case_var
+        self.expr = expr
+
+    def set_times(self, td, tf):
+        self.td = td
+        self.tf = tf
 
 class Case(Expr):
-    pass
+    def __init__(self, expr, case_list = NodeContainer()):
+        self.expr = expr
+        self.case_list = case_list
 
 class New(Expr):
-    pass
+    def __init__(self, type):
+        self.type = type
+
+    def __repr__(self):
+        return f'<New {self.type}>'
 
 class UnaryOp(Expr):
-    pass
+    def __init__(self, expr):
+        self.expr = expr
 
 class IsVoid(UnaryOp):
     pass
@@ -157,7 +192,9 @@ class IntComp(UnaryOp):
     pass
 
 class BinaryOp(Expr):
-    pass
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
 
 class Plus(BinaryOp):
     pass
@@ -181,7 +218,11 @@ class Eq(BinaryOp):
     pass
 
 class Terminal(Expr):
-    pass
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return f'<{self.class_name()}: {repr(self.value)}>'
 
 class Type(Terminal):
     pass
