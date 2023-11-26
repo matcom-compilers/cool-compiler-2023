@@ -65,7 +65,7 @@ class CoolLexer(Lexer):
     @_(r'\(\*')
     def ignore_multiline_comment(self):
         balance = 1
-        l, r = r'\(\*', r'\*\)'
+        l, r = '(*', '*)'
 
         while len(self.text) - self.index > 1:
             s = self.text[self.index: self.index+2]
@@ -116,17 +116,34 @@ class CoolLexer(Lexer):
     # identifier and literals
     ID = r'[a-zA-Z_][a-zA-Z_\d]*'
     INTEGER = r'(0|-?[1-9]\d*)'
-    STRING = r'"([^"\\\n]|\\[\n\S])*"'
 
-    # string literal normalization
+    @_(r'"([^\n"\\]|\\.)*"')
     def STRING(self, t):
-        t.value = t.value[1:-1]\
-            .replace('\\n', '\n')\
-            .replace('\\\n', '\n')\
-            .replace('\\b', '\b')\
-            .replace('\\t', '\t')\
-            .replace('\\f', '\f')\
-            .replace('\\', '')
+        chars = []
+        escaping = False
+
+        for ch in t.value[1:-1]:
+            if escaping:
+                if ch == 'n':
+                    chars.append('\n')
+                elif ch == 'b':
+                    chars.append('\b')
+                elif ch == 't':
+                    chars.append('\t')
+                elif ch == 'f':
+                    chars.append('\f')
+                else:
+                    # if correct multiline string literal, '\n' char is added here
+                    chars.append(ch)
+
+                escaping = False
+
+            elif ch == '\\':
+                escaping = True
+            else:
+                chars.append(ch)
+
+        t.value = "".join(chars)
 
     # operators and other literals
     ASSIGN = r'<-'
