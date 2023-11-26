@@ -14,7 +14,6 @@ class CoolLexer(Lexer):
         "CLASS",
         "ELSE",
         "ESAC",
-        "FALSE",
         "FI",
         "IF",
         "INHERITS",
@@ -26,27 +25,38 @@ class CoolLexer(Lexer):
         "LOOP",
         "OF",
         "POOL",
+        "THEN",
+        "WHILE",
+
+        "FALSE",
+        "TRUE",
+
         "SELF",
         "SELF_TYPE",
-        "THEN",
-        "TRUE",
-        "WHILE",
+
         "ID",
         "INTEGER",
         "STRING",
+
         "ASSIGN",
         "COLON",
         "SEMICOLON",
         "CASE_THEN",
         "COMMA",
+        "AT",
+        "DOT",
+        "NEG",
+
         "LPAREN",
         "RPAREN",
         "LBRACE",
         "RBRACE",
+
         "SUM",
         "SUB",
         "TIMES",
         "DIV",
+
         "GE",
         "LE",
         "GT",
@@ -170,6 +180,7 @@ class CoolLexer(Lexer):
     COMMA = r','
     AT = r'@'
     DOT = r'\.'
+    NEG = r'~'
 
     LPAREN = r'\('
     RPAREN = r'\)'
