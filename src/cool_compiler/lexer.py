@@ -54,7 +54,7 @@ class CoolLexer(Lexer):
         self.lineno += t.value.count('\n')
 
     @_(r'--')
-    def ignore_single_comment(self):
+    def ignore_single_comment(self, _):
         next_newline_index = self.text.find('\n', self.index)
 
         if (next_newline_index == -1):
@@ -63,7 +63,7 @@ class CoolLexer(Lexer):
             self.index = next_newline_index
 
     @_(r'\(\*')
-    def ignore_multiline_comment(self):
+    def ignore_multiline_comment(self, _):
         balance = 1
         l, r = '(*', '*)'
 
@@ -117,7 +117,7 @@ class CoolLexer(Lexer):
     ID = r'[a-zA-Z_][a-zA-Z_\d]*'
     INTEGER = r'(0|-?[1-9]\d*)'
 
-    @_(r'"([^\n"\\]|\\.)*"')
+    @_(r'"([^\n"\\]|\\(\n|[^\n]))*"')
     def STRING(self, t):
         chars = []
         escaping = False
@@ -144,6 +144,7 @@ class CoolLexer(Lexer):
                 chars.append(ch)
 
         t.value = "".join(chars)
+        return t
 
     # operators and other literals
     ASSIGN = r'<-'
