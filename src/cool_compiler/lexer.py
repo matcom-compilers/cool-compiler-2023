@@ -54,12 +54,12 @@ class CoolLexer(Lexer):
         "EQ"
     }
 
-    # ignore
-    @_(r'\s+')
+    # ignored
+    @_(r'\s+')  # type: ignore
     def ignore_whitespace(self, t):
         self.lineno += t.value.count('\n')
 
-    @_(r'--')
+    @_(r'--')  # type: ignore
     def ignore_single_comment(self, _):
         next_newline_index = self.text.find('\n', self.index)
 
@@ -68,7 +68,7 @@ class CoolLexer(Lexer):
         else:
             self.index = next_newline_index
 
-    @_(r'\(\*')
+    @_(r'\(\*')  # type: ignore
     def ignore_multiline_comment(self, _):
         balance = 1
         l, r = '(*', '*)'
@@ -125,7 +125,7 @@ class CoolLexer(Lexer):
     ID = r'[a-zA-Z_][a-zA-Z_\d]*'
     INTEGER = r'(0|-?[1-9]\d*)'
 
-    @_(r'"([^\n"\\]|\\(\n|[^\n]))*"')
+    @_(r'"([^\n"\\]|\\(\n|[^\n]))*"')  # type: ignore
     def STRING(self, t):
         chars = []
         escaping = False
