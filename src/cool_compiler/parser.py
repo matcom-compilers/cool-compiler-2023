@@ -20,6 +20,23 @@ class CoolParser(Parser):
     )
 
 
+    @_('ID LPAREN param_list RPAREN COLON TYPE LBRACE expr RBRACE')
+    def feature(self, p):
+        pass
+
+    @_('var_dec COMMA param_list')
+    def param_list(self, p):
+        return [p[0], *p[2]]
+    
+    @_('var_dec')
+    def param_list(self, p):
+        return [p[0]]
+    
+    @_('var_init')
+    def feature(self, p):
+        pass
+
+
     @_('ID binding')
     def expr(self, p):
         # var mutation
@@ -84,22 +101,26 @@ class CoolParser(Parser):
         return p[0]
 
 
-    @_('LET var_dec var_dec_list IN expr')
+    @_('LET var_init var_init_list IN expr')
     def expr(self, p):
         # var declarations
         pass
 
-    @_('COMMA var_dec var_dec_list')
-    def var_dec_list(self, p):
+    @_('COMMA var_init var_init_list')
+    def var_init_list(self, p):
         return [p[1], *p[2]]
 
     @_('')
-    def var_dec_list(self, p):
+    def var_init_list(self, p):
         return []
     
-    @_('ID COLON TYPE opt_binding')
-    def var_dec(self, p):
+    @_('var_dec opt_binding')
+    def var_init(self, p):
         pass
+
+    @_('ID COLON TYPE')
+    def var_dec(self, p):
+        return (p[0], p[2])
 
     @_('binding')
     def opt_binding(self, p):
@@ -127,7 +148,7 @@ class CoolParser(Parser):
     def case_list(self, _):
         return []
 
-    @_('ID COLON TYPE CASE_THEN expr SEMICOLON')
+    @_('var_dec CASE_THEN expr SEMICOLON')
     def case(self, p):
         pass
 
