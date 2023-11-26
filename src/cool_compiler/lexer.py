@@ -49,10 +49,8 @@ class CoolLexer(Lexer):
     }
 
     # ignore
-    ignore = r' \t\f\r\v'
-    ignore_newline = r'\n+'
-
-    def ignore_newline(self, t):
+    @_(r'\s+')
+    def ignore_whitespace(self, t):
         self.lineno += t.value.count('\n')
 
     # error
