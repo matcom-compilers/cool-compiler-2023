@@ -27,7 +27,25 @@ class CoolLexer(Lexer):
         "WHILE",
         "ID",
         "INTEGER",
-        "STRING"
+        "STRING",
+        "ASSIGN",
+        "COLON",
+        "SEMICOLON",
+        "CASE_THEN",
+        "COMMA",
+        "LPAREN",
+        "RPAREN",
+        "LBRACE",
+        "RBRACE",
+        "SUM",
+        "SUB",
+        "TIMES",
+        "DIV",
+        "GE",
+        "LE",
+        "GT",
+        "LT",
+        "EQ"
     }
 
     # ignore
@@ -80,3 +98,26 @@ class CoolLexer(Lexer):
             .replace('\\t', '\t')\
             .replace('\\f', '\f')\
             .replace('\\', '')
+
+    # operators and other literals
+    ASSIGN = r'<-'
+    COLON = r':'
+    SEMICOLON = r';'
+    CASE_THEN = r'=>'
+    COMMA = ','
+
+    LPAREN = r'\('
+    RPAREN = r'\)'
+    LBRACE = r'\{'
+    RBRACE = r'\}'
+
+    SUM = r'\+'
+    SUB = r'-'
+    TIMES = r'\*'
+    DIV = r'/'
+
+    GE = r'>='
+    LE = r'<='
+    GT = r'>'
+    LT = r'<'
+    EQ = r'='
