@@ -53,6 +53,37 @@ class CoolLexer(Lexer):
     def ignore_whitespace(self, t):
         self.lineno += t.value.count('\n')
 
+    @_(r'--')
+    def ignore_single_comment(self):
+        next_newline_index = self.text.find('\n', self.index)
+
+        if (next_newline_index == -1):
+            self.index = len(self.text)
+        else:
+            self.index = next_newline_index
+
+    @_(r'\(\*')
+    def ignore_multiline_comment(self):
+        balance = 1
+        l, r = r'\(\*', r'\*\)'
+
+        while len(self.text) - self.index > 1:
+            s = self.text[self.index: self.index+2]
+
+            if s == r:
+                balance -= 1
+                self.index += 2
+            elif s == l:
+                balance += 1
+                self.index += 2
+            else:
+                self.index += 1
+
+            if balance == 0:
+                return
+
+        self.index = len(self.text)
+
     # error
     def error(self, t):
         print(
