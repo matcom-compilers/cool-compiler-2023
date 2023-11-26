@@ -2,7 +2,7 @@ from .sly import Lexer
 
 
 def insensitive(word):
-    return "".join(
+    return ''.join(
         [f'[{ch}{ch.upper()}]' for ch in word.lower()]
     )
 
@@ -10,58 +10,58 @@ def insensitive(word):
 class CoolLexer(Lexer):
     # all tokens
     tokens = {
-        "CASE",
-        "CLASS",
-        "ELSE",
-        "ESAC",
-        "FI",
-        "IF",
-        "INHERITS",
-        "IN",
-        "ISVOID",
-        "LET",
-        "NEW",
-        "NOT",
-        "LOOP",
-        "OF",
-        "POOL",
-        "THEN",
-        "WHILE",
+        'CASE',
+        'CLASS',
+        'ELSE',
+        'ESAC',
+        'FI',
+        'IF',
+        'INHERITS',
+        'IN',
+        'ISVOID',
+        'LET',
+        'NEW',
+        'NOT',
+        'LOOP',
+        'OF',
+        'POOL',
+        'THEN',
+        'WHILE',
 
-        "FALSE",
-        "TRUE",
+        'FALSE',
+        'TRUE',
 
-        "SELF",
-        "SELF_TYPE",
+        'SELF',
+        'SELF_TYPE',
 
-        "ID",
-        "INTEGER",
-        "STRING",
+        'ID',
+        'INTEGER',
+        'STRING',
 
-        "ASSIGN",
-        "COLON",
-        "SEMICOLON",
-        "CASE_THEN",
-        "COMMA",
-        "AT",
-        "DOT",
-        "NEG",
+        'ASSIGN',
+        'COLON',
+        'SEMICOLON',
+        'CASE_THEN',
+        'COMMA',
+        'AT',
+        'DOT',
+        'NEG',
 
-        "LPAREN",
-        "RPAREN",
-        "LBRACE",
-        "RBRACE",
+        'LPAREN',
+        'RPAREN',
+        'LBRACE',
+        'RBRACE',
 
-        "SUM",
-        "SUB",
-        "TIMES",
-        "DIV",
+        'SUM',
+        'SUB',
+        'TIMES',
+        'DIV',
 
-        "GE",
-        "LE",
-        "GT",
-        "LT",
-        "EQ"
+        'GE',
+        'LE',
+        'GT',
+        'LT',
+        'EQ'
     }
 
     # ignored
@@ -169,7 +169,7 @@ class CoolLexer(Lexer):
             else:
                 chars.append(ch)
 
-        t.value = "".join(chars)
+        t.value = ''.join(chars)
         return t
 
     # operators and other literals
