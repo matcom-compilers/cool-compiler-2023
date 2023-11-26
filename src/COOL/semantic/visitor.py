@@ -5,10 +5,10 @@ class Visitor:
 
     def __init__(self):
         self.types:dict = {'Object':None,'IO':None}
+        #TODO implement the basic types
         self.basic_types: dict = {
             'Object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
-        # self.types['Object'] = None
-        # self.types['IO'] = None
+
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.errors = []
 
@@ -17,7 +17,6 @@ class Visitor:
         lineage = set()
         lineage.add(class_)
         while temp_class in self.tree.keys():
-            # if temp_class in self.tree.keys():
             if self.types[temp_class].inherits in lineage:
                 self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.'))
                 return 
@@ -27,13 +26,15 @@ class Visitor:
     def _search_lineage(self,class_:str):
         temp_class = class_
         lineage = []
-        lineage.append(class_)
+
         while temp_class in self.tree.keys():
-            if self.types[temp_class].inherits:
-                lineage.append(self.types[temp_class].inherits.type)
-                temp_class = self.tree[temp_class]
-            else:
-                break
+            inherits_ = self.types[temp_class].inherits
+            if inherits_:
+                if self.types.get(inherits_):
+                    lineage.append(self.types[inherits_].type)
+                    temp_class = self.tree[temp_class]
+                else:
+                    break
         return lineage
 
     def _search_feature_name_in_lineage(self, lineage:list, feature:str, type_:type):
@@ -43,8 +44,8 @@ class Visitor:
                 break
             for comprobate_feat in self.types.get(i).features:
                 if feature == comprobate_feat:
-                    if type(comprobate_feat) == type_:
-                        feature_equals.append(comprobate_feat)
+                    # if type(comprobate_feat) == type_:
+                    feature_equals.append(comprobate_feat)
         return feature_equals
     
     def visit_program(self, node):
@@ -57,9 +58,6 @@ class Visitor:
             self.types[i.type] = i
 
         for cls in node.classes:
-            # if cls.type in self.basic_types.keys():
-            #     self.errors.append(Error.error(cls.line, cls.column, 'SemanticError',
-            #         f'Redefinition of basic class {cls.type}.'))
             if cls.inherits:
                 if not cls.inherits in self.types.keys():
                     if cls.inherits in self.basic_types:
@@ -71,21 +69,30 @@ class Visitor:
                 self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type,cls)
 
+    def repeat_feature(self, features, type_):
+        features_node = set()
+        for feat in features:
+            if feat.id in features_node:
+                #TODO search an error for this
+                self.errors.append(Error.error(feat.line,feat.column,'SemanticError',f'Repeated {type_} name {feat.id} in {feat.type}'))
+
+            if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
+                #TODO search an error for this
+                self.errors.append(Error.error(feat.line,feat.column,'SemanticError',f'Undefined type {feat.type}'))
+
+            features_node.add(feat.id)
+
+        
+
+
+
     def visit_class(self, node):
         # TODO to define an error for repeated attributes and methods
         # TODO verify if the type of the attribute is defined
         # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
-        features_node = set()
-        for feat in node.features:
-            if feat.id in features_node:
-                #TODO search an error for this
-                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Repeated feature name {feat.id} in {node.type}'))
-
-            if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
-                #TODO search an error for this
-                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Undefined type {feat.type}'))
-
-            features_node.add(feat.id)
+        
+        self.repeat_feature(node.attributes,'Attribute')
+        self.repeat_feature(node.methods,'Method')
 
         lineage = self._search_lineage(node.type)
 
@@ -95,11 +102,9 @@ class Visitor:
                 equal_attrb = equals_attrbs[0]
                 if attrb.type != equal_attrb.type:
                     #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
-                # if attrb.expr:
-                #     if not attrb.expr.type == attrb.type:
-                #         #TODO search this error
-                #         self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
+                    self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
+                else :
+                    self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
 
 
         for meth in node.methods:
