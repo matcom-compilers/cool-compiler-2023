@@ -1,6 +1,12 @@
 from .sly import Lexer
 
 
+def insensitive(word):
+    return "".join(
+        [f'[{ch}{ch.upper()}]' for ch in word.lower()]
+    )
+
+
 class CoolLexer(Lexer):
     # all tokens
     tokens = {
@@ -91,27 +97,29 @@ class CoolLexer(Lexer):
         self.index += 1
 
     # keywords and special identifiers
-    CASE = r'case'
-    CLASS = r'class'
-    ELSE = r'else'
-    ESAC = r'esac'
-    FALSE = r'false'
-    FI = r'fi'
-    IF = r'if'
-    INHERITS = r'inherits'
-    IN = r'in'
-    ISVOID = r'isvoid'
-    LET = r'let'
-    NEW = r'new'
-    NOT = r'not'
-    LOOP = r'loop'
-    OF = r'of'
-    POOL = r'pool'
-    SELF = r'self'
-    SELF_TYPE = r'SELF_TYPE'
-    THEN = r'then'
-    TRUE = r'true'
-    WHILE = r'while'
+    CASE = insensitive('case')
+    CLASS = insensitive('class')
+    ELSE = insensitive('else')
+    ESAC = insensitive('esac')
+    FI = insensitive('fi')
+    IF = insensitive('if')
+    INHERITS = insensitive('inherits')
+    IN = insensitive('in')
+    ISVOID = insensitive('isvoid')
+    LET = insensitive('let')
+    NEW = insensitive('new')
+    NOT = insensitive('not')
+    LOOP = insensitive('loop')
+    OF = insensitive('of')
+    POOL = insensitive('pool')
+    THEN = insensitive('then')
+    WHILE = insensitive('while')
+
+    FALSE = 'false'
+    TRUE = 'true'
+
+    SELF = 'self'
+    SELF_TYPE = 'SELF_TYPE'
 
     # identifier and literals
     ID = r'[a-zA-Z_][a-zA-Z_\d]*'
