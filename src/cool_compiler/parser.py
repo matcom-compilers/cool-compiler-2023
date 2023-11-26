@@ -19,6 +19,22 @@ class CoolParser(Parser):
         ('left', 'DOT')
     )
 
+    start = 'program'
+
+
+    @_('class_dec SEMICOLON class_dec_list')
+    def program(self, p):
+        classes = [p[0], *p[2]]
+        pass
+
+    @_('class_dec SEMICOLON class_dec_list')
+    def class_dec_list(self, p):
+        return [p[0], *p[2]]
+
+    @_('')
+    def class_dec_list(self, p):
+        return []
+
 
     @_('CLASS TYPE opt_parent LBRACE feature_list RBRACE')
     def class_dec(self, p):
