@@ -35,6 +35,7 @@ class CoolLexer(Lexer):
         'SELF_TYPE',
 
         'ID',
+        'TYPE'
         'INTEGER',
         'STRING',
 
@@ -130,7 +131,8 @@ class CoolLexer(Lexer):
     SELF_TYPE = 'SELF_TYPE'
 
     # identifier and literals
-    ID = r'[a-zA-Z_][a-zA-Z_\d]*'
+    ID = r'[a-z][a-zA-Z_\d]*'
+    TYPE = r'[A-Z][a-zA-Z_\d]*'
 
     @_(r'\d+')  # type: ignore
     def INTEGER(self, t):
