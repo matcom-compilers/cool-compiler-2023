@@ -1,5 +1,5 @@
 import sys
-module = "./src/COOL/"
+module = "./src/"
 sys.path.append(module)
 
 
@@ -22,4 +22,4 @@ classd = Class(1000, 34, [], "D", "A")
 
 prog = Program(classes=[classa, classb, classc, classd])
 
-prog.check()
+# prog.check()

@@ -39,4 +39,7 @@ if __name__ == "__main__":
     ast, errors = parser.parse(tokens)
     check_errors(errors)
 
+    errors = Semantic.check(ast)
+    check_errors(errors)
+    
     exit(0)

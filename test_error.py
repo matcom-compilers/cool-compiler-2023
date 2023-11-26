@@ -7,6 +7,8 @@ sys.path.append(module)
 from src.COOL import CoolLexer
 from src.COOL import CoolParser
 from src.COOL.utils import load_file
+from src.COOL.semantic import Semantic
+
 
 def check_errors(errors):
     if errors:
@@ -14,10 +16,10 @@ def check_errors(errors):
             print(error)
 
 def main():
-    folder = "./tests/parser/"
+    folder = "./tests/semantic/"
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
-    cls = files[::2]
-    out = files[1::2]
+    cls = [f for f in files if f.endswith(".cl")]
+    out = [f[:-3] + "_error.txt" for f in cls]
 
     for _cl, _out in zip(cls, out):
         loaded_file = load_file(_cl)
@@ -36,7 +38,11 @@ def main():
 
         parser = CoolParser()
         ast, errors = parser.parse(tokens)
+
+        errors = Semantic.check(ast)
         check_errors(errors)
+
+        print()
 
 
 if __name__ == "__main__":

@@ -21,8 +21,9 @@ class Program(Node):
 
         for class_ in self.classes.values():
             if class_:
-                class_.inherits = self.classes[class_.inherits] if class_.inherits else None
+                class_.inherits = self.classes[class_.inherits] if (class_.inherits and class_.inherits in self.classes.keys()) else None
 
         for _class in self.classes.values():
             if _class:
                 _class.check(self.visitor)
+        return self.visitor.errors

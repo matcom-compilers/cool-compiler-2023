@@ -2,5 +2,5 @@
 
 class Semantic:
     @classmethod
-    def check(program):
-        program.check()
+    def check(cls, program):
+        return program.check()
