@@ -159,7 +159,9 @@ class CoolLexer(Lexer):
     COLON = r':'
     SEMICOLON = r';'
     CASE_THEN = r'=>'
-    COMMA = ','
+    COMMA = r','
+    AT = r'@'
+    DOT = r'\.'
 
     LPAREN = r'\('
     RPAREN = r'\)'
