@@ -9,36 +9,55 @@ class Visitor:
             'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
         self.types['object'] = None
         self.types['IO'] = None
-        # Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
-        self.tree = {}
-        self.error = Error()
+        self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
+        self.errors = []
 
-    def _check_cycle(self, class_):
+    def _check_cycle(self, class_:str, node):
         temp_class = class_
         lineage = set()
         lineage.add(class_)
         while temp_class in self.tree.keys():
-            if temp_class in self.tree.keys():
-                if self.types[temp_class].inherits in lineage:
-                    raise Exception(f'Inheritance cycle {class_}')
-                lineage.add(self.types[temp_class].inherits)
-                temp_class = self.tree[temp_class]
+            # if temp_class in self.tree.keys():
+            if self.types[temp_class].inherits in lineage:
+                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.'))
+            lineage.add(self.types[temp_class].inherits)
+            temp_class = self.tree[temp_class]
 
+    def _search_lineage(self,class_:str):
+        temp_class = class_
+        lineage = []
+        lineage.add(class_)
+        while temp_class in self.tree.keys():
+            lineage.append(self.types[temp_class].inherits)
+            temp_class = self.tree[temp_class]
+        return lineage
+
+    def _search_feature_name_in_lineage(self,lineage:list,feature:str,type_:type):
+        feature_equals=[]
+        for i in lineage:
+            if feature in self.types[i].features.keys():
+                if type(self.types[i].features[feature]) == type_:
+                    feature_equals.append((self.types[i],self.types[i].features[feature]))
+        return feature_equals
+    
     def visit_program(self, node):
         for i in node.classes:
             if i.type in self.types.keys():
-                raise Exception('Repeated class name')
+                #TODO search this error
+                self.errors.append(Error.error(node.line,node.column,"TypeError",'Repeated class name {node.type}'))
             self.types[i.type] = i
 
         for cls in node.classes:
-
+            if cls.type in self.basic_types.keys():
+                self.error.append(Error.error(node.line, node.column, 'SemanticError',
+                    f'Redefinition of basic class {cls.type}.'))
             if cls.inherits:
                 if not cls.inherits in self.types.keys():
                     if cls.inherits in self.basic_types:
-                        raise Exception(
-                            f'Class {cls.type} cannot inherit class {cls.inherits}. ')
-                    raise Exception(
-                        f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
+                        self.error.append(Error.error(node.line, node.column, 'InheritanceError',
+                            f'Class {cls.type} cannot inherit class {cls.inherits}. '))
+                    self.error.append(Error.error(node.line, node.column, 'TypeError',
+                        f'Class {cls.type} inherits from an undefined class {cls.inherits}.'))
                 self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type)
 
@@ -55,6 +74,39 @@ class Visitor:
                 raise Exception(f'Undefined type {feat.type}')
             features_node.add(feat.id)
 
+        lineage = self._search_lineage(node.type)
+
+        for attrb in node.attributes:
+            equals_attrbs = self._search_feature_name_in_lineage(lineage,attrb.id,type(attrb))
+            if len(equals_attrbs) > 0:
+                equal_attrb = equals_attrbs[0]
+                if attrb.type != equal_attrb[1].type:
+                    #TODO search this error
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
+                if attrb.expr:
+                    if not attrb.expr.type == attrb.type:
+                        #TODO search this error
+                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
+
+
+        for meth in node.methods:
+            equals_methods = self._search_feature_name_in_lineage(lineage,meth.id,type(meth))
+            if len(equals_methods) > 0:
+                equal_meth = equals_methods[0]
+                if len(meth.formals) != len(equal_meth[1].formals):
+                    #TODO search this error
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formals in {meth.id} in {node.type}'))
+                for j in range(len(meth.formals)):
+                    if meth.formals[j].type != equal_meth[1].formals[j].type:
+                        #TODO search this error
+                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of formals in {meth.id} in {node.type}'))
+                if meth.type != equal_meth[1].type:
+                    #TODO search this error
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible return type in {meth.id} in {node.type}'))
+            
+
+        node.methods={i.id:i for i in node.methods}
+        node.attributes={i.id:i for i in node.attributes}
         node.features = {i.id: i for i in node.features}
 
         if node.inherits:
