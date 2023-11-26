@@ -20,6 +20,27 @@ class CoolParser(Parser):
     )
 
 
+    @_('CLASS TYPE opt_parent LBRACE feature_list RBRACE')
+    def class_dec(self, p):
+        pass
+
+    @_('INHERITS TYPE')
+    def opt_parent(self, p):
+        return p[1]
+    
+    @_('')
+    def opt_parent(self, p):
+        return None
+    
+    @_('feature SEMICOLON feature_list')
+    def feature_list(self, p):
+        return [p[0], *p[2]]
+    
+    @_('')
+    def feature_list(self, _):
+        return []
+
+
     @_('ID LPAREN param_list RPAREN COLON TYPE LBRACE expr RBRACE')
     def feature(self, p):
         pass
@@ -93,7 +114,7 @@ class CoolParser(Parser):
         return [p[0], *p[1]]
     
     @_('')
-    def expr_stmt_list(self, p):
+    def expr_stmt_list(self, _):
         return []
     
     @_('expr SEMICOLON')
@@ -111,7 +132,7 @@ class CoolParser(Parser):
         return [p[1], *p[2]]
 
     @_('')
-    def var_init_list(self, p):
+    def var_init_list(self, _):
         return []
     
     @_('var_dec opt_binding')
