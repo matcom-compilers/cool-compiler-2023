@@ -123,7 +123,15 @@ class CoolLexer(Lexer):
 
     # identifier and literals
     ID = r'[a-zA-Z_][a-zA-Z_\d]*'
-    INTEGER = r'(0|-?[1-9]\d*)'
+
+    @_(r'\d+')  # type: ignore
+    def INTEGER(self, t):
+        i = 0
+        while t.value[i] == '0':
+            i += 1
+
+        t.value = t.value[i:] if i < len(t.value) else '0'
+        return t
 
     @_(r'"([^\n"\\]|\\(\n|[^\n]))*"')  # type: ignore
     def STRING(self, t):
