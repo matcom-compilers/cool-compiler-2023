@@ -17,13 +17,13 @@ class Program(Node):
     def check(self):
         self.visitor.visit_program(self)
 
-        # self.classes = self.visitor.types
-
         for class_ in self.classes:
             if class_:
                 if class_.inherits and class_.inherits in self.visitor.types.keys() and not  class_.inherits in self.visitor.basic_types.keys():
                     class_.inherits = self.visitor.types[class_.inherits] 
-        # for _class in self.classes:
-        #     if _class:
-        #         _class.check(self.visitor)
+        
+        for _class in self.classes:
+            if _class:
+                _class.check(self.visitor)
+        
         return self.visitor.errors
