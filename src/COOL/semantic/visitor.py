@@ -3,12 +3,12 @@ from COOL.error import Error
 
 class Visitor:
 
-    def __init__(self, types: dict = {}):
-        self.types = types
+    def __init__(self):
+        self.types:dict = {'Object':None,'IO':None}
         self.basic_types: dict = {
-            'object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
-        self.types['object'] = None
-        self.types['IO'] = None
+            'Object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
+        # self.types['Object'] = None
+        # self.types['IO'] = None
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.errors = []
 
@@ -20,6 +20,7 @@ class Visitor:
             # if temp_class in self.tree.keys():
             if self.types[temp_class].inherits in lineage:
                 self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.'))
+                return 
             lineage.add(self.types[temp_class].inherits)
             temp_class = self.tree[temp_class]
 
@@ -28,8 +29,11 @@ class Visitor:
         lineage = []
         lineage.append(class_)
         while temp_class in self.tree.keys():
-            lineage.append(self.types[temp_class].inherits)
-            temp_class = self.tree[temp_class]
+            if self.types[temp_class].inherits:
+                lineage.append(self.types[temp_class].inherits.type)
+                temp_class = self.tree[temp_class]
+            else:
+                break
         return lineage
 
     def _search_feature_name_in_lineage(self, lineage:list, feature:str, type_:type):
@@ -38,29 +42,32 @@ class Visitor:
             if not i:
                 break
             for comprobate_feat in self.types.get(i).features:
-                if feature == comprobate_feat.id:
+                if feature == comprobate_feat:
                     if type(comprobate_feat) == type_:
                         feature_equals.append(comprobate_feat)
         return feature_equals
     
     def visit_program(self, node):
         for i in node.classes:
-            if i.type in self.types.keys():
-                #TODO search this error
-                self.errors.append(Error.error(i.line,i.column,"TypeError",'Repeated class name {node.type}'))
+            if  i.type in self.basic_types.keys():
+                self.errors.append(Error.error(i.line,i.column,'SemanticError',f'Redefinition of basic class {i.type}.' ))
+            elif i.type in self.types.keys():
+            #TODO search this error
+                self.errors.append(Error.error(i.line,i.column,"TypeError",f'Repeated class name {i.type}'))
             self.types[i.type] = i
 
         for cls in node.classes:
-            if cls.type in self.basic_types.keys():
-                self.error.append(Error.error(cls.line, cls.column, 'SemanticError',
-                    f'Redefinition of basic class {cls.type}.'))
+            # if cls.type in self.basic_types.keys():
+            #     self.errors.append(Error.error(cls.line, cls.column, 'SemanticError',
+            #         f'Redefinition of basic class {cls.type}.'))
             if cls.inherits:
                 if not cls.inherits in self.types.keys():
                     if cls.inherits in self.basic_types:
-                        self.error.append(Error.error(cls.line, cls.column, 'InheritanceError',
+                        self.errors.append(Error.error(cls.line, cls.column, 'SemanticError',
                             f'Class {cls.type} cannot inherit class {cls.inherits}. '))
-                    self.error.append(Error.error(cls.line, cls.column, 'TypeError',
-                        f'Class {cls.type} inherits from an undefined class {cls.inherits}.'))
+                    else :
+                        self.errors.append(Error.error(cls.line, cls.column, 'TypeError',
+                            f'Class {cls.type} inherits from an undefined class {cls.inherits}.'))
                 self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type,cls)
 
