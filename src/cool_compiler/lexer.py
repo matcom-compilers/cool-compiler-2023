@@ -57,10 +57,8 @@ class CoolLexer(Lexer):
         'TIMES',
         'DIV',
 
-        'GE',
-        'LE',
-        'GT',
         'LT',
+        'LE',
         'EQ'
     }
 
@@ -192,8 +190,6 @@ class CoolLexer(Lexer):
     TIMES = r'\*'
     DIV = r'/'
 
-    GE = r'>='
-    LE = r'<='
-    GT = r'>'
     LT = r'<'
+    LE = r'<='
     EQ = r'='
