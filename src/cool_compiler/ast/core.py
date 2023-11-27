@@ -17,7 +17,7 @@ class IAST(ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def is_valid(self) -> bool:
+    def validate(self):
         raise NotImplementedError()
 
     @abstractmethod
