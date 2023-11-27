@@ -130,10 +130,17 @@ La segunda forma proporciona una forma de acceder a métodos de clases padre que
 
 - entendi que se utiliza para poder crear variables dentro de metods
 
-- 
+- Case expresions proporcionan pruebas de tipo de ejecución en objetos. Primero, expr0 se evalúa y su tipo dinámico C notado (si expr0 evalúa a void se produce un error de ejecución).
 
+- El resultado del caso es el valor de retorno de la comprobacion que resulto verdadera. 
 
+- Si ninguna rama puede seleccionarse para su evaluación, se genera un error de ejecución.
 
+- en cada caso la expresión debe tener al menos una rama. 
+
+- El identificador id introducido por una rama de un caso oculta cualquier definición de variable o atributo para id visible en el ámbito que lo contiene. 
+
+- La expresión case proporciona a los programadores una forma de insertar comprobaciones de tipo de ejecución explícitas en situaciones en las que los tipos estáticos inferidos por el comprobador de tipos son demasiado conservadores. 
 
 ### Execution
 
