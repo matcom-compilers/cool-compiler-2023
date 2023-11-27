@@ -67,6 +67,14 @@ método, como el tipo declarado de una variable let, o como el tipo declarado de
 
 - istinguir entre el tipo asignado por el verificador de tipos a una expresión en tiempo de compilación, al que llamaremos el tipo estático de la expresión, y el o los tipos a los que la expresión puede evaluarse durante la ejecución, a los que llamaremos tipos dinámicos. $??????$
 
+- cada bloque tiene al menos una expresion, se evaluan de izquierda a derecha
+
+- el valor de un bloque es el valor de la última expresión en el bloque.
+
+- El tipo estático de un bloque es el tipo estático de la última expresión. 
+
+- 
+
 ##### - No entendi lo de tipos estaticos y dinamicos en coolya entendi OK
 
 - Cuando se crea un nuevo objeto de una clase, todos los atributos heredados y locales deben inicializarse. 
@@ -100,6 +108,25 @@ Las otras formas de despacho son:
 La primera forma es una forma abreviada de self.<id>(<expr>,...,<expr>). 
  
 La segunda forma proporciona una forma de acceder a métodos de clases padre que han sido ocultados por redefiniciones en clases hijas. En lugar de utilizar la clase de la expresión más a la izquierda para determinar el método, se utiliza el método de la clase especificada explícitamente. Por ejemplo, e@B.f() invoca el método f en la clase B en el objeto que es el valor de e. Para esta forma de despacho, el tipo estático a la izquierda de "@" debe ajustarse al tipo especificado a la derecha de "@".
+
+
+- Las expresiones opcionales en el cuerpo de let son inicialización; la otra expresión es el cuerpo. 
+
+- En un let primero se evalúa <expr1> y el resultado se vincula a <id1>. Luego se evalúa <expr2> y el resultado vinculado a <id2>, y así sucesivamente, hasta que todas las variables en el let se inicializan. (Si la inicialización de <idk> se omite, se utiliza la inicialización predeterminada del tipo <tipok>.)
+
+- A continuación, el cuerpo del let se evalua. El valor del let es el valor del cuerpo. 
+
+- Los identificadores de let <id1>,...,<idn> son visibles en el cuerpo del let. Además, identificadores <id1>,...,<idk> son visibles en la inicialización de <idm> para cualquier m > k. 
+
+- Si un identificador se define varias veces en un let, las vinculaciones posteriores ocultan las anteriores.
+
+- Cada let expresión debe introducir al menos un identificador. 
+
+- El tipo de una expresión de inicialización debe cumplir con el tipo declarado del identificador. 
+
+- El tipo de let es el tipo del cuerpo. 
+
+- El <expr> de un let se extiende tanto (abarca tantos tokens) como lo permita la gramática.
 
 - 
 
