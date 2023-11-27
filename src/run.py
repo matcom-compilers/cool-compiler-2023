@@ -1,12 +1,13 @@
 import os
 import sys
+from pathlib import Path
 
-from COOL.coollexer import CoolLexer
-from COOL.coolparser import CoolParser
-from COOL.semantic import Semantic
-from COOL.codegen import Codegen
-from COOL.nodes import Program
+from COOL import CoolLexer
+from COOL import CoolParser
+from COOL import Semantic
+from COOL import Codegen
 from COOL.utils import load_file
+from COOL.utils import save_output
 
 
 def check_errors(errors):
@@ -41,5 +42,8 @@ if __name__ == "__main__":
 
     errors = Semantic.check(ast)
     check_errors(errors)
+
+    mips_code = Codegen.execute(ast)
+    save_output(os.path.join(Path(__file__).parent.parent, "tests", "codegen", output_path), mips_code)
     
     exit(0)
