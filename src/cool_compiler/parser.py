@@ -99,13 +99,21 @@ class CoolParser(Parser):
         # function call ('self' method dispatch shorthand)
         pass
 
-    @_('expr COMMA arg_list')
+    @_('expr rest_arg_list')
     def arg_list(self, p):
-        return [p[0], *p[2]]
+        return [p[0], *p[1]]
     
-    @_('expr')
-    def arg_list(self, p):
-        return [p[0]]
+    @_('')
+    def arg_list(self, _):
+        return []
+
+    @_('COMMA expr rest_arg_list')
+    def rest_arg_list(self, p):
+        return [p[1], *p[2]]
+    
+    @_('')
+    def rest_arg_list(self, _):
+        return []
 
 
     @_('IF expr THEN expr ELSE expr FI')
