@@ -19,7 +19,3 @@ class IAST(ABCMeta):
     @abstractmethod
     def validate(self):
         raise NotImplementedError()
-
-    @abstractmethod
-    def evaluate(self, parent_scope: Scope):
-        raise NotImplementedError()
