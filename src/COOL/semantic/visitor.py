@@ -31,16 +31,16 @@ class Visitor:
             if temp_class in lineage: return lineage
             inherits_ = self.types[temp_class].inherits
             if inherits_:
-                if isinstance(inherits_, str):
-                    if self.types.get(inherits_):
-                        lineage.append(self.types[inherits_].type)
-                        temp_class = self.tree[temp_class]
-                    else: break
-                else:
-                    if self.types.get(inherits_.type):
-                            lineage.append(self.types[inherits_.type].type)
-                            temp_class = self.tree[temp_class]
-                    else: break
+                # if isinstance(inherits_, str):
+                if self.types.get(inherits_):
+                    lineage.append(self.types[inherits_].type)
+                    temp_class = self.tree[temp_class]
+                else: break
+                # else:
+                #     if self.types.get(inherits_.type):
+                #             lineage.append(self.types[inherits_.type].type)
+                #             temp_class = self.tree[temp_class]
+                #     else: break
             else: break
         return lineage
 
@@ -50,8 +50,9 @@ class Visitor:
             if not i:
                 break
             for comprobate_attr in self.types.get(i).attributes:
-                if attrib.id == comprobate_attr and type(attrib) == type(self.types.get(i).attributes[comprobate_attr]):                    
-                    attrb_equals.append(self.types.get(i).attributes[comprobate_attr])
+                if attrib.id == comprobate_attr.id and type(attrib):# == type(self.types.get(i).attributes[comprobate_attr]):                    
+                    attrb_equals.append(comprobate_attr)
+                    # attrb_equals.append(self.types.get(i).attributes[comprobate_attr.id])
         return attrb_equals
     
 
