@@ -51,7 +51,7 @@ def test_codegen(cls, out, inp):
         parser = CoolParser()
         ast, errors = parser.parse(tokens)
 
-        # errors = Semantic.check(ast)
+        errors = Semantic.check(ast)
 
         mips_script = Codegen.execute(ast)
         print(mips_script)
