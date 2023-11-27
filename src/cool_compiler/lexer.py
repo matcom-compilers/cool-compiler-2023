@@ -31,9 +31,6 @@ class CoolLexer(Lexer):
         'FALSE',
         'TRUE',
 
-        'SELF',
-        'SELF_TYPE',
-
         'ID',
         'TYPE'
         'INTEGER',
@@ -126,9 +123,6 @@ class CoolLexer(Lexer):
 
     FALSE = 'false'
     TRUE = 'true'
-
-    SELF = 'self'
-    SELF_TYPE = 'SELF_TYPE'
 
     # identifier and literals
     ID = r'[a-z][a-zA-Z_\d]*'
