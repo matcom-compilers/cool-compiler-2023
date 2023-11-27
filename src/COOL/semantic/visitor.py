@@ -28,25 +28,42 @@ class Visitor:
         lineage = []
 
         while temp_class in self.tree.keys():
+            if temp_class in lineage: return lineage
             inherits_ = self.types[temp_class].inherits
             if inherits_:
-                if self.types.get(inherits_):
-                    lineage.append(self.types[inherits_].type)
-                    temp_class = self.tree[temp_class]
+                if isinstance(inherits_, str):#type(inherits_) == type(''):
+                    if self.types.get(inherits_):
+                        lineage.append(self.types[inherits_].type)
+                        temp_class = self.tree[temp_class]
+                    else: break
                 else:
-                    break
+                    if self.types.get(inherits_.type):
+                            lineage.append(self.types[inherits_.type].type)
+                            temp_class = self.tree[temp_class]
+                    else: break
+            else: break
         return lineage
 
-    def _search_feature_name_in_lineage(self, lineage:list, feature:str, type_:type):
-        feature_equals=[]
+    def _search_attribute_name_in_lineage(self, lineage:list, attrib):
+        attrb_equals=[]
         for i in lineage:
             if not i:
                 break
-            for comprobate_feat in self.types.get(i).features:
-                if feature == comprobate_feat:
-                    # if type(comprobate_feat) == type_:
-                    feature_equals.append(comprobate_feat)
-        return feature_equals
+            for comprobate_attr in self.types.get(i).attributes:
+                if attrib.id == comprobate_attr and type(attrib) == type(self.types.get(i).attributes[comprobate_attr]):                    
+                    attrb_equals.append(self.types.get(i).attributes[comprobate_attr])
+        return attrb_equals
+    
+
+    def _search_method_name_in_lineage(self, lineage:list, method):
+        meths_equals=[]
+        for i in lineage:
+            if not i:
+                break
+            for comprobate_meth in self.types.get(i).methods:
+                if method.id == comprobate_meth and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
+                    meths_equals.append(self.types.get(i).methods[comprobate_meth])
+        return meths_equals
     
     def visit_program(self, node):
         for i in node.classes:
@@ -97,18 +114,14 @@ class Visitor:
         lineage = self._search_lineage(node.type)
 
         for attrb in node.attributes:
-            equals_attrbs = self._search_feature_name_in_lineage(lineage,attrb.id,type(attrb))
+            equals_attrbs = self._search_attribute_name_in_lineage(lineage,attrb)
             if len(equals_attrbs) > 0:
-                equal_attrb = equals_attrbs[0]
-                if attrb.type != equal_attrb.type:
-                    #TODO search this error
-                    self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Incompatible type of attribute in {attrb.id} in {node.type}'))
-                else :
-                    self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
+                #TODO analize if the types are different
+                self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
 
 
         for meth in node.methods:
-            equals_methods = self._search_feature_name_in_lineage(lineage, meth.id, type(meth))
+            equals_methods = self._search_method_name_in_lineage(lineage, meth)
             if len(equals_methods) > 0:
                 equal_meth = equals_methods[0]
                 if len(meth.formals) != len(equal_meth.formals):
