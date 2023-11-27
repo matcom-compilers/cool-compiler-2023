@@ -31,7 +31,7 @@ class Visitor:
             if temp_class in lineage: return lineage
             inherits_ = self.types[temp_class].inherits
             if inherits_:
-                if isinstance(inherits_, str):#type(inherits_) == type(''):
+                if isinstance(inherits_, str):
                     if self.types.get(inherits_):
                         lineage.append(self.types[inherits_].type)
                         temp_class = self.tree[temp_class]
@@ -86,30 +86,37 @@ class Visitor:
                 self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type,cls)
 
-    def repeat_feature(self, features, type_):
-        features_node = set()
-        for feat in features:
-            if feat.id in features_node:
-                #TODO search an error for this
-                self.errors.append(Error.error(feat.line,feat.column,'SemanticError',f'Repeated {type_} name {feat.id} in {feat.type}'))
+    def _analize_methods(self, features):
+        meth_node = set()
+        for meth in features:
+            if meth.id in meth_node:
+                self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Method {meth.id} is multiply defined.'))
 
-            if feat.type not in self.types.keys() and not (feat.type in self.basic_types.keys()):
-                #TODO search an error for this
-                self.errors.append(Error.error(feat.line,feat.column,'SemanticError',f'Undefined type {feat.type}'))
+            if meth.type not in self.types.keys() and not (meth.type in self.basic_types.keys()):
+                self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
 
-            features_node.add(feat.id)
+            meth_node.add(meth.id)
 
         
+    def _analize_attributes(self, features):
+        attrib_node = set()
+        for attrb in features:
+            if attrb.id in attrib_node:
+                self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is multiply defined in class.'))
 
+            if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
+                self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
+
+            attrib_node.add(attrb.id)
+
+        
 
 
     def visit_class(self, node):
-        # TODO to define an error for repeated attributes and methods
-        # TODO verify if the type of the attribute is defined
         # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
         
-        self.repeat_feature(node.attributes,'Attribute')
-        self.repeat_feature(node.methods,'Method')
+        self._analize_attributes(node.attributes)
+        self._analize_methods(node.methods)
 
         lineage = self._search_lineage(node.type)
 
@@ -136,9 +143,9 @@ class Visitor:
                     self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible return type in {meth.id} in {node.type}'))
             
 
-        node.methods={i.id:i for i in node.methods}
-        node.attributes={i.id:i for i in node.attributes}
-        node.features = {i.id: i for i in node.features}
+        node.methods_dict = {i.id:i for i in node.methods}
+        node.attributes_dict = {i.id:i for i in node.attributes}
+        node.features_dict = {i.id: i for i in node.features}
 
         # if node.inherits:
         #     for inh_attr in node.inherits.features.keys():
