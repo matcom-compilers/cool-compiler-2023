@@ -169,20 +169,21 @@ class CoolParser(Parser):
         return p[1]
 
 
-    @_('CASE expr OF case case_list ESAC')
+    @_('CASE expr OF case SEMICOLON case_list ESAC')
     def expr(self, p):
         # matching by type
+        cases = [p[3], *p[5]]
         pass
     
-    @_('case case_list')
+    @_('case SEMICOLON case_list')
     def case_list(self, p):
-        return [p[0], *p[1]]
+        return [p[0], *p[2]]
 
     @_('')
     def case_list(self, _):
         return []
 
-    @_('var_dec CASE_THEN expr SEMICOLON')
+    @_('var_dec CASE_THEN expr')
     def case(self, p):
         pass
 
