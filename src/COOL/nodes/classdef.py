@@ -28,5 +28,5 @@ class Class(Node):
     def check(self, visitor: Visitor):
         visitor.visit_class(self)
 
-        for feature in self.features.values():
+        for feature in self.features:
             feature.check(visitor)
