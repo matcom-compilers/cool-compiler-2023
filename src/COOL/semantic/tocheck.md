@@ -128,6 +128,8 @@ La segunda forma proporciona una forma de acceder a métodos de clases padre que
 
 - El <expr> de un let se extiende tanto (abarca tantos tokens) como lo permita la gramática.
 
+- entendi que se utiliza para poder crear variables dentro de metods
+
 - 
 
 
