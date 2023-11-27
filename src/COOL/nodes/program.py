@@ -4,6 +4,10 @@ from COOL.semantic.visitor import Visitor
 from COOL.nodes import Node
 from COOL.nodes.classdef import Class
 
+from COOL.nodes.codegen_rules import DATA_SECTION
+from COOL.nodes.codegen_rules import TEXT_SECTION
+from COOL.nodes.codegen_rules import COMMENT
+
 
 class Program(Node):
     def __init__(self, classes: List[Class]) -> None:
@@ -11,8 +15,19 @@ class Program(Node):
         self.classes = classes
 
     def execute(self):
+        mips_script_data = DATA_SECTION
+        mips_script_text = TEXT_SECTION
+        
         for _class in self.classes:
-            _class.execute()
+            data, text = _class.execute()
+            data, text = "".join(data), "".join(text)
+            mips_script_data += COMMENT.format(comment=f"Variables of class {_class.type}:\n")
+            mips_script_data += data
+            mips_script_text += COMMENT.format(comment=f"Functions of class {_class.type}:\n")
+            mips_script_text += text
+        
+        mips_script = mips_script_data + mips_script_text
+        return mips_script
 
     def check(self):
         self.visitor.visit_program(self)

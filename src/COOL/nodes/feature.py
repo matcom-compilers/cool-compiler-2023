@@ -3,6 +3,8 @@ from typing import List
 from COOL.nodes import Node
 from COOL.semantic.visitor import Visitor
 
+from COOL.nodes.codegen_rules import SET_VAR_IN_DATA_SECTION
+from COOL.nodes.codegen_rules import CREATE_FUNCTION
 
 class Method(Node):
     def __init__(self, line: int, column: int, id: str, type: str, expr: Node, formals: List[Node]) -> None:
@@ -13,7 +15,7 @@ class Method(Node):
         super().__init__(line, column)
 
     def execute(self):
-        raise NotImplementedError()
+        return [], []
 
     def check(self, visitor: Visitor):
         visitor.visit_method(self)
@@ -40,7 +42,7 @@ class Attribute(Node):
         super().__init__(line, column)
 
     def execute(self):
-        raise NotImplementedError()
+        return [], []
 
     def check(self, visitor: Visitor):
         visitor.visit_attribute(self)
