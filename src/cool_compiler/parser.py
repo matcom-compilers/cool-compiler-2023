@@ -61,13 +61,21 @@ class CoolParser(Parser):
     def feature(self, p):
         pass
 
-    @_('var_dec COMMA param_list')
+    @_('var_dec rest_param_list')
     def param_list(self, p):
-        return [p[0], *p[2]]
+        return [p[0], *p[1]]
     
-    @_('var_dec')
-    def param_list(self, p):
-        return [p[0]]
+    @_('')
+    def param_list(self, _):
+        return []
+
+    @_('COMMA var_dec rest_param_list')
+    def rest_param_list(self, p):
+        return [p[1], *p[2]]
+    
+    @_('')
+    def rest_param_list(self, _):
+        return []
     
     @_('var_init')
     def feature(self, p):
