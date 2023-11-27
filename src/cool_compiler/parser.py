@@ -120,22 +120,19 @@ class CoolParser(Parser):
         pass
 
 
-    @_('LBRACE expr_stmt expr_stmt_list RBRACE')
+    @_('LBRACE expr SEMICOLON expr_list RBRACE')
     def expr(self, p):
         # expr block
+        expressions = [p[1], *p[3]]
         pass
 
-    @_('expr_stmt expr_stmt_list')
-    def expr_stmt_list(self, p):
-        return [p[0], *p[1]]
+    @_('expr SEMICOLON expr_list')
+    def expr_list(self, p):
+        return [p[0], *p[2]]
     
     @_('')
-    def expr_stmt_list(self, _):
+    def expr_list(self, _):
         return []
-    
-    @_('expr SEMICOLON')
-    def expr_stmt(self, p):
-        return p[0]
 
 
     @_('LET var_init var_init_list IN expr')
