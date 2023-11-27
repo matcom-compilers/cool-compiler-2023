@@ -1,6 +1,6 @@
-from errors import SemanticError
+from errors import SemanticError, AttributeError
 from enviroment import Environment
-from ast_ import Class
+from ast_ import Class, Attribute, Id, Type
 
 class TypeChecker:
     def __init__(self, ast_root, class_references):
@@ -140,25 +140,147 @@ class TypeChecker:
 
         return self.class_references[node.type.value]
 
+    # Visitor pattern
     def visit(self, node):
-        # Visitor pattern to dynamically dispatch calls
-        # ...
-        pass 
+        """
+        Dispatch method for visiting different AST node types.
 
-    def visit_Class(self, class_node):
-        # Handle type checking for Class nodes
-        # ...
-        pass 
+        Args:
+            node: The AST node to visit.
 
-    def visit_Self_Type(self, self_type_node):
-        # Handle Self_Type nodes
-        # ...
-        pass 
+        Returns:
+            The result of visiting the AST node.
+        """
+        try:
+            method_name = 'visit_' + node.__class__.__name__
+            visit_method = getattr(self, method_name)
+            return visit_method(node)
+        except:
+            raise AttributeError(node.type.line, node.type.col, f'Visit method not implemented for node type: {node.__class__.__name__}')
 
+    # Atomic Expressions
+    def visit_Id(self, node):
+        pass
+
+    def visit_Int(self, node):
+        pass
+
+    def visit_Bool(self, node):
+        pass
+
+    def visit_String(self, node):
+        pass
+
+    def visit_New(self, node):
+        pass
+
+    # Arithmetic Operations
+    def visit_Plus(self, node):
+        pass
+
+    def visit_Minus(self, node):
+        pass
+    
+    def visit_Mult(self, node):
+        pass
+
+    def visit_Div(self, node):
+        pass
+
+    # Comparison Operations
+    def visit_Less(self, node):
+        pass
+
+    def visit_LessEq(self, node):
+        pass
+
+    def visit_Eq(self, node):
+        pass
+
+    # Unary Operations
+    def visit_IntComp(self, node):
+        pass
+
+    def visit_Not(self, node):
+        pass
+
+    def visit_IsVoid(self, node):
+        pass
+
+    # Control Flow Operations
+    def visit_If(self, node):
+        pass
+
+    def visit_While(self, node):
+        pass
+
+    # Let Expression
+    def visit_Let(self, node):
+        pass
+    
+    def visit_LetVar(self, node):
+        pass
+    
     def visit_Formal(self, formal_node):
         # Handle type checking for Formal nodes
         # ...
         pass 
+
+    # Case Expression
+    def visit_Case(self, node):
+        pass
+
+    def visit_CaseVar(self, node):
+        pass
+
+    # Dispatch Operation
+    def visit_Dispatch(self, node):
+        pass
+
+    # Assignment Operation
+    def visit_Assignment(self, node):
+        pass
+    def visit_Block(self, node):
+        pass
+
+    # Self Type Handling
+    def visit_Self_Type(self, node):
+        pass
+
+    # Class Definition
+    def visit_Class(self, node):
+        """
+        Visit method for handling Class nodes.
+
+        Args:
+            node: The Class node.
+
+        Returns:
+            The result of visiting the Class node.
+        """
+        old_environment = self.current_environment
+        self.current_environment = Environment(old_environment)
+
+        old_class = self.current_class
+        self.current_class = node
+
+        self.current_environment.define('self', Attribute(Id('self'), Type('Self_Type'), None))
+
+        for feature in node.feature_list:
+            if isinstance(feature, Attribute):
+                if self.current_environment.get(feature.id.value):
+                    raise SemanticError(feature.id.line, feature.id.col, f'Tried to redefine {feature} by inheritance')
+
+                self.current_environment.define(feature.id.value, feature)
+
+        for feature in node.feature_list:
+            self.visit(feature)
+
+        for cls in node.children:
+            self.visit(cls)
+
+        self.current_environment = old_environment
+        self.current_class = old_class
 
     def visit_Method(self, method_node):
         # Handle type checking for Method nodes
@@ -169,8 +291,6 @@ class TypeChecker:
         # Handle type checking for Attribute nodes
         # ...
         pass 
-
-    # TODO: Define visit methods for other AST node types
 
     def perform_type_checking(self):
         # Entry point for type checking

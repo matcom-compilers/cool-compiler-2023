@@ -18,3 +18,6 @@ class SyntacticError(Error):
 
 class SemanticError(Error):
     pass
+
+class AttributeError(Error):
+    pass
