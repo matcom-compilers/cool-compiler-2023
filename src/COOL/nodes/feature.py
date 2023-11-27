@@ -15,7 +15,7 @@ class Method(Node):
         super().__init__(line, column)
 
     def execute(self):
-        return [], []
+        data, text = [], []
 
     def check(self, visitor: Visitor):
         visitor.visit_method(self)
@@ -46,3 +46,16 @@ class Attribute(Node):
 
     def check(self, visitor: Visitor):
         visitor.visit_attribute(self)
+
+
+class Formal(Node):
+    def __init__(self, line: int, column: int, id: str, type: str) -> None:
+        self.type = type
+        self.id = id
+        super().__init__(line, column)
+
+    def execute(self):
+        return [], []
+
+    def check(self, visitor: Visitor):
+        raise NotImplementedError()

@@ -18,6 +18,7 @@ from COOL.nodes.operators import Bitwise
 
 from COOL.nodes.program import Program
 from COOL.nodes.classdef import Class
+from COOL.nodes.feature import Formal
 from COOL.nodes.feature import Attribute
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import ExecuteMethod
@@ -148,7 +149,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE')
     def formal(self, p: YaccProduction):
-        return Attribute(
+        return Formal(
             line=p.lineno,
             column=0,
             id=p.ID,
