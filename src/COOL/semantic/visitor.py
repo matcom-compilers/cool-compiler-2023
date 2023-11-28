@@ -28,19 +28,17 @@ class Visitor:
         lineage = []
 
         while temp_class in self.tree.keys():
-            if temp_class in lineage: return lineage
+            if temp_class in lineage: 
+                if temp_class == class_:
+                    lineage.pop()
+                return lineage
             inherits_ = self.types[temp_class].inherits
             if inherits_:
-                if isinstance(inherits_, str):
-                    if self.types.get(inherits_):
-                        lineage.append(self.types[inherits_].type)
-                        temp_class = self.tree[temp_class]
-                    else: break
-                else:
-                    if self.types.get(inherits_.type):
-                            lineage.append(self.types[inherits_.type].type)
-                            temp_class = self.tree[temp_class]
-                    else: break
+                if self.types.get(inherits_):
+                    lineage.append(self.types[inherits_].type)
+                    temp_class = self.tree[temp_class]
+                else: break
+
             else: break
         return lineage
 
@@ -50,10 +48,9 @@ class Visitor:
             if not i:
                 break
             for comprobate_attr in self.types.get(i).attributes:
-                if attrib.id == comprobate_attr and type(attrib) == type(self.types.get(i).attributes[comprobate_attr]):                    
-                    attrb_equals.append(self.types.get(i).attributes[comprobate_attr])
+                if attrib.id == comprobate_attr.id and type(attrib):
+                    attrb_equals.append(comprobate_attr)
         return attrb_equals
-    
 
     def _search_method_name_in_lineage(self, lineage:list, method):
         meths_equals=[]
@@ -96,7 +93,6 @@ class Visitor:
                 self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
 
             meth_node.add(meth.id)
-
         
     def _analize_attributes(self, features):
         attrib_node = set()
@@ -108,9 +104,6 @@ class Visitor:
                 self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
 
             attrib_node.add(attrb.id)
-
-        
-
 
     def visit_class(self, node):
         # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
@@ -173,3 +166,11 @@ class Visitor:
         #TypeError: Inferred type F of initialization of attribute test does not conform to declared type B. 
     # def visit_expression(self, node):
     #     pass
+
+
+    def visit_attribute_declaration(self, node):
+        pass
+
+
+    def visit_attribute_inicialization(self, node):
+        pass
