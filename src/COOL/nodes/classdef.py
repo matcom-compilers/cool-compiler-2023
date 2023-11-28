@@ -22,6 +22,7 @@ class Class(Node):
         self.features = features
         self.methods = [i for i in features if isinstance(i, Method)]
         self.attributes = [i for i in features if isinstance(i, Attribute)]
+        self.inherits_instance: Class = None
         super().__init__(line,column)
 
     def execute(self) -> Tuple[List[str], List[str]]:

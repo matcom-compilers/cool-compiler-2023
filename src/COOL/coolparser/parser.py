@@ -20,8 +20,14 @@ from COOL.nodes.program import Program
 from COOL.nodes.classdef import Class
 from COOL.nodes.feature import Formal
 from COOL.nodes.feature import Attribute
+from COOL.nodes.feature import AttributeDeclaration
+from COOL.nodes.feature import AttributeInicialization
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import ExecuteMethod
+from COOL.nodes.variable import GetVariable
+from COOL.nodes.variable import Initialization
+from COOL.nodes.variable import Declaration
+from COOL.nodes.variable import Assign
 from COOL.nodes.object import Interger
 from COOL.nodes.object import String
 from COOL.nodes.object import Boolean
@@ -100,7 +106,7 @@ class CoolParser(Parser):
     
     @_('ID ":" TYPE ASSIGN expr')
     def feature(self, p: YaccProduction):
-        return Attribute(
+        return AttributeInicialization(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -110,7 +116,7 @@ class CoolParser(Parser):
     
     @_('ID ":" TYPE')
     def feature(self, p: YaccProduction):
-        return Attribute(
+        return AttributeDeclaration(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -166,7 +172,7 @@ class CoolParser(Parser):
 
     @_('ID ASSIGN expr')
     def expr(self, p: YaccProduction):
-        return Attribute(
+        return Assign(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -283,7 +289,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE ASSIGN expr')
     def let_expr(self, p: YaccProduction):
-        return Attribute(
+        return Initialization(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -293,7 +299,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE')
     def let_expr(self, p: YaccProduction):
-        return Attribute(
+        return Declaration(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -319,7 +325,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE DARROW expr')
     def case(self, p: YaccProduction):
-        return Attribute(
+        return Initialization(
             line=p.lineno,
             column=0,
             id=p.ID,
@@ -436,7 +442,7 @@ class CoolParser(Parser):
     
     @_('ID')
     def expr(self, p: YaccProduction):
-        return Attribute(line=p.lineno, column=0, id=p.ID)
+        return GetVariable(line=p.lineno, column=0, id=p.ID)
 
     @_('TRUE')
     def expr(self, p: YaccProduction):

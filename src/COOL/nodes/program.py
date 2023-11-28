@@ -35,7 +35,7 @@ class Program(Node):
         for class_ in self.classes:
             if class_:
                 if class_.inherits and class_.inherits in self.visitor.types.keys() and not  class_.inherits in self.visitor.basic_types.keys():
-                    class_.inherits = self.visitor.types[class_.inherits] 
+                    class_.inherits_instance = self.visitor.types[class_.inherits] 
         
         for _class in self.classes:
             if _class:
