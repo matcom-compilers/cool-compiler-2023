@@ -1,6 +1,6 @@
 from errors import SemanticError, AttributeError
 from enviroment import Environment
-from ast_ import Class, Attribute, Id, Type
+from ast_ import Class, Attribute, Id, Type, Self_Type
 
 class TypeChecker:
     def __init__(self, ast_root, class_references):
@@ -349,30 +349,87 @@ class TypeChecker:
         node.set_static_type(lca)
 
     # Dispatch Operation
-    def visit_Dispatch(self, node):
-        pass
+def visit_Dispatch(self, node):
+    """
+    Handle type checking for Dispatch nodes.
+
+    Args:
+        node: The Dispatch node to perform type checking on.
+
+    Returns:
+        None
+    """
+    for expr in node.expr_list:
+        self.visit(expr)
+
+    self.visit(node.expr)
+    cls = None
+
+    if node.opt_type:  # Static dispatch
+        if node.opt_type.value == 'SELF_TYPE':
+            raise SemanticError(node.opt_type.line, node.opt_type.col, f'Cannot perform static dispatch on {node.opt_type}')
+
+        if node.opt_type.value not in self.class_references:
+            raise TypeError(node.opt_type.line, node.opt_type.col, f'{Class(node.opt_type, None)} does not exist')
+
+        cls = self.class_references[node.opt_type.value]
+
+        if not self.is_order_conform(node.expr.static_type, cls):
+            raise TypeError(node.line, node.col, f'Dispatch failed, {node.expr} with {node.expr.static_type} does not conform to {cls}')
+
+    else:
+        cls = node.expr.static_type
+
+        # Assert that the static type of node.expr is one of the nodes of the tree and NEVER a declared SELF_TYPE
+        # It can be SELF_TYPE(C) though
+        assert node.expr.static_type.td > 0
+
+        if isinstance(node.expr.static_type, Self_Type):
+            cls = self.current_class
+
+    method = self.find_method_in_hierarchy(cls, node.id.value)
+
+    if not method:
+        raise AttributeError(node.line, node.col, f'Dispatch failed: could not find a method with {node.id} in {cls} or any ancestor')
+
+    formals = list(method.formal_list)
+
+    if len(node.expr_list) != len(formals):
+        raise SemanticError(node.line, node.col, (f'Dispatch failed, number of arguments of dispatch is {len(node.expr_list)}, '
+                                                  f'number of formals is {len(formals)}'))
+
+    for expr, formal in zip(node.expr_list, formals):
+        if not self.is_order_conform(expr.static_type, formal.static_type):
+            raise TypeError(expr.line, expr.col, f'{expr} with {expr.static_type} does not conform to {formal} with {formal.static_type}')
+
+    node.set_static_type(self.get_correct_type(method, node.expr.static_type))
 
     # Assignment Operation
     def visit_Assignment(self, node):
-        pass
+        if node.id.value == 'self':
+            raise SemanticError(node.id.line, node.id.col, f'Tried to assign to {node.id}')
+
+        self.visit(node.id)
+        self.visit(node.expr)
+
+        if not self.is_order_conform(node.expr.static_type, node.id.static_type):
+            raise TypeError(node.line, node.col, f'{node.expr} with {node.expr.static_type} does not conform to {node.id} with {node.id.static_type}')
+
+        node.set_static_type(node.expr.static_type)
+
+    # Block Operation
     def visit_Block(self, node):
-        pass
+        for expr in node.expr_list:
+            self.visit(expr)
+
+        node.set_static_type(node.expr_list[-1].static_type)
 
     # Self Type Handling
     def visit_Self_Type(self, node):
-        pass
+        pass  
 
     # Class Definition
     def visit_Class(self, node):
-        """
-        Visit method for handling Class nodes.
-
-        Args:
-            node: The Class node.
-
-        Returns:
-            The result of visiting the Class node.
-        """
         old_environment = self.current_environment
         self.current_environment = Environment(old_environment)
 
@@ -398,19 +455,59 @@ class TypeChecker:
         self.current_class = old_class
 
     def visit_Method(self, method_node):
-        # Handle type checking for Method nodes
-        # ...
-        pass 
+        old_environment = self.current_environment
+        self.current_environment = Environment(old_environment)
+
+        # Type check formal parameters
+        for formal in method_node.formal_list:
+            self.visit_Formal(formal)
+
+        # Type check the method body
+        if method_node.expr:  # If it is not a native method
+            self.visit(method_node.expr)
+
+            # Calculate the static type of the method
+            static_type = self.get_correct_type(method_node, self.current_class.self_type)
+
+            # Ensure the body conforms to the declared method type
+            if not self.is_order_conform(method_node.expr.static_type, static_type):
+                raise TypeError(
+                    method_node.expr.line,
+                    method_node.expr.col,
+                    f'{method_node.expr} with {method_node.expr.static_type} does not conform to {method_node} with {static_type}'
+                )
+
+        self.current_environment = old_environment
 
     def visit_Attribute(self, attribute_node):
-        # Handle type checking for Attribute nodes
-        # ...
-        pass 
-    
+        self.visit(attribute_node.id)
+        attribute_node.set_static_type(attribute_node.id.static_type)
+
+        # If the attribute has an initialization expression
+        if attribute_node.opt_expr_init:
+            expr = attribute_node.opt_expr_init
+            self.visit(expr)
+
+            # Check conformity between the initialization expression and the declared attribute type
+            if not self.is_order_conform(expr.static_type, attribute_node.static_type):
+                raise TypeError(
+                    attribute_node.line,
+                    attribute_node.col,
+                    f'{expr} with {expr.static_type} does not conform to {attribute_node} with {attribute_node.static_type}'
+                )
+
     def visit_Formal(self, formal_node):
-        # Handle type checking for Formal nodes
-        # ...
-        pass 
+        if formal_node.id.value == 'self':
+            raise SemanticError(formal_node.id.line, formal_node.id.col, f'Tried to assign to {formal_node.id}')
+
+        # Check that the formal is not already defined in the current environment
+        if formal_node.id.value in self.current_environment.map:
+            raise SemanticError(formal_node.id.line, formal_node.id.col, f'Tried to redefine {formal_node}')
+
+        self.current_environment.define(formal_node.id.value, formal_node)
+
+        self.visit(formal_node.id)
+        formal_node.set_static_type(formal_node.id.static_type)
     
     def perform_type_checking(self):
         # Entry point for type checking
