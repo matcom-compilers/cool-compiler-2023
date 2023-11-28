@@ -1,17 +1,6 @@
 from COOL.nodes import Node
 from COOL.semantic.visitor import Visitor
 
-class SetVariable(Node):
-    def __init__(self, line: int, column: int, id: str, expr:Node) -> None:
-        self.id = id
-        self.expr = expr
-        super().__init__(line, column)
-        
-    def execute(self):
-        raise NotImplementedError()
-
-    def check(self, visitor: Visitor):
-        raise NotImplementedError()
 
 class GetVariable(Node):
     def __init__(self, line: int, column: int, id:str) -> None:
