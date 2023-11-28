@@ -3,8 +3,10 @@ from typing import List
 from COOL.nodes import Node
 from COOL.semantic.visitor import Visitor
 
-from COOL.nodes.codegen_rules import SET_VAR_IN_DATA_SECTION
+from COOL.nodes.codegen_rules import TYPES
 from COOL.nodes.codegen_rules import CREATE_FUNCTION
+from COOL.nodes.codegen_rules import SET_VAR_IN_DATA_SECTION
+
 
 class Method(Node):
     def __init__(self, line: int, column: int, id: str, type: str, expr: Node, formals: List[Node]) -> None:
@@ -16,6 +18,16 @@ class Method(Node):
 
     def execute(self):
         data, text = [], []
+        for _formal in self.formals:
+            data.append(
+                SET_VAR_IN_DATA_SECTION.format(
+                    owner=self.id, var_name=_formal.id,
+                    type=TYPES[_formal.type.upper()].value,
+                    value=0)
+                )
+        text.append(CREATE_FUNCTION.format(function_name=self.id))
+        # TODO: execute expr
+        return data, text
 
     def check(self, visitor: Visitor):
         visitor.visit_method(self)
