@@ -1,17 +1,104 @@
 from abc import ABCMeta, abstractmethod
+from typing import List, Tuple
 
-
-class StdType:
-    Bool = "Bool"
-    Int = "Int"
-    String = "String"
-    IO = "IO"
-    Object = "Object"
+from .types import StdType, TypeEnvironment
 
 
 class IAST(ABCMeta):
     @abstractmethod
-    def type(self) -> str:
+    def check_type(self, te: TypeEnvironment) -> str:
+        raise NotImplementedError()
+
+
+class ConditionalExpressionAST(IAST):
+    def __init__(self, condition: IAST, then_expr: IAST, else_expr: IAST):
+        self.condition = condition
+        self.then_expr = then_expr
+        self.else_expr = else_expr
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class LoopExpressionAST(IAST):
+    def __init__(self, condition: IAST, body: IAST):
+        self.condition = condition
+        self.body = body
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class BlockExpressionAST(IAST):
+    def __init__(self, expr_list: List[IAST]):
+        self.expr_list = expr_list
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class TypeMatchingAST(IAST):
+    def __init__(self, expr: IAST, cases: List[Tuple[str, str, IAST]]):
+        self.expr = expr
+        self.cases = cases  # tuple is (object id, object type, expr)
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class ObjectInitAST(IAST):
+    def __init__(self, type: str):
+        self.type = type
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class UnaryOpAST(IAST):
+    def __init__(self, expr: IAST):
+        self.expr = expr
+
+
+class VoidCheckingOpAST(UnaryOpAST):
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class NegationOpAST(UnaryOpAST):
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class BooleanNegationOpAST(UnaryOpAST):
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+BINARY_OPERATIONS = {
+    '+': lambda a, b: a + b,
+    '-': lambda a, b: a - b,
+    '*': lambda a, b: a * b,
+    '/': lambda a, b: a // b,
+    '<': lambda a, b: a < b,
+    '<=': lambda a, b: a <= b,
+    '=': lambda a, b: a == b,
+}
+
+
+class BinaryOpAST(IAST):
+    def __init__(self, left: IAST, right: IAST, op: str):
+        self.left = left
+        self.right = right
+        self.op = (op, BINARY_OPERATIONS[op])
+
+
+class ArithmeticOpAST(BinaryOpAST):
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class ComparisonOpAST(BinaryOpAST):
+    def check_type(self, te) -> str:
         raise NotImplementedError()
 
 
@@ -19,16 +106,16 @@ class GroupingAST(IAST):
     def __init__(self, expr: IAST):
         self.expr = expr
 
-    def type(self) -> str:
-        return self.expr.type()
+    def check_type(self, te) -> str:
+        return self.expr.check_type(te)
 
 
 class IdentifierAST(IAST):
     def __init__(self, name: str):
         self.name = name
 
-    def type(self) -> str:
-        raise NotImplementedError()
+    def check_type(self, te) -> str:
+        return te.get_object_type(self.name)
 
 
 class LiteralAST(IAST):
@@ -37,15 +124,15 @@ class LiteralAST(IAST):
 
 
 class BooleanAST(LiteralAST):
-    def type(self) -> str:
+    def check_type(self, _) -> str:
         return StdType.Bool
 
 
 class StringAST(LiteralAST):
-    def type(self) -> str:
+    def check_type(self, _) -> str:
         return StdType.String
 
 
 class IntAST(LiteralAST):
-    def type(self) -> str:
+    def check_type(self, _) -> str:
         return StdType.Int
