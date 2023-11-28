@@ -93,3 +93,15 @@ class Expr(Node):
 
     def execute(self):
         raise NotImplementedError()
+
+class Block(Node):
+    def __init__(self, line: int, column: int, exprs: List[Node]) -> None:
+        self.exprs: List[Node] = exprs
+        super().__init__(line, column)
+
+    def execute(self):
+        raise NotImplementedError()
+
+    def check(self):
+        raise NotImplementedError()
+    

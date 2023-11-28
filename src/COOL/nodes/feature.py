@@ -33,9 +33,7 @@ class ExecuteMethod(Node):
 
 
 class Attribute(Node):
-    def __init__(self, line: int, column: int, id: str, type: str = None, expr: Node = None) -> None:
-        self.type = type
-        self.expr = expr
+    def __init__(self, line: int, column: int, id: str) -> None:
         self.id = id
         super().__init__(line, column)
 
@@ -44,3 +42,29 @@ class Attribute(Node):
 
     def check(self, visitor: Visitor):
         visitor.visit_attribute(self)
+
+class AttributeDeclaration(Attribute):
+    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
+        self.type = type
+        self.id = id
+        super().__init__(line, column, id)
+
+    def execute(self):
+        raise NotImplementedError()
+
+    def check(self, visitor: Visitor):
+        visitor.visit_attribute_declaration(self)
+
+class AttributeInicialization(Attribute):
+    def __init__(self, line: int, column: int, id: str, type: str = None, expr: Node = None) -> None:
+        self.type = type
+        self.expr = expr
+        self.id = id
+        super().__init__(line, column, id)
+
+    def execute(self):
+        raise NotImplementedError()
+
+    def check(self, visitor: Visitor):
+        visitor.visit_attribute_inicialization(self)
+
