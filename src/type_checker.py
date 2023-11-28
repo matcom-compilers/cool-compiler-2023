@@ -159,79 +159,194 @@ class TypeChecker:
             raise AttributeError(node.type.line, node.type.col, f'Visit method not implemented for node type: {node.__class__.__name__}')
 
     # Atomic Expressions
-    def visit_Id(self, node):
-        pass
-
     def visit_Int(self, node):
-        pass
-
-    def visit_Bool(self, node):
-        pass
+        node.set_static_type(self.class_references['Int'])
 
     def visit_String(self, node):
-        pass
+        node.set_static_type(self.class_references['String'])
+
+    def visit_Bool(self, node):
+        node.set_static_type(self.class_references['Bool'])
+
+    def visit_Id(self, node):
+        ref = self.current_environment.get(node.value)
+
+        if not ref:
+            raise NameError(node.line, node.col, f'{node} does not exist in this environment')
+
+        node.set_static_type(self._get_correct_type_for_node(ref, self.current_class.self_type))
 
     def visit_New(self, node):
-        pass
+        node.set_static_type(self._get_correct_type_for_node(node, self.current_class.self_type))
 
     # Arithmetic Operations
     def visit_Plus(self, node):
-        pass
+        self.visit(node.left)
+        self.visit(node.right)
+
+        if node.left.static_type.type.value != 'Int' or node.right.static_type.type.value != 'Int':
+            raise TypeError(node.line, node.col, f'{node.left} and {node.right} must both have {self.class_references["Int"]}')
+
+        node.set_static_type(self.class_references['Int'])
 
     def visit_Minus(self, node):
-        pass
-    
+        self.visit_Plus(node)
+
     def visit_Mult(self, node):
-        pass
+        self.visit_Plus(node)
 
     def visit_Div(self, node):
-        pass
+        self.visit_Plus(node)
 
     # Comparison Operations
+    def visit_Eq(self, node):
+        self.visit(node.left)
+        self.visit(node.right)
+
+        types = ['Int', 'String', 'Bool']
+
+        lft_type = node.left.static_type.type.value
+        rgt_type = node.right.static_type.type.value
+
+        if lft_type in types or rgt_type in types:
+            if lft_type != rgt_type:
+                raise TypeError(node.line, node.col, f'{node.left} with {node.left.static_type} and {node.right} with {node.right.static_type} must both have the same type')
+
+        node.set_static_type(self.class_references['Bool'])
+
     def visit_Less(self, node):
-        pass
+        self.visit(node.left)
+        self.visit(node.right)
+
+        if node.left.static_type.type.value != 'Int' or node.right.static_type.type.value != 'Int':
+            raise TypeError(node.line, node.col, f'{node.left} and {node.right} must both have {self.class_references["Int"]}')
+
+        node.set_static_type(self.class_references['Bool'])
 
     def visit_LessEq(self, node):
-        pass
-
-    def visit_Eq(self, node):
-        pass
+        self.visit_Less(node)
 
     # Unary Operations
-    def visit_IntComp(self, node):
-        pass
-
     def visit_Not(self, node):
-        pass
+        self.visit(node.expr)
+
+        if node.expr.static_type.type.value != 'Bool':
+            raise TypeError(node.expr.line, node.expr.col, f'{node.expr} must have {self.class_references["Bool"]}')
+
+        node.set_static_type(self.class_references['Bool'])
 
     def visit_IsVoid(self, node):
-        pass
+        self.visit(node.expr)
+
+        node.set_static_type(self.class_references['Bool'])
+    
+    def visit_IntComp(self, node):
+        self.visit(node.expr)
+
+        if node.expr.static_type.type.value != 'Int':
+            raise TypeError(node.line, node.col, f'{node.expr} must have {self.class_references["Int"]}')
+
+        node.set_static_type(self.class_references['Int'])
 
     # Control Flow Operations
     def visit_If(self, node):
-        pass
+        self.visit(node.predicate)
+
+        predicate_type = node.predicate.static_type
+
+        if predicate_type.type.value != 'Bool':
+            raise TypeError(node.predicate.line, node.predicate.col, f'{node} predicate must have {self.class_references["Bool"]}, not {predicate_type}')
+
+        self.visit(node.if_branch)
+        self.visit(node.else_branch)
+
+        node.set_static_type(self._find_least_common_ancestor(node.if_branch.static_type, node.else_branch.static_type))
 
     def visit_While(self, node):
-        pass
+        self.visit(node.predicate)
+
+        predicate_type = node.predicate.static_type
+
+        if predicate_type.type.value != 'Bool':
+            raise TypeError(node.predicate.line, node.predicate.col, f'{node} predicate must have {self.class_references["Bool"]}, not {predicate_type}')
+
+        self.visit(node.body)
+
+        node.set_static_type(self.class_references['Object'])
 
     # Let Expression
-    def visit_Let(self, node):
-        pass
-    
     def visit_LetVar(self, node):
-        pass
-    
-    def visit_Formal(self, formal_node):
-        # Handle type checking for Formal nodes
-        # ...
-        pass 
+        if node.id.value == 'self':
+            raise SemanticError(node.id.line, node.id.col, f'Tried to assign to {node.id}')
+
+        if node.opt_expr_init:
+            self.logger.info(f'{node} has expr')
+
+            expr = node.opt_expr_init
+            self.visit(expr)
+
+            self.cur_env.define(node.id.value, node)
+            self.visit(node.id)
+            node.set_static_type(node.id.static_type)
+
+            if not self._is_order_conform(expr.static_type, node.static_type):
+                raise TypeError(node.line, node.col, f'{expr} with {expr.static_type} doesnt conform to {node} with {node.static_type}')
+
+        else:
+            self.cur_env.define(node.id.value, node)
+            self.visit(node.id)
+            node.set_static_type(node.id.static_type)
+
+    def visit_Let(self, node):
+        old_env = self.cur_env
+        self.cur_env = Environment(old_env)
+
+        for let_var in node.let_list:
+            self.visit(let_var)
+
+        self.visit(node.body)
+        node.set_static_type(node.body.static_type)
+
+        self.cur_env = old_env
 
     # Case Expression
-    def visit_Case(self, node):
-        pass
-
     def visit_CaseVar(self, node):
-        pass
+        if node.id.value == 'self':
+            raise SemanticError(node.id.line, node.id.col, f'Tried to assign to {node.id}')
+
+        if node.type.value == 'SELF_TYPE':
+            raise SemanticError(node.type.line, node.type.col, f'Tried to declare {node} with {node.type}')
+        
+        self.cur_env.define(node.id.value, node)
+        self.visit(node.id)
+        node.set_static_type(node.id.static_type)
+
+    def visit_Case(self, node):
+        self.visit(node.expr)
+
+        type_set = set()
+        lca = None
+
+        for branch in node.case_list:
+            if branch.case_var.type.value in type_set:
+                raise SemanticError(branch.case_var.type.line, branch.case_var.type.col, f'{branch.case_var.type} appears in other branch of {node}')
+
+            type_set.add(branch.case_var.type.value)
+
+            old_env = self.cur_env
+            self.cur_env = Environment(old_env)
+
+            self.visit(branch.case_var)
+            self.visit(branch.expr)
+
+            if not lca:
+                lca = branch.expr.static_type
+
+            else: lca = self._find_least_common_ancestor(lca, branch.expr.static_type)
+
+            self.cur_env = old_env
+
+        node.set_static_type(lca)
 
     # Dispatch Operation
     def visit_Dispatch(self, node):
@@ -291,7 +406,12 @@ class TypeChecker:
         # Handle type checking for Attribute nodes
         # ...
         pass 
-
+    
+    def visit_Formal(self, formal_node):
+        # Handle type checking for Formal nodes
+        # ...
+        pass 
+    
     def perform_type_checking(self):
         # Entry point for type checking
         # ...
