@@ -57,7 +57,7 @@ class COOL2CIL(Visitor):
                         for name in list(self.attrs[type_name].keys())
                     ],
                     [
-                        cil.MethodNode(method, self.get_method_id(ftype, method))
+                        cil.MethodNode(method, self.get_func_id(ftype, method))
                         for method, (_, ftype) in sorted_methods
                     ],
                 )
@@ -73,7 +73,7 @@ class COOL2CIL(Visitor):
 
         self.dotcode.append(
             cil.FunctionNode(
-                self.get_method_id("Void", "__init"),
+                self.get_func_id("Void", "__init"),
                 self.params,
                 self.locals,
                 self.instructions,
@@ -84,7 +84,7 @@ class COOL2CIL(Visitor):
         main_instance = self.register_new("Main")
         self.instructions.append(cil.ArgNode(main_instance))
         self.instructions.append(
-            cil.StaticCallNode(self.get_method_id("Main", "main"), self.add_local())
+            cil.StaticCallNode(self.get_func_id("Main", "main"), self.add_local())
         )
         self.instructions.append(cil.ExitNode(0))
         self.dotcode.append(
@@ -101,19 +101,44 @@ class COOL2CIL(Visitor):
     def visit__ClassNode(self, node: ClassNode, context: Context):
         pass
 
-    def get_method_id(self, type_name: str, method_name: str):
+    def get_func_id(self, type_name: str, method_name: str):
         return f"{type_name}__{method_name}"
+
+    def get_method_id(self, type_name: str, method_name: str):
+        method_id, _ = self.methods[type_name][method_name]
+        return method_id
 
     def clear_state(self):
         self.params, self.locals, self.instructions = [], [], []
 
     def get_local(self, name: Optional[str]):
-        return f"local_{len(self.locals) if name is None else name}"
+        return f"_l_{len(self.locals) if name is None else name}"
 
     def add_local(self, name: Optional[str] = None):
         local = self.get_local(name)
         self.locals.append(cil.LocalNode(local))
         return local
+
+    def get_param(self, name: str):
+        return f"param__{name}"
+
+    def add_param(self, name: str):
+        param = self.get_param(name)
+        self.params.append(cil.ParamNode(param))
+        return param
+
+    def add_data(self, name: str, value: str):
+        for data in self.dotdata:
+            if data.value == value:
+                data_id = data.name
+                break
+        else:
+            data_id = f"data_{len(self.dotdata)}_{name}"
+            self.dotdata.append(cil.DataNode(data_id, value))
+
+        return_sid = self.add_local()
+        self.instructions.append(cil.LoadNode(return_sid, data_id))
+        return return_sid
 
     def register_new(self, type: str, *args, dest: Optional[str] = None):
         if dest is None:
@@ -121,10 +146,39 @@ class COOL2CIL(Visitor):
         for arg in args:
             self.instructions.append(cil.ArgNode(arg))
         self.instructions.append(
-            cil.StaticCallNode(self.get_method_id(type, "__init"), dest)
+            cil.StaticCallNode(self.get_func_id(type, "__init"), dest)
         )
         return dest
 
     def register_builtins(self):
-        # TODO: register builtin codes for nodes
-        pass
+        self.register_object__abort()
+
+    def register_object__abort(self):
+        self.clear_state()
+
+        self_param = self.add_param("self")
+        self_type = self.add_local("self")
+        type_name = self.add_local("type")
+        self.instructions.append(cil.TypeOfNode(self_param, self_type))
+        self.instructions.append(
+            cil.DynamicCallNode(
+                self_type, self.get_method_id("Object", "type_name"), type_name
+            )
+        )
+        type_name_instance = self.register_new("String", type_name)
+        eol = self.register_new("String", self.add_data("EOL", '"\\n"'))
+        msg = self.register_new(
+            "String", self.add_data("abort_msg", '"Abort called from class "')
+        )
+        self.instructions.append(cil.PrintNode(msg, True))
+        self.instructions.append(cil.PrintNode(type_name_instance, True))
+        self.instructions.append(cil.PrintNode(eol, True))
+        self.instructions.append(cil.ExitNode(1))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("Object", "abort"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )

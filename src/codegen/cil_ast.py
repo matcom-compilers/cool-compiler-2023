@@ -77,8 +77,8 @@ class FunctionNode(Node):
 
     def __str__(self) -> str:
         cil = f"function {self.name} " + "{\n"
-        cil += "\t\n".join(tab + str(param) for param in self.params) + "\n"
-        cil += "\t\n".join(tab + str(local) for local in self.localvars) + "\n"
+        cil += "\t\n".join(tab + str(param) for param in self.params) + "\n\n"
+        cil += "\t\n".join(tab + str(local) for local in self.localvars) + "\n\n"
         cil += (
             "\t\n".join(tab + str(instruction) for instruction in self.instructions)
             + "\n"
@@ -183,6 +183,9 @@ class TypeOfNode(InstructionNode):
         self.obj = obj
         self.dest = dest
 
+    def __str__(self) -> str:
+        return f"{self.dest} = TYPEOF {self.obj};"
+
 
 class LabelNode(InstructionNode):
     def __init__(self, name) -> None:
@@ -240,6 +243,9 @@ class DynamicCallNode(InstructionNode):
         self.method = method
         self.dest = dest
 
+    def __str__(self) -> str:
+        return f"{self.dest} = VCALL {self.type} {self.method};"
+
 
 class ArgNode(InstructionNode):
     def __init__(self, name):
@@ -269,6 +275,9 @@ class LoadNode(InstructionNode):
     def __init__(self, dest, msg):
         self.dest = dest
         self.msg = msg
+
+    def __str__(self) -> str:
+        return f"{self.dest} = LOAD {self.msg};"
 
 
 class LengthNode(InstructionNode):
@@ -316,6 +325,9 @@ class PrintNode(InstructionNode):
     def __init__(self, str_addr, is_string):
         self.is_string = is_string
         self.str_addr = str_addr
+
+    def __str__(self) -> str:
+        return f"PRINT {self.str_addr};"
 
 
 class ComplementNode(InstructionNode):
