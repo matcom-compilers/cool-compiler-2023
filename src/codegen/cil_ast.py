@@ -157,6 +157,9 @@ class SetAttrNode(InstructionNode):
         self.attr = attr
         self.source = source
 
+    def __str__(self) -> str:
+        return f"SETATTR {self.instance} {self.attr} {self.source}"
+
 
 class GetIndexNode(InstructionNode):
     pass

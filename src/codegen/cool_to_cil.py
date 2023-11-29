@@ -165,6 +165,12 @@ class COOL2CIL(Visitor):
         self.register_string__concat()
         self.register_string__substr()
 
+        # Inits
+        self.register_int_init()
+        self.register_bool_init()
+        self.register_string_init()
+        self.register_object_init()
+
     def register_object__abort(self):
         self.clear_state()
 
@@ -317,6 +323,68 @@ class COOL2CIL(Visitor):
         self.dotcode.append(
             cil.FunctionNode(
                 self.get_func_id("String", "substr"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_object_init(self):
+        self.clear_state()
+        self_local = self.add_local("self")
+        self.instructions.append(cil.AllocateNode("Object", self_local))
+        self.instructions.append(cil.ReturnNode(self_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("Object", "__init"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_int_init(self):
+        self.clear_state()
+        value_param = self.add_param("value")
+        self_local = self.add_local("self")
+        self.instructions.append(cil.AllocateNode("Int", self_local))
+        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
+        self.instructions.append(cil.ReturnNode(self_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("Int", "__init"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_bool_init(self):
+        self.clear_state()
+        value_param = self.add_param("value")
+        self_local = self.add_local("self")
+        self.instructions.append(cil.AllocateNode("Bool", self_local))
+        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
+        self.instructions.append(cil.ReturnNode(self_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("Bool", "__init"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_string_init(self):
+        self.clear_state()
+        value_param = self.add_param("value")
+        self_local = self.add_local("self")
+        self.instructions.append(cil.AllocateNode("String", self_local))
+        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
+        self.instructions.append(cil.ReturnNode(self_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("String", "__init"),
                 self.params,
                 self.locals,
                 self.instructions,
