@@ -23,6 +23,9 @@ class Visitor:
             lineage.add(self.types[temp_class].inherits)
             temp_class = self.tree[temp_class]
 
+    def inheritable_class(self, class_str:str):
+        return class_str in self.types.keys()
+
     def _search_lineage(self,class_:str):
         temp_class = class_
         lineage = []
@@ -31,21 +34,21 @@ class Visitor:
             if temp_class in lineage: 
                 if temp_class == class_:
                     lineage.pop()
-                return lineage
+                    return lineage
             inherits_ = self.types[temp_class].inherits
             if inherits_:
-                if self.types.get(inherits_):
-                    lineage.append(self.types[inherits_].type)
-                    temp_class = self.tree[temp_class]
-                else: break
+                lineage.append(inherits_)
+                temp_class = self.tree[temp_class]
 
             else: break
         return lineage
-
+    
     def _search_attribute_name_in_lineage(self, lineage:list, attrib):
         attrb_equals=[]
         for i in lineage:
             if not i:
+                break
+            if not self.inheritable_class(i):
                 break
             for comprobate_attr in self.types.get(i).attributes:
                 if attrib.id == comprobate_attr.id and type(attrib):
@@ -57,8 +60,10 @@ class Visitor:
         for i in lineage:
             if not i:
                 break
+            if not self.inheritable_class(i):
+                break
             for comprobate_meth in self.types.get(i).methods:
-                if method.id == comprobate_meth.id:# and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
+                if method.id == comprobate_meth.id:                  
                     meths_equals.append(comprobate_meth)
         return meths_equals
     
@@ -120,8 +125,6 @@ class Visitor:
                         if not (attrb.type in lineage_expr_type):
                             self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
 
-
-
             attrib_node.add(attrb.id)
 
     def visit_class(self, node):
@@ -145,26 +148,20 @@ class Visitor:
                 equal_meth = equals_methods[0]
                 
                 if len(meth.formals) != len(equal_meth.formals):
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
-                
+                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
+                    break
                 for j in range(len(meth.formals)):
                     if meth.formals[j].type != equal_meth.formals[j].type:
-                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
+                        self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
                 
                 if meth.type != equal_meth.type:
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
+                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
             
 
         node.methods_dict = {i.id:i for i in node.methods}
         node.attributes_dict = {i.id:i for i in node.attributes}
         node.features_dict = {i.id: i for i in node.features}
 
-        # if node.inherits:
-        #     for inh_attr in node.inherits.features.keys():
-        #         if inh_attr in node.features.keys():
-        #             if not (node.inherits.features[inh_attr].type == node.features[inh_attr].type):
-        #                 self.errors.append(Error.error(node.line,node.column,'',f'Can not subscribe the attribute {inh_attr} with different type in {node.type} and {node.inherits.type}'))
-        #                     f'')
 
     def visit_method(self, node):
         pass
