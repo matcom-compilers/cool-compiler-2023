@@ -1,4 +1,4 @@
-from typing import Mapping, List, Tuple, Type, Optional
+from typing import Mapping, List, Tuple, Optional
 from collections import deque
 
 
@@ -28,8 +28,17 @@ class _TypeEnvironment:
     def set_method_type(self, name: str, type: str):
         self._method_types[name] = type
 
+    def clone(self):
+        te = _TypeEnvironment(self.type)
 
-TypeEnvironment = Type[_TypeEnvironment]
+        te._object_types = dict(**self._object_types)
+        for key, value in self._method_types.items():
+            te._method_types[key] = (
+                value[0].copy(),
+                value[1]
+            )
+
+        return te
 
 
 _TYPE_TO_TE: Mapping[str, '_TypeEnvironment'] = {}
