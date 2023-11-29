@@ -92,4 +92,6 @@ class SemanticChecker:
             _class.self_type = Self_Type()
             _class.children.append(_class.self_type)
         
+        self.ast_root.cls_list.extend([_class.self_type for _class in self.ast_root.cls_list])
+        
         return classes_refs
