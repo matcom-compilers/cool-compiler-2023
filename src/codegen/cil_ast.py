@@ -1,5 +1,7 @@
 from typing import List
 
+tab = "\t"
+
 
 class Node:
     pass
@@ -75,9 +77,13 @@ class FunctionNode(Node):
 
     def __str__(self) -> str:
         cil = f"function {self.name} " + "{\n"
-        cil += "\t\n".join(str(param) for param in self.params) + "\n"
-        cil += "\t\n".join(str(local) for local in self.localvars) + "\n"
-        cil += "\t\n".join(str(instruction) for instruction in self.instructions)
+        cil += "\t\n".join(tab + str(param) for param in self.params) + "\n"
+        cil += "\t\n".join(tab + str(local) for local in self.localvars) + "\n"
+        cil += (
+            "\t\n".join(tab + str(instruction) for instruction in self.instructions)
+            + "\n"
+        )
+        cil += "}\n"
         return cil
 
 
@@ -164,6 +170,9 @@ class AllocateNode(InstructionNode):
         self.type = itype
         self.dest = dest
 
+    def __str__(self) -> str:
+        return f"{self.dest} = ALLOCATE {self.type};"
+
 
 class ArrayNode(InstructionNode):
     pass
@@ -221,6 +230,9 @@ class StaticCallNode(InstructionNode):
         self.function = function
         self.dest = dest
 
+    def __str__(self) -> str:
+        return f"{self.dest} = CALL {self.function};"
+
 
 class DynamicCallNode(InstructionNode):
     def __init__(self, xtype, method, dest):
@@ -233,15 +245,24 @@ class ArgNode(InstructionNode):
     def __init__(self, name):
         self.name = name
 
+    def __str__(self) -> str:
+        return f"ARG {self.name};"
+
 
 class ReturnNode(InstructionNode):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self) -> str:
+        return f"RETURN {self.value};"
+
 
 class ExitNode(InstructionNode):
     def __init__(self, code) -> None:
         self.code = code
+
+    def __str__(self) -> str:
+        return f"EXIT {self.code};"
 
 
 class LoadNode(InstructionNode):
