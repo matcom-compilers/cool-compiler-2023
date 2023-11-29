@@ -241,8 +241,98 @@ class Bool(Terminal):
 
 #FOR CODE GENERATION
 
-class AttrTypeInfo:
-    pass
+class List(list, ASTNode):  #to save lists and be able to print cil ast
+    def __repr__(self):
+        return f'<List ({len(self)})>'
 
-class AttrSizeInfo:
-    pass
+class CILCode(ASTNode):
+    def __init__(self, functions, init_functions, dict_func, dict_init_func):
+        self.functions = functions  #list of functions
+        self.init_functions = init_functions
+        self.dict_func = dict_func  #dict for functions (ie. regular functions, not init-functions)
+        self.dict_init_func = dict_init_func
+        self.str_literals = {}  #literals for string
+        self.int_literals = {}  #literals for ints
+
+class Function(ASTNode):
+    def __init__(self, name, formals, body, locals_size):
+        self.name = name  #str
+        self.formals = formals #list of Reference objects
+        self.body = body  #expr, None represents a native method
+        self.locals_size = locals_size  #how many locals need to be saved
+
+    def __repr__(self):
+        return f'<Function {repr(self.name)}>'
+
+class FuncInit(ASTNode):
+    def __init__(self, name, attrs, attr_dict, label, reserved_attrs, type_obj):
+        self.name = name
+        self.attrs = attrs  #list of attrs in correct order
+        self.attr_dict = attr_dict  #dict of (name, position) for attrs including reserved attrs
+        self.label = label
+        self.reserved_attrs = reserved_attrs
+        self.type_obj = type_obj
+
+    def __repr__(self):
+        return f'<FuncInit {repr(self.name)}>'
+
+class FunctionCall(ASTNode):
+    def __init__(self, expr, opt_class, name, args):
+        self.expr = expr
+        self.opt_class = opt_class  #a str with name of class or None
+        self.name = name  #a string with the name of the function to call
+        self.args = args  #list of expressions
+
+    def __repr__(self):
+        return f'<FunctionCall {repr(self.name)}>'
+
+class AttrDecl(Expr):  #models the declaration of an attribute
+    def __init__(self, ref, type, expr, locals_size):
+        self.ref = ref
+        self.type = type  #str, declared type of the attr for default initialization
+        self.expr = expr
+        self.locals_size = locals_size  #how many locals need to be saved for initialization expr
+
+    def __repr__(self):
+        return f'<AttrDecl {self.ref}>'
+
+class AttrTypeInfo(AttrDecl): #reserved attribute for type info, used in gen_cil
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_type_info'), '_reserved', None, 0)
+        
+class AttrSizeInfo(AttrDecl):  # number of bytes that object occupies
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_size_info'), '_reserved', None, 0)
+        
+class AttrIntLiteral(AttrDecl):
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_int_literal'), '_reserved', None, 0)
+
+class AttrStringLength(AttrDecl):
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_string_length'), '_reserved', None, 0)
+
+class AttrStringLiteral(AttrDecl):
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_string_literal'), '_reserved', None, 0)
+
+class AttrBoolLiteral(AttrDecl):
+    def __init__(self):
+        AttrDecl.__init__(self, Reference('_bool_literal'), '_reserved', None, 0)
+
+class Binding(Expr):  #models a binding between a reference and an object address
+    def __init__(self, ref, expr):
+        self.ref = ref
+        self.expr = expr
+
+    def __repr__(self):
+        return f'<Binding>'
+
+class Reference(Expr):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f'<Reference {repr(self.name)}>'
+
+class Void(Expr): pass  #represents void expr
