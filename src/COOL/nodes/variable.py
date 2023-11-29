@@ -1,5 +1,5 @@
 from COOL.nodes import Node
-from COOL.semantic.visitor import Visitor
+# from COOL.semantic.visitor import Visitor
 
 
 class GetVariable(Node):
@@ -10,7 +10,7 @@ class GetVariable(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         raise NotImplementedError()
 
 class Initialization(Node):
@@ -23,7 +23,7 @@ class Initialization(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         raise NotImplementedError()
 
 class Declaration(Node):
@@ -35,7 +35,7 @@ class Declaration(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         raise NotImplementedError()
     
 class Assign(Node):

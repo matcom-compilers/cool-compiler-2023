@@ -1,7 +1,10 @@
 from COOL.error import Error
 from COOL.nodes.basic_classes import BasicBool, BasicInt, BasicIO, BasicObject, BasicString
 
-class Visitor:
+
+
+
+class Visitor_Program:
 
     def __init__(self):
         self.types:dict = {'Object':BasicObject(),'IO':BasicIO()}
@@ -72,8 +75,7 @@ class Visitor:
             if  i.type in self.basic_types.keys():
                 self.errors.append(Error.error(i.line,i.column,'SemanticError',f'Redefinition of basic class {i.type}.' ))
             elif i.type in self.types.keys():
-            #TODO search this error
-                self.errors.append(Error.error(i.line,i.column,"TypeError",f'Repeated class name {i.type}'))
+                self.errors.append(Error.error(i.line,i.column,"SemanticError",'Classes may not be redefined'))
             self.types[i.type] = i
 
         for cls in node.classes:
@@ -117,18 +119,9 @@ class Visitor:
             if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
                 self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
 
-            if attrb.__dict__.get('expr'):
-                if attrb.expr.__dict__.get('type'):
-                    expr_type = attrb.expr.type 
-                    if not (attrb.type == expr_type):
-                        lineage_expr_type = self._search_lineage(expr_type)
-                        if not (attrb.type in lineage_expr_type):
-                            self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
-
             attrib_node.add(attrb.id)
 
     def visit_class(self, node):
-        # TODO veryfy if the type and the count of the formal parameters in a heritance method is the same as the original method to subscribe
         
         self._analize_attributes(node.attributes)
         self._analize_methods(node.methods)
@@ -138,7 +131,6 @@ class Visitor:
         for attrb in node.attributes:
             equals_attrbs = self._search_attribute_name_in_lineage(lineage,attrb)
             if len(equals_attrbs) > 0:
-                #TODO analize if the types are different
                 self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
 
 
@@ -162,7 +154,9 @@ class Visitor:
         node.attributes_dict = {}
         node.features_dict = {}
 
-        for anc_class in lineage.reverse():
+        for anc_class in reversed(lineage):
+            if not anc_class or not self.inheritable_class(anc_class):
+                break
             anc_class = self.types[anc_class]
             for attrb in anc_class.attributes:
                 node.attributes_dict[attrb.id] = attrb
@@ -170,37 +164,60 @@ class Visitor:
                 node.methods_dict[meth.id] = meth
             for feat in anc_class.features:
                 node.features_dict[feat.id] = feat
-
+        #TODO check if the methods and attributes are redefined in the dynamic type of the attribute.
         node.methods_dict.update({i.id:i for i in node.methods})
         node.attributes_dict.update({i.id:i for i in node.attributes})
         node.features_dict.update({i.id: i for i in node.features})
+        node.lineage = lineage
 
 
 
+
+
+
+
+class Visitor_Class:
+
+    def __init__(self, scope):
+        self.scope = scope
+        self.errors = []
+
+    def visit_attribute_inicialization(self, node):
+        expr = node.expr
+        attrb = node
+        if attrb.__dict__.get('expr'):
+            if attrb.expr.__dict__.get('type'):
+                expr_type = attrb.expr.type 
+                if not (attrb.type == expr_type):
+                    lineage_expr_type = self.scope['lineage']#self._search_lineage(expr_type)
+                    if not (attrb.type in lineage_expr_type):
+                        self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+
+            
     def visit_method(self, node):
         pass
+
     # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
     # def visit_variable(self, node):
     #     pass
 
-    def visit_attribute(self, node):
-        pass
-
-        # if node.expr:
-        #     if not node.expr.type == node.type:
-        #         #TODO search this error
-        #         self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of attribute in {node.id} in {node.type}'))
-                    
-        # #TODO when an attribute does have the same static and dynamic type(or not inheritance)
-        #TypeError: Inferred type F of initialization of attribute test does not conform to declared type B. 
-    # def visit_expression(self, node):
-    #     pass
-
-
-    def visit_attribute_declaration(self, node):
+    def visit_execute_method(self,node):
         pass
 
 
-    def visit_attribute_inicialization(self, node):
+    def visit_let(self, node,scope):
         pass
+
+    def visit_case(self, node, scope):
+        pass
+
+    def visit_new(self, node):
+        pass
+
+    def visit_conditionals(self, node, scope):
+        pass
+
+    def visit_loops(self, node, scope):
+        pass
+

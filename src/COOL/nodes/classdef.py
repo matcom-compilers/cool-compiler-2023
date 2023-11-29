@@ -1,6 +1,6 @@
 from typing import List
 
-from COOL.semantic.visitor import Visitor
+from COOL.semantic.visitor import Visitor_Program, Visitor_Class
 from COOL.nodes import Node
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import Attribute
@@ -26,8 +26,19 @@ class Class(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor:Visitor_Program):
         visitor.visit_class(self)
-
+        self.class_visitor =  Visitor_Class( scope= {
+            'type': self.type, 
+            'inherits': self.inherits, 
+            'features': self.features_dict, 
+            'methods': self.methods_dict, 
+            'attributes': self.attributes_dict, 
+            'inherits_instance': self.inherits_instance, 
+            'line': self.line, 
+            'column': self.column,
+            'lineage': self.lineage
+            })
         for feature in self.features:
-            feature.check(visitor)
+            feature.check(self.class_visitor)
+        visitor.errors += self.class_visitor.errors

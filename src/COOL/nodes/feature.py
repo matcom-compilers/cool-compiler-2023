@@ -1,7 +1,7 @@
 from typing import List
 
 from COOL.nodes import Node
-from COOL.semantic.visitor import Visitor
+from COOL.semantic.visitor import Visitor_Class
 
 
 class Method(Node):
@@ -15,8 +15,8 @@ class Method(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
-        visitor.visit_method(self)
+    def check(self, visitor: Visitor_Class):
+        visitor.visit_method(node = self)
 
 
 class ExecuteMethod(Node):
@@ -28,8 +28,8 @@ class ExecuteMethod(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self,visitor: Visitor_Class):
+        visitor.visit_execute_method(node = self)
 
 
 class Attribute(Node):
@@ -40,7 +40,7 @@ class Attribute(Node):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor: Visitor_Class):
         visitor.visit_attribute(self)
 
 class AttributeDeclaration(Attribute):
@@ -52,8 +52,9 @@ class AttributeDeclaration(Attribute):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
-        visitor.visit_attribute_declaration(self)
+    def check(self, visitor: Visitor_Class):
+        ...
+        # visitor.visit_attribute_declaration(self)
 
 class AttributeInicialization(Attribute):
     def __init__(self, line: int, column: int, id: str, type: str = None, expr: Node = None) -> None:
@@ -65,6 +66,6 @@ class AttributeInicialization(Attribute):
     def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor: Visitor_Class):
         visitor.visit_attribute_inicialization(self)
 
