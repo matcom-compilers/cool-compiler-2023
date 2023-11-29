@@ -33,7 +33,7 @@ class CoolParser(Parser):
         return [p[0], *p[2]]
 
     @_('')
-    def class_dec_list(self, p):
+    def class_dec_list(self, _):
         return []
 
 
@@ -50,7 +50,7 @@ class CoolParser(Parser):
         return p[1].value
     
     @_('')
-    def opt_parent(self, p):
+    def opt_parent(self, _):
         return None
     
     @_('feature SEMICOLON feature_list')
@@ -110,10 +110,10 @@ class CoolParser(Parser):
 
     @('AS TYPE')
     def opt_type(self, p):
-        return p[1]
+        return p[1].value
     
     @('')
-    def opt_type(self, p):
+    def opt_type(self, _):
         return None
 
 
