@@ -58,8 +58,8 @@ class Visitor:
             if not i:
                 break
             for comprobate_meth in self.types.get(i).methods:
-                if method.id == comprobate_meth and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
-                    meths_equals.append(self.types.get(i).methods[comprobate_meth])
+                if method.id == comprobate_meth.id:# and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
+                    meths_equals.append(comprobate_meth)
         return meths_equals
     
     def visit_program(self, node):
@@ -94,6 +94,10 @@ class Visitor:
 
             meth_formals_name = set()
             for formal in meth.formals:
+                
+                if formal.type not in self.types.keys() and not (formal.type in self.basic_types.keys()):
+                    self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Class {formal.type} of formal parameter {formal.id} is undefined.'))
+                
                 if formal.id in meth_formals_name:
                     self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Formal parameter {formal.id} is multiply defined.'))
                 meth_formals_name.add(formal.id)
@@ -139,15 +143,16 @@ class Visitor:
             equals_methods = self._search_method_name_in_lineage(lineage, meth)
             if len(equals_methods) > 0:
                 equal_meth = equals_methods[0]
+                
                 if len(meth.formals) != len(equal_meth.formals):
                     self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
+                
                 for j in range(len(meth.formals)):
                     if meth.formals[j].type != equal_meth.formals[j].type:
-                        #TODO search this error
-                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of formals in {meth.id} in {node.type}'))
+                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
+                
                 if meth.type != equal_meth.type:
-                    #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible return type in {meth.id} in {node.type}'))
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
             
 
         node.methods_dict = {i.id:i for i in node.methods}
