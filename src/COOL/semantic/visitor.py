@@ -157,10 +157,24 @@ class Visitor:
                 if meth.type != equal_meth.type:
                     self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
             
+        
+        node.methods_dict = {}
+        node.attributes_dict = {}
+        node.features_dict = {}
 
-        node.methods_dict = {i.id:i for i in node.methods}
-        node.attributes_dict = {i.id:i for i in node.attributes}
-        node.features_dict = {i.id: i for i in node.features}
+        for anc_class in lineage.reverse():
+            anc_class = self.types[anc_class]
+            for attrb in anc_class.attributes:
+                node.attributes_dict[attrb.id] = attrb
+            for meth in anc_class.methods:
+                node.methods_dict[meth.id] = meth
+            for feat in anc_class.features:
+                node.features_dict[feat.id] = feat
+
+        node.methods_dict.update({i.id:i for i in node.methods})
+        node.attributes_dict.update({i.id:i for i in node.attributes})
+        node.features_dict.update({i.id: i for i in node.features})
+
 
 
     def visit_method(self, node):
