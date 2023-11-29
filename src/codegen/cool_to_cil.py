@@ -91,7 +91,7 @@ class COOL2CIL(Visitor):
             cil.FunctionNode("main", self.params, self.locals, self.instructions)
         )
 
-        self.register_builtins()
+        self.register_builtins(context.types)
 
         for cool_class in node.classes:
             cool_class.accept(self, context)
@@ -150,7 +150,7 @@ class COOL2CIL(Visitor):
         )
         return dest
 
-    def register_builtins(self):
+    def register_builtins(self, types):
         # Abort
         self.register_object__abort()
 
@@ -170,6 +170,12 @@ class COOL2CIL(Visitor):
         self.register_bool_init()
         self.register_string_init()
         self.register_object_init()
+
+        for type_name, t in types.items():
+            self.register_conforms_to(type_name, t.parent and t.parent.name)
+
+            self.register_type_name(t.name)
+            self.register_copy(t.name)
 
     def register_object__abort(self):
         self.clear_state()
@@ -385,6 +391,91 @@ class COOL2CIL(Visitor):
         self.dotcode.append(
             cil.FunctionNode(
                 self.get_func_id("String", "__init"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def get_label(self, name: str):
+        label = f"LABEL_{name}_{self.label[name]}"
+        self.label[name] += 1
+        return label
+
+    def register_int(self, value: int, name: Optional[str] = None):
+        return_sid = self.add_local(name)
+        self.instructions.append(cil.LoadNode(return_sid, value))
+        return return_sid
+
+    def register_type_name(self, type: str):
+        self.clear_state()
+        self.add_param("self")
+        type_name = self.add_data(f"TYPE_NAME_{type}", f'"{type}"')
+        self.instructions.append(cil.ReturnNode(type_name))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id(type, "type_name"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_copy(self, type: str):
+        self.clear_state()
+        self_param = self.add_param("self")
+        copy_local = self.add_local("copy")
+        self.instructions.append(cil.AllocateNode(type, copy_local))
+        for attr, _ in self.attrs[type].values():
+            attr_copy_local = self.add_local("attr_copy")
+            self.instructions.append(cil.GetAttrNode(self_param, attr, attr_copy_local))
+            self.instructions.append(cil.SetAttrNode(copy_local, attr, attr_copy_local))
+
+        self.instructions.append(cil.ReturnNode(copy_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id(type, "copy"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_conforms_to(self, type, parent=None):
+        self.clear_state()
+        other_param = self.add_param("other_type")
+
+        type_local = self.add_local()
+        self.instructions.append(cil.LoadNode(type_local, type))
+
+        then_label = self.get_label("then")
+
+        # IF condition GOTO then_label
+        types_eq_local = self.add_local()
+        self.instructions.append(cil.MinusNode(types_eq_local, type_local, other_param))
+        self.instructions.append(cil.GotoIfEqNode(types_eq_local, then_label))
+
+        # Label else_label
+        if parent is None:
+            self.instructions.append(cil.ReturnNode(self.register_int(0)))
+        else:
+            recursive_local = self.add_local("rec_call")
+            parent_type_local = self.add_local()
+            self.instructions.append(cil.LoadNode(parent_type_local, parent))
+            method_id = self.get_method_id("Object", "__conforms_to")
+            self.instructions.append(cil.ArgNode(other_param))
+            self.instructions.append(
+                cil.DynamicCallNode(parent_type_local, method_id, recursive_local)
+            )
+            self.instructions.append(cil.ReturnNode(recursive_local))
+
+        # Label then_label
+        self.instructions.append(cil.LabelNode(then_label))
+        self.instructions.append(cil.ReturnNode(self.register_int(1)))
+
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id(type, "__conforms_to"),
                 self.params,
                 self.locals,
                 self.instructions,

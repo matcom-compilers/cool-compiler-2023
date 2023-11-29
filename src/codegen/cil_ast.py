@@ -131,15 +131,18 @@ class PlusNode(ArithmeticNode):
 
 
 class MinusNode(ArithmeticNode):
-    pass
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} - {self.right};"
 
 
 class StarNode(ArithmeticNode):
-    pass
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} * {self.right};"
 
 
 class DivNode(ArithmeticNode):
-    pass
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} / {self.right};"
 
 
 class GetAttrNode(InstructionNode):
@@ -148,6 +151,9 @@ class GetAttrNode(InstructionNode):
         self.instance = instance
         self.attr = attr
         self.dest = dest
+
+    def __str__(self) -> str:
+        return f"{self.dest} = GETATTR {self.instance} {self.attr};"
 
 
 class SetAttrNode(InstructionNode):
@@ -196,11 +202,17 @@ class LabelNode(InstructionNode):
         super().__init__()
         self.name = name
 
+    def __str__(self) -> str:
+        return f"LABEL {self.name};"
+
 
 class GotoNode(InstructionNode):
     def __init__(self, label) -> None:
         super().__init__()
         self.label = label
+
+    def __str__(self) -> str:
+        return f"GOTO {self.label};"
 
 
 class GotoIfGtNode(InstructionNode):
@@ -209,12 +221,18 @@ class GotoIfGtNode(InstructionNode):
         self.cond = cond
         self.label = label
 
+    def __str__(self) -> str:
+        return f"IF {self.cond} > 0 GOTO {self.label};"
+
 
 class GotoIfLtNode(InstructionNode):
     def __init__(self, cond, label) -> None:
         super().__init__()
         self.cond = cond
         self.label = label
+
+    def __str__(self) -> str:
+        return f"IF {self.cond} < 0 GOTO {self.label};"
 
 
 class GotoIfEqNode(InstructionNode):
@@ -223,6 +241,9 @@ class GotoIfEqNode(InstructionNode):
         self.cond = cond
         self.label = label
 
+    def __str__(self) -> str:
+        return f"IF {self.cond} = 0 GOTO {self.label};"
+
 
 class StrEqNode(InstructionNode):
     def __init__(self, dest, str1, str2) -> None:
@@ -230,6 +251,9 @@ class StrEqNode(InstructionNode):
         self.dest = dest
         self.str1 = str1
         self.str2 = str2
+
+    def __str__(self) -> str:
+        return f"{self.dest} = STREQ({self.str1}, {self.str2});"
 
 
 class StaticCallNode(InstructionNode):
@@ -326,6 +350,9 @@ class ToStrNode(InstructionNode):
     def __init__(self, dest, ivalue):
         self.dest = dest
         self.ivalue = ivalue
+
+    def __str__(self) -> str:
+        return f"{self.dest} = STR {self.ivalue};"
 
 
 class ReadNode(InstructionNode):
