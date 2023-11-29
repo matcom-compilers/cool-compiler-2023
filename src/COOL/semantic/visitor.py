@@ -1,13 +1,13 @@
 from COOL.error import Error
-
+from COOL.nodes.basic_classes import BasicBool, BasicInt, BasicIO, BasicObject, BasicString
 
 class Visitor:
 
     def __init__(self):
-        self.types:dict = {'Object':None,'IO':None}
+        self.types:dict = {'Object':BasicObject(),'IO':BasicIO()}
         #TODO implement the basic types
         self.basic_types: dict = {
-            'Object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
+            'Object': BasicObject(), 'IO': BasicIO(), 'Int': BasicInt(), 'String': BasicString(), 'Bool': BasicBool()}
 
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.errors = []
@@ -102,6 +102,16 @@ class Visitor:
 
             if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
                 self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
+
+            if attrb.__dict__.get('expr'):
+                if attrb.expr.__dict__.get('type'):
+                    expr_type = attrb.expr.type 
+                    if not (attrb.type == expr_type):
+                        lineage_expr_type = self._search_lineage(expr_type)
+                        if not (attrb.type in lineage_expr_type):
+                            self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+
+
 
             attrib_node.add(attrb.id)
 
