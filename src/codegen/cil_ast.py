@@ -13,11 +13,11 @@ class ProgramNode(Node):
 
     def __str__(self) -> str:
         cil = "\n.TYPES\n"
-        cil += str(self.dottypes) + "\n"
+        cil += "\n".join(str(type) for type in self.dottypes) + "\n"
         cil += "\n.DATA\n"
-        cil += str(self.dotdata) + "\n"
+        cil += "\n".join(str(data) for data in self.dotdata) + "\n"
         cil += "\n.CODE\n"
-        cil += str(self.dotcode) + "\n"
+        cil += "\n".join(str(code) for code in self.dotcode) + "\n"
         return cil
 
 

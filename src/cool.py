@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 
+from codegen.cool_to_cil import COOL2CIL
 from parsing.lex import Lexer
 from parsing.parser import Parser
 from semantic.type_builder import TypeBuilder
@@ -125,8 +126,12 @@ def main():
         for error in type_checker.errors:
             print(error)
         exit_code = 1
-
     ######
+
+    cool_to_cil = COOL2CIL()
+    cil_program = cool_to_cil.visit(program, context=type_checker.context)
+
+    print(cil_program)
 
     exit(exit_code)
 
