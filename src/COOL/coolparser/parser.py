@@ -21,7 +21,7 @@ from COOL.nodes.classdef import Class
 from COOL.nodes.feature import Attribute, AttributeDeclaration, AttributeInicialization
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import ExecuteMethod
-from COOL.nodes.variable import GetVariable, SetVariable
+from COOL.nodes.variable import GetVariable
 from COOL.nodes.variable import Initialization, Declaration, Assign
 from COOL.nodes.object import Interger
 from COOL.nodes.object import String
