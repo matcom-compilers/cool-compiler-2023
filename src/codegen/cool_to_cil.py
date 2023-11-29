@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Optional
 
 from codegen import cil_ast as cil
-from parsing.ast import ClassNode, ProgramNode
+from parsing.ast import AttributeNode, ClassNode, MethodNode, ProgramNode
 from semantic.context import Context
 from utils.visitor import Visitor
 
@@ -99,6 +99,43 @@ class COOL2CIL(Visitor):
         return cil.ProgramNode(self.dottypes, self.dotdata, self.dotcode)
 
     def visit__ClassNode(self, node: ClassNode, context: Context):
+        self.type = node.name
+        self.clear_state()
+        self_local = self.add_local("self")
+
+        self.instructions.append(cil.AllocateNode(self.type, self_local))
+
+        for attr, (i, htype) in self.attrs[self.type].items():
+            attr_local = self.add_local(attr)
+            self.instructions.append(cil.ArgNode(self_local))
+            self.instructions.append(
+                cil.StaticCallNode(
+                    self.get_func_id(htype, f"{attr}___init"),
+                    attr_local,
+                )
+            )
+            self.instructions.append(cil.SetAttrNode(self_local, i, attr_local))
+        self.instructions.append(cil.ReturnNode(self_local))
+
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id(self.type, "__init"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+        for feat in node.features:
+            function = feat.accept(self, context)
+            self.dotcode.append(function)
+
+    def visit__AttributeNode(
+        self, node: AttributeNode, context: Context
+    ) -> cil.FunctionNode:
+        pass
+
+    def visit__MethodNode(self, node: MethodNode, context: Context) -> cil.FunctionNode:
         pass
 
     def get_func_id(self, type_name: str, method_name: str):
