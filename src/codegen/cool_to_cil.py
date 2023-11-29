@@ -160,6 +160,11 @@ class COOL2CIL(Visitor):
         self.register_io__in_string()
         self.register_io__in_int()
 
+        # String
+        self.register_string__length()
+        self.register_string__concat()
+        self.register_string__substr()
+
     def register_object__abort(self):
         self.clear_state()
 
@@ -248,6 +253,70 @@ class COOL2CIL(Visitor):
         self.dotcode.append(
             cil.FunctionNode(
                 self.get_func_id("IO", "in_int"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_string__length(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        length_local = self.add_local()
+        self.instructions.append(cil.LengthNode(length_local, self_param))
+        self.instructions.append(cil.ReturnNode(length_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("String", "length"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_string__concat(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        str_param = self.add_param("s")
+
+        # Calcular la longitud de las cadenas
+        self_length = self.add_local()
+        str_length = self.add_local()
+        self.instructions.append(cil.LengthNode(self_length, self_param))
+        self.instructions.append(cil.LengthNode(str_length, str_param))
+
+        # Concatenar las cadenas
+        concat_local = self.add_local()
+        total_length = self.add_local()  # Longitud total para la cadena resultante
+        self.instructions.append(cil.PlusNode(total_length, self_length, str_length))
+
+        self.instructions.append(
+            cil.ConcatNode(concat_local, self_param, str_param, total_length)
+        )
+        self.instructions.append(cil.ReturnNode(concat_local))
+
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("String", "concat"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_string__substr(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        index_param = self.add_param("i")
+        length_param = self.add_param("l")
+        substr_local = self.add_local()
+        self.instructions.append(
+            cil.SubstringNode(substr_local, self_param, length_param, index_param)
+        )
+        self.instructions.append(cil.ReturnNode(substr_local))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("String", "substr"),
                 self.params,
                 self.locals,
                 self.instructions,

@@ -126,7 +126,8 @@ class ArithmeticNode(InstructionNode):
 
 
 class PlusNode(ArithmeticNode):
-    pass
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} + {self.right};"
 
 
 class MinusNode(ArithmeticNode):
@@ -285,6 +286,9 @@ class LengthNode(InstructionNode):
         self.dest = dest
         self.string = string
 
+    def __str__(self) -> str:
+        return f"{self.dest} = LENGTH {self.string};"
+
 
 class ConcatNode(InstructionNode):
     def __init__(self, dest, string1, string2, dest_lenght):
@@ -292,6 +296,9 @@ class ConcatNode(InstructionNode):
         self.string1 = string1
         self.string2 = string2
         self.dest_lenght = dest_lenght
+
+    def __str__(self) -> str:
+        return f"{self.dest} = CONCAT {self.string1} {self.string2};"
 
 
 class PrefixNode(InstructionNode):
@@ -307,6 +314,9 @@ class SubstringNode(InstructionNode):
         self.string = string
         self.n = n
         self.index = index
+
+    def __str__(self) -> str:
+        return f"{self.dest} = SUBSTRING {self.string} {self.n};"
 
 
 class ToStrNode(InstructionNode):
