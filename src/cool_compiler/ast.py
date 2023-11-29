@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from .types import StdType, TypeEnvironment
 
@@ -7,6 +7,68 @@ from .types import StdType, TypeEnvironment
 class IAST(ABCMeta):
     @abstractmethod
     def check_type(self, te: TypeEnvironment) -> str:
+        raise NotImplementedError()
+
+
+class ClassDeclarationAST(IAST):
+    def __init__(
+        self,
+        name: str,
+        parent_name: Optional[str],
+        features: List[IAST]
+    ):
+        self.type = name
+        self.inherited_type = parent_name if parent_name != None else StdType.Object
+        self.features = features
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class VarInitFeatureAST(IAST):
+    def __init__(self, name: str, type: str, value: Optional[IAST]):
+        self.name = name
+        self.type = type
+        self.value = value
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class FunctionDeclarationFeatureAST(IAST):
+    def __init__(
+        self,
+        name: str,
+        params: List[Tuple[str, str]],
+        return_type: str,
+        body: IAST
+    ):
+        self.name = name
+        self.params = params
+        self.type = return_type
+        self.body = body
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class VarMutationAST(IAST):
+    def __init__(self, name: str, value: IAST):
+        self.name = name
+        self.value = value
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class FunctionCallAST(IAST):
+    def __init__(self, name: str, args: List[IAST], owner: Optional[IAST] = None, owner_as_type: Optional[str] = None):
+        self.name = name
+        self.args = args
+        self.owner = owner
+        self.owner_as_type = owner_as_type
+
+    def check_type(self, te) -> str:
         raise NotImplementedError()
 
 
@@ -32,6 +94,15 @@ class LoopExpressionAST(IAST):
 class BlockExpressionAST(IAST):
     def __init__(self, expr_list: List[IAST]):
         self.expr_list = expr_list
+
+    def check_type(self, te) -> str:
+        raise NotImplementedError()
+
+
+class VarsInitAST(IAST):
+    def __init__(self, var_init_list: List[Tuple[str, str, IAST]], body: IAST):
+        self.var_init_list = var_init_list
+        self.body = body
 
     def check_type(self, te) -> str:
         raise NotImplementedError()
