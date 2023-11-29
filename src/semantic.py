@@ -12,14 +12,60 @@ class SemanticChecker:
             if child.type.value not in seen:
                 self.dfs_search(child, seen, up)
             elif up[child.type.value]:
-                raise SemanticError(child.type.line, child.type.column, f'Cycle detected in class hierarchy involving {node} and {child}')
+                raise SemanticError(child.type.line, child.type.col, f'Cycle detected in class hierarchy involving {node} and {child}')
         
         up[node.type.value] = False
         
-    def check_cycles(self):
+    def check_inheritance(self):
         seen = {}
         up = {}
         
         for _class in self.ast_root.cls_list:
             if _class.type.value not in seen:
                 self.dfs_search(_class, seen, up)
+    
+    def build_class_hierarchy(self, native_classes):
+        classes_refs = {}
+        
+        for _class in native_classes:
+            classes_refs[_class.type.value] = _class
+        
+        for _class in self.ast_root.cls_list:
+            if _class.type.value in classes_refs:
+                raise SemanticError(_class.type.line, _class.type.col, f'Class {_class} is redefined')
+            
+            classes_refs[_class.type.value] = _class
+        
+        self.ast_root.cls_list = list(self.ast_root.cls_list)
+        self.ast_root.cls_list.sort(key = lambda _class: _class.type.line, reverse = True)
+        
+        for _class in native_classes:
+            self.ast_root.cls_list.append(_class)
+        
+        for _class in self.ast_root.cls_list:
+            for feature in _class.feat_list:
+                if isinstance(feature, Method):
+                    if feature.id.value in _class.methods:
+                        raise SemanticError(feature.id.line, feature.id.col, f'Method {feature} is redefined in class {_class}')
+                    
+                    _class.methods[feature.id.value] = feature
+                
+                else:
+                    if feature.id.value in _class.attrs:
+                        raise SemanticError(feature.id.line, feature.id.col, f'Attribute {feature} is redefined in class {_class}')
+            
+            if _class.type.value == 'Object':
+                continue
+            
+            name = (_class.opt_inherits or Type('Object')).value
+            
+            if name not in classes_refs:
+                assert _class.opt_inherits
+                raise TypeError(_class.opt_inherits.line, _class.opt_inherits.col, f'Class {_class} inherits from undefined class {_class.opt_inherits}')
+            
+            parent = classes_refs[name]
+            
+            if not parent.can_inherit:
+                raise SemanticError(_class.opt_inherits.line, _class.opt_inherits.col, f'Class {_class} inherits from final class {parent}')
+            
+            parent.children.append(_class)
