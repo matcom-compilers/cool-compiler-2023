@@ -18,9 +18,13 @@ class TypeChecker:
         Returns:
             None
         """
+        self.ast_root = ast_root
         self.class_references = class_references
         self.traversal_counter = 0
         self._initialize_order(ast_root, Environment())
+
+        self.current_environment = None
+        self.current_class = None
 
     def _initialize_order(self, current_node, current_environment):
         """
@@ -349,60 +353,60 @@ class TypeChecker:
         node.set_static_type(lca)
 
     # Dispatch Operation
-def visit_Dispatch(self, node):
-    """
-    Handle type checking for Dispatch nodes.
+    def visit_Dispatch(self, node):
+        """
+        Handle type checking for Dispatch nodes.
 
-    Args:
-        node: The Dispatch node to perform type checking on.
+        Args:
+            node: The Dispatch node to perform type checking on.
 
-    Returns:
-        None
-    """
-    for expr in node.expr_list:
-        self.visit(expr)
+        Returns:
+            None
+        """
+        for expr in node.expr_list:
+            self.visit(expr)
 
-    self.visit(node.expr)
-    cls = None
+        self.visit(node.expr)
+        cls = None
 
-    if node.opt_type:  # Static dispatch
-        if node.opt_type.value == 'SELF_TYPE':
-            raise SemanticError(node.opt_type.line, node.opt_type.col, f'Cannot perform static dispatch on {node.opt_type}')
+        if node.opt_type:  # Static dispatch
+            if node.opt_type.value == 'SELF_TYPE':
+                raise SemanticError(node.opt_type.line, node.opt_type.col, f'Cannot perform static dispatch on {node.opt_type}')
 
-        if node.opt_type.value not in self.class_references:
-            raise TypeError(node.opt_type.line, node.opt_type.col, f'{Class(node.opt_type, None)} does not exist')
+            if node.opt_type.value not in self.class_references:
+                raise TypeError(node.opt_type.line, node.opt_type.col, f'{Class(node.opt_type, None)} does not exist')
 
-        cls = self.class_references[node.opt_type.value]
+            cls = self.class_references[node.opt_type.value]
 
-        if not self.is_order_conform(node.expr.static_type, cls):
-            raise TypeError(node.line, node.col, f'Dispatch failed, {node.expr} with {node.expr.static_type} does not conform to {cls}')
+            if not self.is_order_conform(node.expr.static_type, cls):
+                raise TypeError(node.line, node.col, f'Dispatch failed, {node.expr} with {node.expr.static_type} does not conform to {cls}')
 
-    else:
-        cls = node.expr.static_type
+        else:
+            cls = node.expr.static_type
 
-        # Assert that the static type of node.expr is one of the nodes of the tree and NEVER a declared SELF_TYPE
-        # It can be SELF_TYPE(C) though
-        assert node.expr.static_type.td > 0
+            # Assert that the static type of node.expr is one of the nodes of the tree and NEVER a declared SELF_TYPE
+            # It can be SELF_TYPE(C) though
+            assert node.expr.static_type.td > 0
 
-        if isinstance(node.expr.static_type, Self_Type):
-            cls = self.current_class
+            if isinstance(node.expr.static_type, Self_Type):
+                cls = self.current_class
 
-    method = self.find_method_in_hierarchy(cls, node.id.value)
+        method = self.find_method_in_hierarchy(cls, node.id.value)
 
-    if not method:
-        raise AttributeError(node.line, node.col, f'Dispatch failed: could not find a method with {node.id} in {cls} or any ancestor')
+        if not method:
+            raise AttributeError(node.line, node.col, f'Dispatch failed: could not find a method with {node.id} in {cls} or any ancestor')
 
-    formals = list(method.formal_list)
+        formals = list(method.formal_list)
 
-    if len(node.expr_list) != len(formals):
-        raise SemanticError(node.line, node.col, (f'Dispatch failed, number of arguments of dispatch is {len(node.expr_list)}, '
-                                                  f'number of formals is {len(formals)}'))
+        if len(node.expr_list) != len(formals):
+            raise SemanticError(node.line, node.col, (f'Dispatch failed, number of arguments of dispatch is {len(node.expr_list)}, '
+                                                    f'number of formals is {len(formals)}'))
 
-    for expr, formal in zip(node.expr_list, formals):
-        if not self.is_order_conform(expr.static_type, formal.static_type):
-            raise TypeError(expr.line, expr.col, f'{expr} with {expr.static_type} does not conform to {formal} with {formal.static_type}')
+        for expr, formal in zip(node.expr_list, formals):
+            if not self.is_order_conform(expr.static_type, formal.static_type):
+                raise TypeError(expr.line, expr.col, f'{expr} with {expr.static_type} does not conform to {formal} with {formal.static_type}')
 
-    node.set_static_type(self.get_correct_type(method, node.expr.static_type))
+        node.set_static_type(self.get_correct_type(method, node.expr.static_type))
 
     # Assignment Operation
     def visit_Assignment(self, node):
