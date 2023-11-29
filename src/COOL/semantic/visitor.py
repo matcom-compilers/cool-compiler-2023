@@ -92,6 +92,11 @@ class Visitor:
             if meth.type not in self.types.keys() and not (meth.type in self.basic_types.keys()):
                 self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
 
+            meth_formals_name = set()
+            for formal in meth.formals:
+                if formal.id in meth_formals_name:
+                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Formal parameter {formal.id} is multiply defined.'))
+                meth_formals_name.add(formal.id)
             meth_node.add(meth.id)
         
     def _analize_attributes(self, features):
@@ -135,8 +140,7 @@ class Visitor:
             if len(equals_methods) > 0:
                 equal_meth = equals_methods[0]
                 if len(meth.formals) != len(equal_meth.formals):
-                    #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formals in {meth.id} in {node.type}'))
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
                 for j in range(len(meth.formals)):
                     if meth.formals[j].type != equal_meth.formals[j].type:
                         #TODO search this error
