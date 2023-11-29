@@ -17,7 +17,13 @@ class ConditionalExpressionAST(IAST):
         self.else_expr = else_expr
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        if self.condition.check_type() is not StdType.Bool:
+            raise TypeError()
+        elif self.condition:
+            return self.then_expr.check_type()
+        else:
+            return self.else_expr.check_type()
+        
 
 
 class LoopExpressionAST(IAST):
