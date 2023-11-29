@@ -151,7 +151,14 @@ class COOL2CIL(Visitor):
         return dest
 
     def register_builtins(self):
+        # Abort
         self.register_object__abort()
+
+        # IO
+        self.register_io__out_string()
+        self.register_io__out_int()
+        self.register_io__in_string()
+        self.register_io__in_int()
 
     def register_object__abort(self):
         self.clear_state()
@@ -177,6 +184,70 @@ class COOL2CIL(Visitor):
         self.dotcode.append(
             cil.FunctionNode(
                 self.get_func_id("Object", "abort"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_io__out_string(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        str_param = self.add_param("str")
+        str_param_instance = self.register_new("String", str_param)
+
+        self.instructions.append(cil.PrintNode(str_param_instance, True))
+        self.instructions.append(cil.ReturnNode(self_param))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("IO", "out_string"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_io__out_int(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        int_param = self.add_param("int")
+        int_param_instance = self.register_new("Int", int_param)
+
+        self.instructions.append(cil.PrintNode(int_param_instance, False))
+        self.instructions.append(cil.ReturnNode(self_param))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("IO", "out_int"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_io__in_string(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        dest = self.add_local()
+        self.instructions.append(cil.ReadNode(dest, is_string=True))
+        self.instructions.append(cil.ReturnNode(dest))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("IO", "in_string"),
+                self.params,
+                self.locals,
+                self.instructions,
+            )
+        )
+
+    def register_io__in_int(self):
+        self.clear_state()
+        self_param = self.add_param("self")
+        dest = self.add_local()
+        self.instructions.append(cil.ReadNode(dest, is_string=False))
+        self.instructions.append(cil.ReturnNode(dest))
+        self.dotcode.append(
+            cil.FunctionNode(
+                self.get_func_id("IO", "in_int"),
                 self.params,
                 self.locals,
                 self.instructions,

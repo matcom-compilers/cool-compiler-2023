@@ -320,6 +320,9 @@ class ReadNode(InstructionNode):
         self.is_string = is_string
         self.dest = dest
 
+    def __str__(self) -> str:
+        return f"{self.dest} = READ;"
+
 
 class PrintNode(InstructionNode):
     def __init__(self, str_addr, is_string):
