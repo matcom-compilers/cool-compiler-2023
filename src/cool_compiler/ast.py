@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple, Optional
 
-from .types import StdType, TypeEnvironment
+from .types import StdType, _TypeEnvironment, inherits, normalize
 
 
 class IAST(ABCMeta):
     @abstractmethod
-    def check_type(self, te: TypeEnvironment) -> str:
+    def check_type(self, te: _TypeEnvironment) -> str:
         raise NotImplementedError()
 
 
@@ -100,12 +100,32 @@ class BlockExpressionAST(IAST):
 
 
 class VarsInitAST(IAST):
-    def __init__(self, var_init_list: List[Tuple[str, str, IAST]], body: IAST):
+    def __init__(self, var_init_list: List[Tuple[str, str, Optional[IAST]]], body: IAST):
         self.var_init_list = var_init_list
         self.body = body
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        self._normalize(te)
+
+        extended_te = te.clone()
+        for name, type, value in self.var_init_list:
+            # type check if init value can be assigned to
+            # variable within 'te'
+            if value != None:
+                value_type = value.check_type(te)
+                if not inherits(value_type, type):
+                    raise Exception('')
+
+            # prepare 'extended_te' to type check body expr
+            extended_te.set_object_type(name, type)
+
+        return self.body.check_type(extended_te)
+
+    def _normalize(self, te: _TypeEnvironment):
+        self.var_init_list = map(
+            lambda t: (t[0], normalize(t[1], te), t[2]),
+            self.var_init_list
+        )
 
 
 class TypeMatchingAST(IAST):

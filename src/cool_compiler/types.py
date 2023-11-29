@@ -105,5 +105,5 @@ def union_type(types: List[str]):
     return least_type if least_type != None else StdType.Object
 
 
-def safe_type(type: str, te: _TypeEnvironment):
+def normalize(type: str, te: _TypeEnvironment):
     return type if type != _SELF_TYPE else te.type
