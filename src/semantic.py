@@ -69,3 +69,27 @@ class SemanticChecker:
                 raise SemanticError(_class.opt_inherits.line, _class.opt_inherits.col, f'Class {_class} inherits from final class {parent}')
             
             parent.children.append(_class)
+        
+        if "Main" not in classes_refs:
+            raise TypeError(1, 1, f"Class {Type('Main')} is not defined")
+        
+        main_class = classes_refs["Main"]
+        
+        if "main" not in main_class.methods:
+            raise SemanticError(main_class.type.line, main_class.type.col, f"Class {main_class} does not contain method {Id('main')}")
+        
+        ref = main_class.methods["main"]
+        
+        if len(ref.get_signature()) > 1:
+            raise SemanticError(ref.id.line, ref.id.col, f"Method {ref} should not receive arguments")
+        
+        if "SELF_TYPE" in classes_refs:
+            raise SemanticError(ref.type.line, ref.type.col, f"Cannot declare {ref}")
+        
+        classes_refs["SELF_TYPE"] = Class(Type("SELF_TYPE"))
+        
+        for _class in self.ast_root.cls_list:
+            _class.self_type = Self_Type()
+            _class.children.append(_class.self_type)
+        
+        return classes_refs
