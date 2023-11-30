@@ -5,13 +5,20 @@ from codegen import cil_ast as cil
 from parsing.ast import (
     AssignNode,
     AttributeNode,
+    BinaryOperator,
+    BinaryOperatorNode,
     BlockNode,
     BooleanNode,
     ClassNode,
     IdentifierNode,
     IntegerNode,
+    LetNode,
+    MethodCallNode,
     MethodNode,
+    NotNode,
     ProgramNode,
+    StringNode,
+    WhileNode,
 )
 from semantic.context import Context
 from semantic.scope import Scope
@@ -122,7 +129,7 @@ class COOL2CIL(Visitor):
             self.instructions.append(cil.ArgNode(self_local))
             self.instructions.append(
                 cil.StaticCallNode(
-                    self.get_func_id(htype, f"{attr}___init"),
+                    self.get_func_id(htype.name, f"{attr}___init"),
                     attr_local,
                 )
             )
@@ -152,7 +159,7 @@ class COOL2CIL(Visitor):
             assert attr_type is not None  # Semantic correctness
             sid = node.init.accept(self, context=context, scope=scope)
             if attr_type.type.name in ["Int", "Bool", "String"]:
-                sid = self.register_new(node.attr_type, sid)  # boxing
+                sid = self.register_new(node.attr_type.type.name, sid)  # boxing
         else:
             sid = self.register_default(node.attr_type)
         self.instructions.append(cil.ReturnNode(sid))
@@ -195,7 +202,7 @@ class COOL2CIL(Visitor):
         lhs_data = scope.find_variable_or_attribute(node.name, self.type)
         assert lhs_data is not None
         if lhs_data.type.name in ["Int", "Bool", "String"]:
-            rhs_local = self.register_new(lhs_data.type, rhs_local)  # boxing
+            rhs_local = self.register_new(lhs_data.type.name, rhs_local)  # boxing
 
         local_sid = self.get_local(node.name)
         if any(local_sid == l.name for l in self.locals):
@@ -213,11 +220,186 @@ class COOL2CIL(Visitor):
         )
         return rhs_local
 
+    def visit__MethodCallNode(
+        self, node: MethodCallNode, context: Context, scope: Scope
+    ):
+        return_local = self.add_local()
+
+        meth = self.type.get_method(node.method)
+        sid = self.get_local("self")
+        # Translate all call arguments to cil
+        args = [cil.ArgNode(sid)]
+        for arg_expr, param_type in zip(node.args, meth.param_types):
+            arg_sid = arg_expr.accept(self, context=context, scope=scope)
+            if param_type.name in ["Int", "Bool", "String"]:
+                arg_sid = self.register_new(param_type.name, arg_sid)  # boxing
+            args.append(cil.ArgNode(arg_sid))
+
+        self.instructions.extend(args)
+        self.instructions.append(
+            cil.StaticCallNode(
+                self.get_func_id(self.type.name, node.method), return_local
+            )
+        )
+        return return_local
+
+    def visit__LetNode(self, node: LetNode, context: Context, scope: Scope):
+        let_scope = scope.get_child(scope.class_name, scope.method_name)
+        for var_name, var_type, init_expr, _ in node.bindings:
+            lhs_local = self.get_local(var_name)
+            if not any(lhs_local == l.name for l in self.locals):
+                lhs_local = self.add_local(var_name)
+            if init_expr is not None:
+                rhs_local = init_expr.accept(self, context=context, scope=let_scope)
+                if var_type in ["Int", "Bool", "String"]:
+                    rhs_local = self.register_new(var_type, rhs_local)  # boxing
+                self.instructions.append(cil.AssignNode(lhs_local, rhs_local))
+            else:
+                self.register_default(var_name, dest=lhs_local)
+
+        return node.body.accept(self, context=context, scope=let_scope)
+
+    def visit__WhileNode(self, node: WhileNode, context: Context, scope: Scope):
+        while_label = self.get_label("while_label")
+        loop_label = self.get_label("loop_label")
+        pool_label = self.get_label("pool_label")
+
+        # Label while
+        self.instructions.append(cil.LabelNode(while_label))
+
+        # IF condition GOTO loop
+        while_ret = node.condition.accept(self, context=context, scope=scope)
+        self.instructions.append(cil.GotoIfGtNode(while_ret, loop_label))
+
+        # GOTO pool
+        self.instructions.append(cil.GotoNode(pool_label))
+
+        # Label loop
+        self.instructions.append(cil.LabelNode(loop_label))
+        node.body.accept(self, context=context, scope=scope)
+
+        # GOTO while
+        self.instructions.append(cil.GotoNode(while_label))
+
+        # Label pool
+        self.instructions.append(cil.LabelNode(pool_label))
+
+        return self.register_new("Void")
+
+    def visit__NotNode(self, node: NotNode, context: Context, scope: Scope):
+        ret_local = self.add_local()
+        sid = node.expr.accept(self, context=context, scope=scope)
+        self.instructions.append(cil.MinusNode(ret_local, self.register_int(1), sid))
+        return ret_local
+
+    def visit__BinaryOperatorNode(
+        self, node: BinaryOperatorNode, context: Context, scope: Scope
+    ):
+        left = node.left.accept(self, context=context, scope=scope)
+        right = node.right.accept(self, context=context, scope=scope)
+
+        ret_local = self.add_local()
+
+        if node.operator == BinaryOperator.PLUS:
+            self.instructions.append(cil.PlusNode(ret_local, left, right))
+        elif node.operator == BinaryOperator.MINUS:
+            self.instructions.append(cil.MinusNode(ret_local, left, right))
+
+        elif node.operator == BinaryOperator.TIMES:
+            self.instructions.append(cil.StarNode(ret_local, left, right))
+
+        elif node.operator == BinaryOperator.DIVIDE:
+            self.instructions.append(cil.DivNode(ret_local, left, right))
+
+        elif node.operator == BinaryOperator.LT:
+            cond_local = self.add_local()
+            self.instructions.append(cil.MinusNode(cond_local, left, right))
+
+            then_label = self.get_label("then")
+            continue_label = self.get_label("continue")
+
+            # IF condition GOTO then_label
+            self.instructions.append(cil.GotoIfLtNode(cond_local, then_label))
+
+            # Label else_label
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
+            # GoTo continue_label
+            self.instructions.append(cil.GotoNode(continue_label))
+
+            # Label then_label
+            self.instructions.append(cil.LabelNode(then_label))
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
+
+            # Label continue_label
+            self.instructions.append(cil.LabelNode(continue_label))
+
+        elif node.operator == BinaryOperator.LE:
+            cond_local = self.add_local()
+            self.instructions.append(cil.MinusNode(cond_local, left, right))
+            self.instructions.append(
+                cil.MinusNode(cond_local, cond_local, self.register_int(1))
+            )
+
+            ret_local = self.add_local()
+            then_label = self.get_label("then")
+            continue_label = self.get_label("continue")
+
+            # IF condition GOTO then_label
+            self.instructions.append(cil.GotoIfLtNode(cond_local, then_label))
+
+            # Label else_label
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
+            # GoTo continue_label
+            self.instructions.append(cil.GotoNode(continue_label))
+
+            # Label then_label
+            self.instructions.append(cil.LabelNode(then_label))
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
+
+            # Label continue_label
+            self.instructions.append(cil.LabelNode(continue_label))
+
+        elif node.operator == BinaryOperator.EQ:
+            cond_local = self.add_local()
+
+            assert node.left.type
+            if node.left.type.name == "String":
+                self.instructions.append(cil.StrEqNode(cond_local, left, right))
+                self.instructions.append(
+                    cil.MinusNode(cond_local, self.register_int(1), cond_local)
+                )
+            else:
+                self.instructions.append(cil.MinusNode(cond_local, left, right))
+
+            ret_local = self.add_local()
+            then_label = self.get_label("then")
+            continue_label = self.get_label("continue")
+
+            # IF condition GOTO then_label
+            self.instructions.append(cil.GotoIfEqNode(cond_local, then_label))
+
+            # Label else_label
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
+            # GoTo continue_label
+            self.instructions.append(cil.GotoNode(continue_label))
+
+            # Label then_label
+            self.instructions.append(cil.LabelNode(then_label))
+            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
+
+            # Label continue_label
+            self.instructions.append(cil.LabelNode(continue_label))
+
+        return ret_local
+
     def visit__IntegerNode(self, node: IntegerNode, context: Context, scope: Scope):
         return self.register_int(int(node._value))
 
     def visit__BooleanNode(self, node: BooleanNode, context: Context, scope: Scope):
         return self.register_int(1 if node.value == "true" else 0)
+
+    def visit__StringNode(self, node: StringNode, context: Context, scope: Scope):
+        return self.add_data("STR", node._value)
 
     def visit__IdentifierNode(
         self, node: IdentifierNode, context: Context, scope: Scope

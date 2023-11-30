@@ -117,6 +117,9 @@ class AssignNode(InstructionNode):
         self.dest = dest
         self.source = source
 
+    def __str__(self):
+        return f"{self.dest} = {self.source} "
+
 
 class ArithmeticNode(InstructionNode):
     def __init__(self, dest, left, right):

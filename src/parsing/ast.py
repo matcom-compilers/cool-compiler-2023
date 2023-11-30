@@ -1,8 +1,9 @@
 from collections import namedtuple
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from parsing.lex import TokenType
+from semantic.types import BoolType, IntType, StringType, Type
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
 
@@ -116,7 +117,8 @@ class FormalNode(Node):
 
 
 class ExpressionNode(Node):
-    def __init__(self, location):
+    def __init__(self, location, type: Optional[Type] = None):
+        self.type = type
         super().__init__(location)
 
 
@@ -276,7 +278,7 @@ class IdentifierNode(ExpressionNode):
 class IntegerNode(ExpressionNode):
     def __init__(self, value, location):
         self._value = value
-        super().__init__(location)
+        super().__init__(location, IntType())
 
     def __str__(self) -> str:
         return str(self._value)
@@ -285,7 +287,7 @@ class IntegerNode(ExpressionNode):
 class StringNode(ExpressionNode):
     def __init__(self, value, location):
         self._value = value
-        super().__init__(location)
+        super().__init__(location, StringType())
 
     def __str__(self) -> str:
         return self._value
@@ -294,7 +296,7 @@ class StringNode(ExpressionNode):
 class BooleanNode(ExpressionNode):
     def __init__(self, value, location):
         self._value = value
-        super().__init__(location)
+        super().__init__(location, BoolType())
 
     def __str__(self) -> str:
         return str(self._value)

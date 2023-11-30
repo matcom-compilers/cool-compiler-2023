@@ -94,7 +94,9 @@ class TypeChecker(Visitor):
                     type="Attribute",
                     value=expr_type,
                 )
-        scope.define_variable(node.name, attr_type)
+            scope.define_variable(node.name, expr_type)
+        else:
+            scope.define_variable(node.name, attr_type)
 
     def visit__MethodNode(self, node: MethodNode, scope: Scope):
         assert self.current_type
@@ -227,6 +229,9 @@ class TypeChecker(Visitor):
     def visit__BinaryOperatorNode(self, node: BinaryOperatorNode, scope: Scope):
         left_type = node.left.accept(self, scope=scope)
         right_type = node.right.accept(self, scope=scope)
+
+        node.left.type = left_type
+        node.right.type = right_type
 
         operator = node.operator
 
