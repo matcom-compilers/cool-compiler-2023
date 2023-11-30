@@ -28,6 +28,7 @@ def main():
         "--parser", action="store_true", help="Run only to parsing stage"
     )
     parser.add_argument("-t", action="store_true", help="Print Tokens from lexer stage")
+    parser.add_argument("-c", "--cil", action="store_true", help="Output cil program")
     parser.add_argument(
         "--log-level", type=str, help="Set the log level (default: INFO)"
     )
@@ -132,6 +133,10 @@ def main():
 
     cool_to_cil = COOL2CIL()
     cil_program = cool_to_cil.visit(program, context=type_checker.context, scope=scope)
+
+    if options.cil:
+        with open(options.output_file[:-4] + "cil", "w") as f:
+            f.write(str(cil_program))
 
     cil_to_mips = CILVisitor()
     mips_program = cil_program.accept(cil_to_mips)

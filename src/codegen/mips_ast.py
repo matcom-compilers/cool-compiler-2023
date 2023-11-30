@@ -95,7 +95,7 @@ class LoadWordNode(InstructionNode):
         self.address = address
 
 
-class LoadInmediateNode(InstructionNode):
+class LoadImmediateNode(InstructionNode):
     """Nodo para la instrucción 'li' en MIPS."""
 
     def __init__(self, rt, immediate):
@@ -109,6 +109,14 @@ class LoadAddressNode(InstructionNode):
     def __init__(self, rt, label):
         self.rt = rt
         self.label = label
+
+
+class StoreByteNode(InstructionNode):
+    """Nodo para la instrucción 'sb' en MIPS."""
+
+    def __init__(self, rt, ramdir):
+        self.rt = rt
+        self.ramdir = ramdir
 
 
 class StoreWordNode(InstructionNode):
@@ -159,6 +167,12 @@ class BranchEqualNode(InstructionNode):
 class BeqzNode(InstructionNode):
     """Nodo para la instrucción 'beqz' en MIPS."""
 
+    def __init__(self, rs, label):
+        self.rs = rs
+        self.label = label
+
+
+class BgtzNode(InstructionNode):
     def __init__(self, rs, label):
         self.rs = rs
         self.label = label

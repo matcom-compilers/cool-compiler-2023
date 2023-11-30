@@ -226,7 +226,7 @@ class COOL2CIL(Visitor):
         return_local = self.add_local()
 
         meth = self.type.get_method(node.method)
-        sid = self.get_local("self")
+        sid = self.get_param("self")
         # Translate all call arguments to cil
         args = [cil.ArgNode(sid)]
         for arg_expr, param_type in zip(node.args, meth.param_types):
