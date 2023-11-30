@@ -55,14 +55,14 @@ def test_codegen(cls, out, inp):
 
         errors = Semantic.check(ast)
 
-        mips_script = Codegen.execute(ast)
+        mips_script = Codegen.codegen(ast)
         print(mips_script)
         break
 
 
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
-    folder = "./tests/lexer/"
+    folder = "./tests/parser/"
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]
     out = [f[:-3] + "_error.txt" for f in cls]
