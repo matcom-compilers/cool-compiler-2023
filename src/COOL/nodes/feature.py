@@ -55,7 +55,7 @@ class Attribute(Node):
         self.id = id
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         return [], []
 
     def check(self, visitor):
@@ -123,7 +123,7 @@ class Formal(Node):
         self.id = id
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self, visitor):
