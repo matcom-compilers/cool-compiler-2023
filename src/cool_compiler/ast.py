@@ -49,7 +49,8 @@ class FunctionDeclarationFeatureAST(IAST):
         self.body = body
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        self.body.check_type()
+        return self.type
 
 
 class VarMutationAST(IAST):
@@ -150,7 +151,7 @@ class TypeMatchingAST(IAST):
             if not cases_type in cases_type:
                 cases_type.append(case_type)
             else:
-                raise TypeError('Only one case must have a type.')
+                raise TypeError(f'Only one case must have a {case_type} type.')
         return cases_type
 
 
@@ -213,9 +214,11 @@ class ArithmeticOpAST(BinaryOpAST):
 class ComparisonOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
         if self.op[0] is '=':
+            self.left.check_type()
+            self.right.check_type()
             return StdType.Bool
         elif self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
-            raise TypeError()
+            raise TypeError('Both arguments must be Int,')
         else:
             return StdType.Bool
 
