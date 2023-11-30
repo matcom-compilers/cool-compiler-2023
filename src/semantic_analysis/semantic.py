@@ -1,5 +1,5 @@
-from errors import *
-from ast_ import *
+from utils.errors import *
+from semantic_analysis.ast_ import *
 
 class SemanticChecker:
     def __init__(self, ast_root) -> None:

@@ -1,6 +1,6 @@
 import ply.lex as lex
 import ply.yacc as yacc
-from ast_ import Id, Type, String, Int, Bool
+from semantic_analysis.ast_ import Id, Type, String, Int, Bool
 
 class Lexer(object):
     

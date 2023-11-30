@@ -1,7 +1,7 @@
-from ast_ import *
-from constants import LABEL_STR_LITERAL, LABEL_INT_LITERAL
+from semantic_analysis.ast_ import *
+from utils.constants import LABEL_STR_LITERAL, LABEL_INT_LITERAL
 from collections import defaultdict
-from enviroment import Environment
+from utils.enviroment import Environment
 
 class CILCodeGenerator:
     """

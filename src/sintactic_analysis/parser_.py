@@ -1,6 +1,6 @@
 import ply.yacc as yacc
-from ast_ import *
-from errors import SyntacticError
+from semantic_analysis.ast_ import *
+from utils.errors import SyntacticError
 
 class Parser:
     

@@ -1,6 +1,6 @@
-from errors import SemanticError, AttributeError
-from enviroment import Environment
-from ast_ import Class, Attribute, Id, Type, Self_Type
+from utils.errors import SemanticError, AttributeError
+from utils.enviroment import Environment
+from semantic_analysis.ast_ import Class, Attribute, Id, Type, Self_Type
 
 class TypeChecker:
     def __init__(self, ast_root, class_references):

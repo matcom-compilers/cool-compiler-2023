@@ -1,4 +1,4 @@
-from constants import TYPE_NOT_PRIMITIVE
+from utils.constants import TYPE_NOT_PRIMITIVE
 from collections import deque
 from collections.abc import Iterable
 

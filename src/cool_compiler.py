@@ -1,9 +1,9 @@
-from lexer import Lexer
-from parser_ import Parser
-from type_checker import TypeChecker
-from cil_generator import CILCodeGenerator
-from semantic import SemanticChecker
-from errors import *
+from lexic_analysis.lexer import Lexer
+from sintactic_analysis.parser_ import Parser
+from type_checker.type_checker import TypeChecker
+from cil_generation.cil_generator import CILCodeGenerator
+from semantic_analysis.semantic import SemanticChecker
+from utils.errors import *
 
 class CoolCompiler:
     def __init__(self, code, tab_size=4):
