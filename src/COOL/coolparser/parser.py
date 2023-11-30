@@ -18,11 +18,16 @@ from COOL.nodes.operators import Bitwise
 
 from COOL.nodes.program import Program
 from COOL.nodes.classdef import Class
-from COOL.nodes.feature import Attribute, AttributeDeclaration, AttributeInicialization
+from COOL.nodes.feature import Attribute
+from COOL.nodes.feature import AttributeDeclaration
+from COOL.nodes.feature import AttributeInicialization
+from COOL.nodes.feature import Formal
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import ExecuteMethod
 from COOL.nodes.variable import GetVariable
-from COOL.nodes.variable import Initialization, Declaration, Assign
+from COOL.nodes.variable import Initialization
+from COOL.nodes.variable import Declaration
+from COOL.nodes.variable import Assign
 from COOL.nodes.object import Interger
 from COOL.nodes.object import String
 from COOL.nodes.object import Boolean
@@ -151,7 +156,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE')
     def formal(self, p: YaccProduction):
-        return Declaration(
+        return Formal(
             line=p.lineno,
             column=0,
             id=p.ID,
