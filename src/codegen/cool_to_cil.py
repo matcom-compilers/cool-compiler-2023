@@ -2,7 +2,14 @@ from collections import defaultdict
 from typing import Optional
 
 from codegen import cil_ast as cil
-from parsing.ast import AttributeNode, ClassNode, MethodNode, ProgramNode
+from parsing.ast import (
+    AttributeNode,
+    BooleanNode,
+    ClassNode,
+    IntegerNode,
+    MethodNode,
+    ProgramNode,
+)
 from semantic.context import Context
 from utils.visitor import Visitor
 
@@ -13,7 +20,7 @@ class COOL2CIL(Visitor):
         self.dotdata = []
         self.dotcode = []
 
-        self.type = None
+        self.type = ""
         self.params = []
         self.locals = []
         self.instructions = []
@@ -133,10 +140,30 @@ class COOL2CIL(Visitor):
     def visit__AttributeNode(
         self, node: AttributeNode, context: Context
     ) -> cil.FunctionNode:
-        pass
+        self.clear_state()
+        self.add_param("self")
+        if node.init is not None:
+            sid = node.init.accept(self, context=context)
+            if node.attr_type in ["Int", "Bool", "String"]:
+                sid = self.register_new(node.attr_type, sid)  # boxing
+        else:
+            sid = self.register_default(node.attr_type)
+        self.instructions.append(cil.ReturnNode(sid))
+        return cil.FunctionNode(
+            self.get_func_id(self.type, f"{node.attr_type}___init"),
+            self.params,
+            self.locals,
+            self.instructions,
+        )
 
     def visit__MethodNode(self, node: MethodNode, context: Context) -> cil.FunctionNode:
         pass
+
+    def visit__IntegerNode(self, node: IntegerNode, context: Context):
+        return self.register_int(int(node._value))
+
+    def visit__BooleanNode(self, node: BooleanNode, context: Context):
+        return self.register_int(1 if node.value == "true" else 0)
 
     def get_func_id(self, type_name: str, method_name: str):
         return f"{type_name}__{method_name}"
@@ -518,3 +545,19 @@ class COOL2CIL(Visitor):
                 self.instructions,
             )
         )
+
+    def register_default(self, type: str, dest: Optional[str] = None):
+        if type == "Int" or type == "Bool":
+            val = self.register_int(0)
+            if dest is not None:
+                self.instructions.append(cil.AssignNode(dest, val))
+                return dest
+            return val
+        elif type == "String":
+            val = self.add_data("DEFAULT_STR", '""')
+            if dest is not None:
+                self.instructions.append(cil.AssignNode(dest, val))
+                return dest
+            return val
+        else:
+            return self.register_new("Void", dest=dest)
