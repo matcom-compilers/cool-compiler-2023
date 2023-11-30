@@ -20,6 +20,18 @@ class Dispatch(Node):
         raise NotImplementedError()
 
 
+class CodeBlock(Node):
+    def __init__(self, line: int, column: int, exprs: List[Node]):
+        self.exprs: List[Node] = exprs
+        super().__init__(line, column)
+
+    def check(self,visitor:Visitor_Class):
+        return visitor.visit_code_block(self)
+        
+
+    def execute(self):
+        raise NotImplementedError()
+
 class If(Node):
     def __init__(self, line: int, column: int, if_expr: Node, then_expr: Node, else_expr: Node):
         self.if_expr: Node = if_expr
@@ -96,15 +108,3 @@ class Isvoid(Node):
     def execute(self):
         raise NotImplementedError()
 
-
-class Block(Node):
-    def __init__(self, line: int, column: int, exprs: List[Node]) -> None:
-        self.exprs: List[Node] = exprs
-        super().__init__(line, column)
-
-    def execute(self):
-        raise NotImplementedError()
-
-    def check(self):
-        raise NotImplementedError()
-    

@@ -171,11 +171,6 @@ class Visitor_Program:
         node.lineage = lineage
 
 
-
-
-
-
-
 class Visitor_Class:
 
     def __init__(self, scope):
@@ -203,10 +198,7 @@ class Visitor_Class:
                         if not(attrb.type == type) or attrb.type not in self.all_types[type].lineage:
                             self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
 
-    # def _possible_substitution(class1,class2):
-    #     return attrb.type in lineage_expr_type
-
-    def visit_dispatch(self,node):        
+    def visit_dispatch(self,node):
         if node.expr:
             expr_type = node.expr.check(self)
             if expr_type:
@@ -214,7 +206,7 @@ class Visitor_Class:
                     #TODO search this error
                     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
                 
-                class_meths = self.all_types[expr_type].methods_dict
+                class_meths = self.all_types[expr_type].methods_dict 
                 if not node.id in class_meths.keys():
                     self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
                     return None
@@ -232,36 +224,55 @@ class Visitor_Class:
                              self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
                              return None
                 return class_meths[node.id].type
-
-
         else:
-            return node.check(self)
+            if not self.scope['methods'].get(node.id):
+                self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+                return None
+            return self.scope['methods'][node.id].type
         
             
     def visit_method(self, node):
-        node.expr.check(self)
+        self.temporal_scope = node.formals        
+        type = node.expr.check(self)
+        self.temporal_scope = []
+        return type
 
+    def visit_code_block(self, node):
+        type=None
+        for expr in node.exprs:
+            type = expr.check(self)
+        return type
     # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
-    # def visit_variable(self, node):
-    #     pass
+    def search_variable_in_scope(self, id):
+        for formal in self.temporal_scope:
+            if formal.id == id:
+                return formal
+        for attr in self.scope['attributes'].values():
+            if attr.id == id:
+                return attr
+        return None
 
     def visit_operator(self, node):
         ex1 = node.expr1
         ex2 = node.expr2
+        type1 = type2 = None
 
-        for formal in node.formals:
-            if formal.id == ex1.id:
-                type1 = formal.type
-            elif formal.id == ex2.id:
-                type2 = formal.type
+        if not ex1.__dict__.get('id'):
+            type1 = ex1.check(self)
+        else:
+            type1 = self.search_variable_in_scope(ex1.id).type
+        if not ex2.__dict__.get('id'):
+            type2 = ex2.check(self)
+        else:
+            type2 = self.search_variable_in_scope(ex2.id).type
 
-        if not type1:
-            ex1.check(self)
-        if not type2:
-            ex2.check(self)
-
-        possible_types = node.posibles_types
+        if not type1 or not type2:
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {type2}'))
+            return None
+        
+        possible_types = node.possibles_types
         if  possible_types[0] == 'All':
             possible_types = self.basic_types.keys()
         elif not (type1 in possible_types and type2 in possible_types):
@@ -271,13 +282,16 @@ class Visitor_Class:
         
     def visit_unary_operator(self, node):
         ex1 = node.expr
-        type1 = ex1.check(self)
-        for formal in node.formals:
-            if formal.id == ex1.id:
-                type1 = formal.type
-        if not type1:
-            return None
+        if not ex1.__dict__.get('id'):
+            type1 = ex1.check(self)
+        else:
+            type1 = self.search_variable_in_scope(ex1.id).type
         
+        if not type1:
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
+            return None
+              
         possible_types = node.posibles_types
         if not (type1 in possible_types):
             #TODO search this error
@@ -314,4 +328,3 @@ class Visitor_Class:
     def visit_loops(self, node):
         pass
 
-class 

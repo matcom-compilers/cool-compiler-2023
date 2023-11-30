@@ -27,6 +27,7 @@ from COOL.nodes.object import Interger
 from COOL.nodes.object import String
 from COOL.nodes.object import Boolean
 from COOL.nodes.expr import If
+from COOL.nodes.expr import CodeBlock
 from COOL.nodes.expr import While
 from COOL.nodes.expr import Let
 from COOL.nodes.expr import Case
@@ -263,7 +264,7 @@ class CoolParser(Parser):
 
     @_('"{" nested_expr "}"')
     def expr(self, p: YaccProduction):
-        return p.nested_expr
+        return CodeBlock(p.lineno,0,p.nested_expr)
 
     @_('expr ";" nested_expr')
     def nested_expr(self, p: YaccProduction):
