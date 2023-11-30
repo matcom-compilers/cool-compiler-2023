@@ -1,13 +1,13 @@
 from COOL.error import Error
-
+from COOL.nodes.basic_classes import BasicBool, BasicInt, BasicIO, BasicObject, BasicString
 
 class Visitor:
 
     def __init__(self):
-        self.types:dict = {'Object':None,'IO':None}
+        self.types:dict = {'Object':BasicObject(),'IO':BasicIO()}
         #TODO implement the basic types
         self.basic_types: dict = {
-            'Object': None, 'IO': None, 'Int': None, 'String': None, 'Bool': None}
+            'Object': BasicObject(), 'IO': BasicIO(), 'Int': BasicInt(), 'String': BasicString(), 'Bool': BasicBool()}
 
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.errors = []
@@ -58,8 +58,8 @@ class Visitor:
             if not i:
                 break
             for comprobate_meth in self.types.get(i).methods:
-                if method.id == comprobate_meth and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
-                    meths_equals.append(self.types.get(i).methods[comprobate_meth])
+                if method.id == comprobate_meth.id:# and type(method) == type(self.types.get(i).methods[comprobate_meth]):                    
+                    meths_equals.append(comprobate_meth)
         return meths_equals
     
     def visit_program(self, node):
@@ -92,6 +92,15 @@ class Visitor:
             if meth.type not in self.types.keys() and not (meth.type in self.basic_types.keys()):
                 self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
 
+            meth_formals_name = set()
+            for formal in meth.formals:
+                
+                if formal.type not in self.types.keys() and not (formal.type in self.basic_types.keys()):
+                    self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Class {formal.type} of formal parameter {formal.id} is undefined.'))
+                
+                if formal.id in meth_formals_name:
+                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Formal parameter {formal.id} is multiply defined.'))
+                meth_formals_name.add(formal.id)
             meth_node.add(meth.id)
         
     def _analize_attributes(self, features):
@@ -102,6 +111,16 @@ class Visitor:
 
             if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
                 self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
+
+            if attrb.__dict__.get('expr'):
+                if attrb.expr.__dict__.get('type'):
+                    expr_type = attrb.expr.type 
+                    if not (attrb.type == expr_type):
+                        lineage_expr_type = self._search_lineage(expr_type)
+                        if not (attrb.type in lineage_expr_type):
+                            self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+
+
 
             attrib_node.add(attrb.id)
 
@@ -124,16 +143,16 @@ class Visitor:
             equals_methods = self._search_method_name_in_lineage(lineage, meth)
             if len(equals_methods) > 0:
                 equal_meth = equals_methods[0]
+                
                 if len(meth.formals) != len(equal_meth.formals):
-                    #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formals in {meth.id} in {node.type}'))
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
+                
                 for j in range(len(meth.formals)):
                     if meth.formals[j].type != equal_meth.formals[j].type:
-                        #TODO search this error
-                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible type of formals in {meth.id} in {node.type}'))
+                        self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
+                
                 if meth.type != equal_meth.type:
-                    #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Incompatible return type in {meth.id} in {node.type}'))
+                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
             
 
         node.methods_dict = {i.id:i for i in node.methods}
