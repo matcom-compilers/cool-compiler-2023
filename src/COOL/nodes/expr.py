@@ -42,7 +42,7 @@ class If(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -55,7 +55,7 @@ class While(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -68,7 +68,7 @@ class Let(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -81,7 +81,7 @@ class Case(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -93,7 +93,7 @@ class New(Node):
     def check(self,visitor:Visitor_Class):
         return visitor.visit_new(self)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -105,6 +105,5 @@ class Isvoid(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
-
