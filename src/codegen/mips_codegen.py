@@ -9,10 +9,10 @@ class MipsCodeGenerator(Visitor):
         return f"{text_section}\n\n{data_section}\n"
 
     def visit__TextNode(self, node, *args, **kwargs):
-        return "\n\t".join(self.visit(instr) for instr in node.instructions)+"#comment"
+        return "\n\t".join(self.visit(instr) for instr in node.instructions)
 
     def visit__DataSectionNode(self, node: mips.DataSectionNode, *args, **kwargs):
-        return "\n".join(self.visit(data) for data in node.data.values())+"#comment"
+        return "\n".join(self.visit(data) for data in node.data.values())
 
     def visit__DataNode(self, node: mips.DataNode, *args, **kwargs):
         def visit_value(value):
@@ -23,77 +23,77 @@ class MipsCodeGenerator(Visitor):
             )
 
         data_value = ",".join(visit_value(value) for value in node.data)
-        return f"{self.visit(node.label)}: {node.storage_type} {data_value}"+"#comment"
+        return f"{self.visit(node.label)}: {node.storage_type} {data_value}"
 
     def visit__LabelNode(self, node, *args, **kwargs):
-        return f"{node.label}"+"#comment"
+        return f"{node.label}"
 
     def visit__LabelInstructionNode(self, node, *args, **kwargs):
-        return f"\r{node.label}:"+"#comment"
+        return f"\r{node.label}:"+"\t# " + node.comment
 
     def visit__SyscallNode(self, node, *args, **kwargs):
-        return "syscall"+"#comment"
+        return "syscall"+"\t# " + node.comment
 
     # Métodos para instrucciones aritméticas
     def visit__AddNode(self, node, *args, **kwargs):
-        return f"add {node.rd.accept(self)}, {node.rs.accept(self)}, {node.rt.accept(self)}"+"#comment"
+        return f"add {node.rd.accept(self)}, {node.rs.accept(self)}, {node.rt.accept(self)}"+"\t# " + node.comment
 
     def visit__SubNode(self, node, *args, **kwargs):
-        return f"sub {node.rd.accept(self)}, {node.rs.accept(self)}, {node.rt.accept(self)}"+"#comment"
+        return f"sub {node.rd.accept(self)}, {node.rs.accept(self)}, {node.rt.accept(self)}"+"\t# " + node.comment
 
     # Métodos para instrucciones de carga y almacenamiento
     def visit__LoadWordNode(self, node: mips.LoadWordNode, *args, **kwargs):
-        return f"lw {node.rt.accept(self)}, {node.address.accept(self)}"+"#comment"
+        return f"lw {node.rt.accept(self)}, {node.address.accept(self)}"+"\t# " + node.comment
 
     def visit__LoadAddressNode(self, node: mips.LoadAddressNode):
-        return f"la {node.rt.accept(self)}, {node.label.accept(self)}"+"#comment"
+        return f"la {node.rt.accept(self)}, {node.label.accept(self)}"+"\t# " + node.comment
 
     def visit__LoadByteNode(self, node: mips.LoadByteNode):
-        return f"lb {node.rt.accept(self)}, {node.address.accept(self)}"+"#comment"
+        return f"lb {node.rt.accept(self)}, {node.address.accept(self)}"+"\t# " + node.comment
 
     # Métodos para instrucciones de salto
     def visit__JumpNode(self, node: mips.JumpNode, *args, **kwargs):
-        return f"j {node.label}"+"#comment"
+        return f"j {node.label}"+"\t# " + node.comment
 
     def visit__JumpRegisterNode(self, node, *args, **kwargs):
-        return f"jr {node.rs.accept(self)}"+"#comment"
+        return f"jr {node.rs.accept(self)}"+"\t# " + node.comment
 
     def visit__JumpAndLinkNode(self, node: mips.JumpAndLinkNode, *args, **kwargs):
-        return f"jal {node.label}"+"#comment"
+        return f"jal {node.label}"+"\t# " + node.comment
 
     def visit__JumpRegisterAndLinkNode(
         self, node: mips.JumpRegisterAndLinkNode, *args, **kwargs
     ):
-        return f"jalr {node.rs.accept(self)}"+"#comment"
+        return f"jalr {node.rs.accept(self)}"+"\t# " + node.comment
 
     def visit__BranchEqualNode(self, node, *args, **kwargs):
-        return f"beq {node.rs}, {node.rt}, {node.offset}"+"#comment"
+        return f"beq {node.rs}, {node.rt}, {node.offset}"+"\t# " + node.comment
 
     def visit__BeqzNode(self, node: mips.BeqzNode, *args, **kwargs):
-        return f"beqz {node.rs.accept(self)}, {node.label}"+"#comment"
+        return f"beqz {node.rs.accept(self)}, {node.label}"+"\t# " + node.comment
 
     def visit__BgtzNode(self, node: mips.BgtzNode, *args, **kwargs):
-        return f"beqz {node.rs.accept(self)}, {node.label}"+"#comment"
+        return f"beqz {node.rs.accept(self)}, {node.label}"+"\t# " + node.comment
 
     def visit__MoveNode(self, node: mips.MoveNode, *args, **kwargs):
-        return f"move {node.rd.accept(self)}, {node.rs.accept(self)}"+"#comment"
+        return f"move {node.rd.accept(self)}, {node.rs.accept(self)}"+"\t# " + node.comment
 
     def visit__AddiNode(self, node: mips.AddiNode, *args, **kwargs):
-        return f"addi {node.rt.accept(self)}, {node.rs.accept(self)}, {node.immediate}"+"#comment"
+        return f"addi {node.rt.accept(self)}, {node.rs.accept(self)}, {node.immediate}"+"\t# " + node.comment
 
     def visit__StoreWordNode(self, node: mips.StoreWordNode, *args, **kwargs):
-        return f"sw {node.rt.accept(self)}, {node.ramdir.accept(self)}"+"#comment"
+        return f"sw {node.rt.accept(self)}, {node.ramdir.accept(self)}"+"\t# " + node.comment
 
     def visit__StoreByteNode(self, node: mips.StoreByteNode, *args, **kwargs):
-        return f"sb {node.rt.accept(self)}, {node.ramdir.accept(self)}"+"#comment"
+        return f"sb {node.rt.accept(self)}, {node.ramdir.accept(self)}"+"\t# " + node.comment
 
     def visit__RegisterNode(self, node: mips.RegisterNode, *args, **kwargs):
-        return f"${node.number}"+"#comment"
+        return f"${node.number}"
 
     def visit__MemoryAddressRegisterNode(
         self, node: mips.MemoryAddressRegisterNode, *args, **kwargs
     ):
-        return f"{str(node.index)}({node.register.accept(self)})"+"#comment"
+        return f"{str(node.index)}({node.register.accept(self)})"+"\t# " + node.comment
 
     def visit__LoadImmediateNode(self, node: mips.LoadImmediateNode, *args, **kwargs):
-        return f"li {node.rt.accept(self)}, {node.immediate}"+"#comment"
+        return f"li {node.rt.accept(self)}, {node.immediate}"+"\t# " + node.comment
