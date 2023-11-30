@@ -2,6 +2,8 @@ from abc import abstractmethod
 
 from COOL.nodes import Node
 from COOL.codegen.mips_visitor import MipsVisitor
+from COOL.codegen.codegen_rules import PUSH_STACK
+from COOL.codegen.codegen_rules import POP_STACK
 
 
 class UnaryOperator(Node):
@@ -11,13 +13,17 @@ class UnaryOperator(Node):
         self.return_type = return_type
         super().__init__(line, column)
 
-    def codegen(self, mips_visitor: MipsVisitor, out_register: str="$t0"):
+    def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr = self.expr.codegen(mips_visitor)
-        operation = self.operator(out_register)
-        # TODO: what to return
+        operation = self.operation()
+        result = (
+            expr +
+            operation
+        )
+        return result
 
     @abstractmethod
-    def operator(self, out_register: str="$t0") -> str:
+    def operation(self) -> str:
         pass
 
     def check(self, visitor):
@@ -33,14 +39,21 @@ class Operator(Node):
 
         super().__init__(line, column)
 
-    def codegen(self, mips_visitor: MipsVisitor, out_register: str="$t0"):
-        expr1 = self.expr1.codegen(mips_visitor, "$t0")
-        expr2 = self.expr2.codegen(mips_visitor, "$t1")
-        operation = self.operator(out_register)
-        # TODO: what to return
+    def codegen(self, mips_visitor: MipsVisitor) -> str:
+        expr1 = self.expr1.codegen(mips_visitor)
+        expr2 = self.expr2.codegen(mips_visitor)
+        operation = self.operation()
+        result =(
+            expr1 +
+            PUSH_STACK.format(register="$t0") +
+            expr2 +
+            POP_STACK.format(register="$t1") +
+            operation
+        )
+        return result
 
     @abstractmethod
-    def operator(self, out_register: str="$t0") -> str:
+    def operation(self) -> str:
         pass
 
     def check(self,visitor):
@@ -50,24 +63,24 @@ class Add(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    add {out_register}, $t0, $t1"
+    def operation(self):
+        return "    add $t0, $t0, $t1\n"
 
 
 class Sub(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    sub {out_register}, $t0, $t1"
+    def operation(self):
+        return "    sub $t0, $t0, $t1\n"
 
 
 class Div(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    div {out_register}, $t0, $t1"
+    def operation(self):
+        return "    div $t0, $t0, $t1\n"
 
 
 class Times(Operator):
@@ -76,8 +89,8 @@ class Times(Operator):
         self.return_type = 'Int'
         super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    mul {out_register}, $t0, $t1"
+    def operation(self):
+        return "    mul $t0, $t0, $t1\n"
 
 
 class Less(Operator):
@@ -86,8 +99,9 @@ class Less(Operator):
         self.return_type = 'Bool'
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    slt {out_register}, $t0, $t1"
+    # FIX
+    def operation(self):
+        return "    slt $t0, $t0, $t1\n"
 
 
 class LessEqual(Operator):
@@ -95,8 +109,9 @@ class LessEqual(Operator):
 
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    sle {out_register}, $t0, $t1"
+    # FIX
+    def operation(self):
+        return "    sle $t0, $t0, $t1\n"
 
 
 class Equal(Operator):
@@ -104,23 +119,24 @@ class Equal(Operator):
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool')
 
-    def operator(self, out_register: str="$t0"):
-        return f"    seq {out_register}, $t0, $t1"
+    # FIX
+    def operation(self):
+        return "    seq $t0, $t0, $t1\n"
 
 
 class Not(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Bool'],'Bool')
 
-    def operator(self, out_register: str="$t0"):
-        # TODO: check this
-        return f"    not {out_register}, $t0"
+    # FIX
+    def operation(self):
+        return "    not $t0, $t0\n"
 
 
 class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Int'],'Int')
 
-    def operator(self, out_register: str="$t0"):
-        # TODO: check this
-        return f"    and {out_register}, $t0, $t1"
+    # FIX
+    def operation(self):
+        return "    and $t0, $t0, $t1\n"

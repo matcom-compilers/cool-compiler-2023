@@ -1,5 +1,4 @@
 from COOL.nodes import Node
-# from COOL.semantic.visitor import Visitor
 
 
 class GetVariable(Node):
@@ -7,6 +6,7 @@ class GetVariable(Node):
         self.id = id
         super().__init__(line, column)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -20,6 +20,7 @@ class Initialization(Node):
         self.expr = expr
         super().__init__(line, column)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -32,6 +33,7 @@ class Declaration(Node):
         self.type = type
         super().__init__(line, column)
     
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -44,6 +46,7 @@ class Assign(Node):
         self.id = id
         super().__init__(line, column)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 

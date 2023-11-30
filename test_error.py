@@ -60,13 +60,29 @@ def test_codegen(cls, out, inp):
         break
 
 
+def test_codegen_file(file):
+    loaded_file = load_file(file)
+    print(f"Testing {Path(file).name}:\n")
+    
+    lexer = CoolLexer()
+    tokens, errors = lexer.tokenize(loaded_file)
+
+    parser = CoolParser()
+    ast, errors = parser.parse(tokens)
+
+    # errors = Semantic.check(ast)
+
+    mips_script = Codegen.codegen(ast)
+    print(mips_script)
+
+
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
-    folder = "./tests/parser/"
-    files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
-    cls = [f for f in files if f.endswith(".cl")]
-    out = [f[:-3] + "_error.txt" for f in cls]
-    test_errors(cls, out)
+    # folder = "./tests/parser/"
+    # files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
+    # cls = [f for f in files if f.endswith(".cl")]
+    # out = [f[:-3] + "_error.txt" for f in cls]
+    # test_errors(cls, out)
 
     # Testing codegen
     # folder = "./tests/codegen/"
@@ -75,3 +91,7 @@ if __name__ == "__main__":
     # out = [f[:-3] + "_output.txt" for f in cls]
     # inp = [f[:-3] + "_input.txt" for f in cls]
     # test_codegen(cls, out, inp)
+
+    # Testing one file
+    file = "./t/a.cl"
+    test_codegen_file(file)

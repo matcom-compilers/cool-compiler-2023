@@ -28,7 +28,7 @@ class Class(Node):
         self.inherits_instance: Class = None
         super().__init__(line,column)
     
-    def codegen(self, mips_visitor: MipsVisitor) -> Tuple[List[str], List[str]]:
+    def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_class(self)
         for attribute in self.attributes:
             attribute.codegen(mips_visitor)

@@ -15,6 +15,7 @@ class Dispatch(Node):
     def check(self, visitor:Visitor_Class):
         return visitor.visit_dispatch(self)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -27,6 +28,7 @@ class CodeBlock(Node):
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -40,6 +42,7 @@ class If(Node):
     def check(self):
         raise NotImplementedError()
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -53,6 +56,7 @@ class While(Node):
     def check(self):
         raise NotImplementedError()
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -66,6 +70,7 @@ class Let(Node):
     def check(self):
         raise NotImplementedError()
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -79,6 +84,7 @@ class Case(Node):
     def check(self):
         raise NotImplementedError()
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -91,6 +97,7 @@ class New(Node):
     def check(self,visitor:Visitor_Class):
         return visitor.visit_new(self)
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()
 
@@ -103,5 +110,6 @@ class Isvoid(Node):
     def check(self):
         raise NotImplementedError()
 
+    # TODO
     def codegen(self):
         raise NotImplementedError()

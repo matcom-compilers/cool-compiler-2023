@@ -17,7 +17,7 @@ TRUE = "true"
 
 FALSE = "false"
 
-NEWLINE = "\n"
+NEWLINE = "\\n"
 
 INDENT = "    "
 
@@ -29,13 +29,13 @@ class Types(Enum):
     STRING = ".asciiz"
 
 DATA_SECTION =\
-"""
+f"""
 # Data section
 .data
-newline:  .asciiz  "\n"
-null:     .word    0
-true:     .byte    1
-false:    .byte    0
+newline:  .asciiz  "{NEWLINE}"
+{NULL}:     .word    0
+{TRUE}:     .byte    1
+{FALSE}:    .byte    0
 """
 
 SET_VAR_IN_DATA_SECTION=\
@@ -48,24 +48,32 @@ TEXT_SECTION =\
 .text
 
 .globl main
-main:\n
+main:
 """
 
 REQUEST_MEMORY=\
-"""
-    # Request memory
+"""    # Request memory
     li $a0, {memory}
     li $v0, 9
-    syscall
-    mv ${register}, $v0
+    syscall"""
+
+PUSH_STACK=\
+"""    # Push stack
+    addiu $sp, $sp, -4
+    sw ${register}, 0($sp)
+"""
+
+POP_STACK=\
+"""    # Pop stack
+    lw ${register}, 0($sp)
+    addiu $sp, $sp, 4
 """
 
 STORE_DATA=\
 """
     # Store data
     li $t0, {data}
-    sw $t0, {offset}(${register})
-"""
+    sw $t0, {offset}(${register})"""
 
 LOAD_DATA=\
 """
@@ -84,7 +92,7 @@ CREATE_CLASS=\
 
 CREATE_FUNCTION=\
 """
-# Create function {function_name}
+# Create function {function_name} from class {class_name}
 {function_name}:
 """
 
