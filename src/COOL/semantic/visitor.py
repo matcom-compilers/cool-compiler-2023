@@ -217,8 +217,9 @@ class Visitor_Class:
                 elif len(class_meths[node.id].formals)>0:
                     for i, formal in enumerate(class_meths[node.id].formals):
                         type = self.all_types.get(node.exprs[i].check(self))
+                        if not type: type = self.temporal_scope.get(node.exprs[i])
                         if not type: type = self.basic_types.get(node.exprs[i].check(self))
-
+                        
                         if not(type.type == formal.type) and not (formal.type in type.lineage):
                             #TODO search this error
                              self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
@@ -232,9 +233,9 @@ class Visitor_Class:
         
             
     def visit_method(self, node):
-        self.temporal_scope = node.formals        
+        self.temporal_scope = {i.id:i for i in node.formals}     
         type = node.expr.check(self)
-        self.temporal_scope = []
+        self.temporal_scope = {}
         return type
 
     def visit_code_block(self, node):
@@ -245,9 +246,8 @@ class Visitor_Class:
     # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
     def search_variable_in_scope(self, id):
-        for formal in self.temporal_scope:
-            if formal.id == id:
-                return formal
+        if self.temporal_scope.get(id):
+            return self.temporal_scope.get(id)
         for attr in self.scope['attributes'].values():
             if attr.id == id:
                 return attr
@@ -306,7 +306,8 @@ class Visitor_Class:
         self.visit_dispatch(node)
 
     def visit_get_variable(self, node):
-        #FIX copilot
+        if node.id in self.temporal_scope.keys():
+            return self.temporal_scope[node.id].type
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:

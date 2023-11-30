@@ -68,6 +68,7 @@ if __name__ == "__main__":
     folder = "./tests/lauren/passed/"
     # folder = "./tests/lauren/yet/"
     # folder = "./tests/lexer/"
+
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]
     out = [f[:-3] + "_error.txt" for f in cls]
