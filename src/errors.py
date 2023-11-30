@@ -21,3 +21,6 @@ class SemanticError(Error):
 
 class AttributeError(Error):
     pass
+
+class LexicographicError(Error):
+    pass
