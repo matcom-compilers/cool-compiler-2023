@@ -143,25 +143,3 @@ new:
 
 
 """
-
-
-class A:
-    def visit_program(self, _program):
-        def decorator(func):
-            def wrapper(*args, **kwargs):
-                print(_program)
-                print(1)
-                result = func(*args, **kwargs)
-                print(2)
-                return result
-            return wrapper
-        return decorator
-
-a = A()
-
-@a.visit_program("a")
-def b():
-    print(3)
-    return 4
-
-b()
