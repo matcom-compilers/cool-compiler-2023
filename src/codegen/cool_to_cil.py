@@ -3,14 +3,19 @@ from typing import Optional
 
 from codegen import cil_ast as cil
 from parsing.ast import (
+    AssignNode,
     AttributeNode,
+    BlockNode,
     BooleanNode,
     ClassNode,
+    IdentifierNode,
     IntegerNode,
     MethodNode,
     ProgramNode,
 )
 from semantic.context import Context
+from semantic.scope import Scope
+from semantic.types import SelfType, Type
 from utils.visitor import Visitor
 
 
@@ -20,7 +25,7 @@ class COOL2CIL(Visitor):
         self.dotdata = []
         self.dotcode = []
 
-        self.type = ""
+        self.type = SelfType()
         self.params = []
         self.locals = []
         self.instructions = []
@@ -31,7 +36,7 @@ class COOL2CIL(Visitor):
         self.label = defaultdict(lambda: 0)
 
     def visit__ProgramNode(
-        self, node: ProgramNode, context: Context
+        self, node: ProgramNode, context: Context, scope: Scope
     ) -> cil.ProgramNode:
         self.attrs, self.methods = dict(), dict()
         for type_name, ctype in context.types.items():
@@ -100,19 +105,19 @@ class COOL2CIL(Visitor):
 
         self.register_builtins(context.types)
 
-        for cool_class in node.classes:
-            cool_class.accept(self, context)
+        for scope_index, cool_class in enumerate(node.classes):
+            cool_class.accept(self, context=context, scope=scope.children[scope_index])
 
         return cil.ProgramNode(self.dottypes, self.dotdata, self.dotcode)
 
-    def visit__ClassNode(self, node: ClassNode, context: Context):
-        self.type = node.name
+    def visit__ClassNode(self, node: ClassNode, context: Context, scope: Scope):
+        self.type = context.get_type(node.name)
         self.clear_state()
         self_local = self.add_local("self")
 
-        self.instructions.append(cil.AllocateNode(self.type, self_local))
+        self.instructions.append(cil.AllocateNode(self.type.name, self_local))
 
-        for attr, (i, htype) in self.attrs[self.type].items():
+        for attr, (i, htype) in self.attrs[self.type.name].items():
             attr_local = self.add_local(attr)
             self.instructions.append(cil.ArgNode(self_local))
             self.instructions.append(
@@ -126,7 +131,7 @@ class COOL2CIL(Visitor):
 
         self.dotcode.append(
             cil.FunctionNode(
-                self.get_func_id(self.type, "__init"),
+                self.get_func_id(self.type.name, "__init"),
                 self.params,
                 self.locals,
                 self.instructions,
@@ -134,36 +139,103 @@ class COOL2CIL(Visitor):
         )
 
         for feat in node.features:
-            function = feat.accept(self, context)
+            function = feat.accept(self, context=context, scope=scope)
             self.dotcode.append(function)
 
     def visit__AttributeNode(
-        self, node: AttributeNode, context: Context
+        self, node: AttributeNode, context: Context, scope: Scope
     ) -> cil.FunctionNode:
         self.clear_state()
         self.add_param("self")
         if node.init is not None:
-            sid = node.init.accept(self, context=context)
-            if node.attr_type in ["Int", "Bool", "String"]:
+            attr_type = scope.find_variable_or_attribute(node.name, self.type)
+            assert attr_type is not None  # Semantic correctness
+            sid = node.init.accept(self, context=context, scope=scope)
+            if attr_type.type.name in ["Int", "Bool", "String"]:
                 sid = self.register_new(node.attr_type, sid)  # boxing
         else:
             sid = self.register_default(node.attr_type)
         self.instructions.append(cil.ReturnNode(sid))
         return cil.FunctionNode(
-            self.get_func_id(self.type, f"{node.attr_type}___init"),
+            self.get_func_id(self.type.name, f"{node.attr_type}___init"),
             self.params,
             self.locals,
             self.instructions,
         )
 
-    def visit__MethodNode(self, node: MethodNode, context: Context) -> cil.FunctionNode:
-        pass
+    def visit__MethodNode(
+        self, node: MethodNode, context: Context, scope: Scope
+    ) -> cil.FunctionNode:
+        self.clear_state()
+        self.add_param("self")
+        for formal in node.formals:
+            self.add_param(formal.name)
 
-    def visit__IntegerNode(self, node: IntegerNode, context: Context):
+        sid = node.body.accept(
+            self, context=context, scope=scope.get_child(self.type.name, node.name)
+        )
+        self.instructions.append(cil.ReturnNode(sid))
+        return cil.FunctionNode(
+            self.get_func_id(self.type.name, node.name),
+            self.params,
+            self.locals,
+            self.instructions,
+        )
+
+    def visit__BlockNode(self, node: BlockNode, context: Context, scope: Scope):
+        sid = None
+        for expr in node.expressions:
+            sid = expr.accept(self, context=context, scope=scope)
+        assert sid is not None  # Semantic correct => Block nonempty
+        return sid
+
+    def visit__AssignNode(self, node: AssignNode, context: Context, scope: Scope):
+        rhs_local = node.expr.accept(self, context=context, scope=scope)
+
+        lhs_data = scope.find_variable_or_attribute(node.name, self.type)
+        assert lhs_data is not None
+        if lhs_data.type.name in ["Int", "Bool", "String"]:
+            rhs_local = self.register_new(lhs_data.type, rhs_local)  # boxing
+
+        local_sid = self.get_local(node.name)
+        if any(local_sid == l.name for l in self.locals):
+            self.instructions.append(cil.AssignNode(local_sid, rhs_local))
+            return local_sid
+
+        param_sid = self.get_param(node.name)
+        if any(param_sid == p.name for p in self.params):
+            self.instructions.append(cil.AssignNode(param_sid, rhs_local))
+            return param_sid
+
+        attr_id = self.get_attr_id(self.type.name, node.name)
+        self.instructions.append(
+            cil.SetAttrNode(self.get_param("self"), attr_id, rhs_local)
+        )
+        return rhs_local
+
+    def visit__IntegerNode(self, node: IntegerNode, context: Context, scope: Scope):
         return self.register_int(int(node._value))
 
-    def visit__BooleanNode(self, node: BooleanNode, context: Context):
+    def visit__BooleanNode(self, node: BooleanNode, context: Context, scope: Scope):
         return self.register_int(1 if node.value == "true" else 0)
+
+    def visit__IdentifierNode(
+        self, node: IdentifierNode, context: Context, scope: Scope
+    ):
+        local_sid = self.get_local(node.name)
+        if any(local_sid == l.name for l in self.locals):
+            return local_sid
+
+        param_sid = self.get_param(node.name)
+        if any(param_sid == p.name for p in self.params):
+            return param_sid
+
+        local_sid = self.add_local()
+        attr_id = self.get_attr_id(self.type.name, node.name)
+        self.instructions.append(
+            cil.GetAttrNode(self.get_param("self"), attr_id, local_sid)
+        )
+        return local_sid
 
     def get_func_id(self, type_name: str, method_name: str):
         return f"{type_name}__{method_name}"
@@ -190,6 +262,10 @@ class COOL2CIL(Visitor):
         param = self.get_param(name)
         self.params.append(cil.ParamNode(param))
         return param
+
+    def get_attr_id(self, type_name: str, name: str):
+        attr_id, _ = self.attrs[type_name][name]
+        return attr_id
 
     def add_data(self, name: str, value: str):
         for data in self.dotdata:

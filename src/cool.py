@@ -129,7 +129,7 @@ def main():
     ######
 
     cool_to_cil = COOL2CIL()
-    cil_program = cool_to_cil.visit(program, context=type_checker.context)
+    cil_program = cool_to_cil.visit(program, context=type_checker.context, scope=scope)
 
     print(cil_program)
 

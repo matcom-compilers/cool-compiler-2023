@@ -71,3 +71,9 @@ class Scope:
         else:
             for child in self.children:
                 child.child_find_variable(vname)
+
+    def get_child(self, class_name, method_name):
+        for child in self.children:
+            if child.class_name == class_name and child.method_name == method_name:
+                return child
+        return None
