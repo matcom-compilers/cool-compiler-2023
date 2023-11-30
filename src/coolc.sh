@@ -1,3 +1,4 @@
+#! /usr/bin/sh
 # Incluya aquí las instrucciones necesarias para ejecutar su compilador
 
 INPUT_FILE=$1

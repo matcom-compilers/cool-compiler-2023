@@ -70,7 +70,7 @@ class CILVisitor(Visitor):
         self.types[node.name] = node
 
         self.data_section[node.name] = mips.DataNode(
-            mips.LabelNode(node.name),
+            mips.LabelInstructionNode(node.name),
             ".word",
             [mips.LabelNode(f"{method.id}") for method in node.methods],
         )
@@ -79,14 +79,13 @@ class CILVisitor(Visitor):
         pass
 
     def visit__FunctionNode(self, node: cil.FunctionNode, *args, **kwargs):
-        print(f"VISIT FUNCTION: {node.name}")
         instructions = []
 
         locals_save, params_save = self.locals, self.params
         self.locals, self.params = [], []
         self.clean_pushed_args()
 
-        instructions.append(mips.LabelNode(node.name))
+        instructions.append(mips.LabelInstructionNode(node.name))
 
         self.memory_manager.save()
         fp_save = self.memory_manager.get_unused_register()
@@ -475,7 +474,7 @@ class CILVisitor(Visitor):
 
         instructions.append(mips.LoadImmediateNode(reg1, 0))
 
-        instructions.append(mips.LabelNode(loop))
+        instructions.append(mips.LabelInstructionNode(loop))
         instructions.append(
             mips.LoadByteNode(reg2, mips.MemoryAddressRegisterNode(ARG_REGISTERS[0], 0))
         )
@@ -484,7 +483,7 @@ class CILVisitor(Visitor):
         instructions.append(mips.AddiNode(ARG_REGISTERS[0], ARG_REGISTERS[0], 1))
         instructions.append(mips.AddiNode(reg1, reg1, 1))
         instructions.append(mips.JumpNode(loop))
-        instructions.append(mips.LabelNode(exit))
+        instructions.append(mips.LabelInstructionNode(exit))
 
         dest_dir = self.search_mem(node.dest)
         # Save Calculated Length
@@ -601,7 +600,7 @@ class CILVisitor(Visitor):
             )
         )
 
-        instructions.append(mips.LabelNode(loop1))
+        instructions.append(mips.LabelInstructionNode(loop1))
         instructions.append(
             mips.LoadByteNode(reg1, mips.MemoryAddressRegisterNode(ARG_REGISTERS[1], 0))
         )
@@ -614,9 +613,9 @@ class CILVisitor(Visitor):
         instructions.append(mips.AddiNode(V0_REG, V0_REG, 1))
         instructions.append(mips.AddiNode(ARG_REGISTERS[1], ARG_REGISTERS[1], 1))
         instructions.append(mips.JumpNode(loop1))
-        instructions.append(mips.LabelNode(exit1))
+        instructions.append(mips.LabelInstructionNode(exit1))
 
-        instructions.append(mips.LabelNode(loop2))
+        instructions.append(mips.LabelInstructionNode(loop2))
         instructions.append(
             mips.LoadByteNode(reg1, mips.MemoryAddressRegisterNode(ARG_REGISTERS[2], 0))
         )
@@ -627,7 +626,7 @@ class CILVisitor(Visitor):
         instructions.append(mips.AddiNode(V0_REG, V0_REG, 1))
         instructions.append(mips.AddiNode(ARG_REGISTERS[2], ARG_REGISTERS[2], 1))
         instructions.append(mips.JumpNode(loop2))
-        instructions.append(mips.LabelNode(exit2))
+        instructions.append(mips.LabelInstructionNode(exit2))
 
         dest_dir = self.search_mem(node.dest)
         instructions.append(
@@ -679,7 +678,7 @@ class CILVisitor(Visitor):
         )
         instructions.append(mips.AddNode(ARG_REGISTERS[1], ARG_REGISTERS[1], reg4))
 
-        instructions.append(mips.LabelNode(loop))
+        instructions.append(mips.LabelInstructionNode(loop))
         instructions.append(
             mips.LoadByteNode(reg1, mips.MemoryAddressRegisterNode(ARG_REGISTERS[1], 0))
         )
@@ -692,7 +691,7 @@ class CILVisitor(Visitor):
         instructions.append(mips.AddiNode(ARG_REGISTERS[1], ARG_REGISTERS[1], 1))
         instructions.append(mips.AddiNode(reg3, reg3, -1))
         instructions.append(mips.JumpNode(loop))
-        instructions.append(mips.LabelNode(exit))
+        instructions.append(mips.LabelInstructionNode(exit))
 
         instructions.append(mips.LoadImmediateNode(reg1, 0))
         instructions.append(
@@ -768,7 +767,7 @@ class CILVisitor(Visitor):
         return instructions
 
     def visit__LabelNode(self, node: cil.LabelNode, *args, **kwargs):
-        return [mips.LabelNode(node.name)]
+        return [mips.LabelInstructionNode(node.name)]
 
     def visit__AssignNode(self, node: cil.AssignNode, *args, **kwargs):
         instructions = []
@@ -800,7 +799,7 @@ class CILVisitor(Visitor):
             return index * WORD_SIZE
         except ValueError:
             index = self.params.index(id)
-            print(self.params)
+
             return (index - len(self.params)) * WORD_SIZE
 
     def get_loop_count(self):

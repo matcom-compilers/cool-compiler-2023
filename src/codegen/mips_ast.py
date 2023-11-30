@@ -55,6 +55,13 @@ class InstructionNode(MipsAstNode):
     pass
 
 
+class LabelInstructionNode(InstructionNode):
+    """Representa una etiqueta en MIPS."""
+
+    def __init__(self, label):
+        self.label = label
+
+
 class SyscallNode(InstructionNode):
     """Representa la instrucción 'syscall' en MIPS."""
 
