@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple, Optional
 
-from .types import StdType, _TypeEnvironment, inherits, normalize
+from .types import StdType, TypeEnvironment, inherits, normalize
 
 
 class IAST(ABCMeta):
     @abstractmethod
-    def check_type(self, te: _TypeEnvironment) -> str:
+    def check_type(self, te: TypeEnvironment) -> str:
         raise NotImplementedError()
 
 
@@ -85,7 +85,6 @@ class ConditionalExpressionAST(IAST):
             return self.then_expr.check_type()
         else:
             return self.else_expr.check_type()
-        
 
 
 class LoopExpressionAST(IAST):
@@ -127,7 +126,7 @@ class VarsInitAST(IAST):
 
         return self.body.check_type(extended_te)
 
-    def _normalize(self, te: _TypeEnvironment):
+    def _normalize(self, te: TypeEnvironment):
         self.var_init_list = map(
             lambda t: (t[0], normalize(t[1], te), t[2]),
             self.var_init_list

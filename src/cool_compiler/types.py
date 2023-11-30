@@ -10,7 +10,7 @@ class StdType:
     Object = "Object"
 
 
-class _TypeEnvironment:
+class TypeEnvironment:
     def __init__(self, type: str):
         self.type = type
         self._object_types: Mapping[str, str] = {}
@@ -29,7 +29,7 @@ class _TypeEnvironment:
         self._method_types[name] = type
 
     def clone(self):
-        te = _TypeEnvironment(self.type)
+        te = TypeEnvironment(self.type)
 
         te._object_types = dict(**self._object_types)
         for key, value in self._method_types.items():
@@ -41,7 +41,7 @@ class _TypeEnvironment:
         return te
 
 
-_TYPE_TO_TE: Mapping[str, '_TypeEnvironment'] = {}
+_TYPE_TO_TE: Mapping[str, 'TypeEnvironment'] = {}
 _TYPE_TO_PARENTTYPE: Mapping[str, str] = {}
 _SELF_TYPE = 'SELF_TYPE'
 
@@ -50,7 +50,7 @@ def type_env_of(type: str):
     if type in _TYPE_TO_TE:
         return _TYPE_TO_TE[type]
 
-    te = _TypeEnvironment(type)
+    te = TypeEnvironment(type)
     _TYPE_TO_TE[type] = te
     return te
 
@@ -105,5 +105,5 @@ def union_type(types: List[str]):
     return least_type if least_type != None else StdType.Object
 
 
-def normalize(type: str, te: _TypeEnvironment):
+def normalize(type: str, te: TypeEnvironment):
     return type if type != _SELF_TYPE else te.type
