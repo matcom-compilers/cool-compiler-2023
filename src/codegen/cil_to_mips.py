@@ -66,8 +66,11 @@ class CILVisitor(Visitor):
             [mips.LabelNode(f"{method.id}") for method in node.methods],
         )
 
-    def visit__FunctionNode(self, node, *args, **kwargs):
+    def visit__DataNode(self, node: cil.DataNode):
         pass
+
+    def visit__FunctionNode(self, node, *args, **kwargs):
+        return []
 
     def visit__ParamNode(self, node, *args, **kwargs):
         pass  # Procesar el nodo ParamNode

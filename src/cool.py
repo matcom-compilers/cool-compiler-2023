@@ -139,7 +139,8 @@ def main():
     mips_codegen_visitor = MipsCodeGenerator()
     code = mips_program.accept(mips_codegen_visitor)
 
-    print(code)
+    with open(options.output_file, "w") as f:
+        f.write(code)
 
     exit(exit_code)
 
