@@ -1,4 +1,4 @@
-from typing import Mapping, List, Tuple, Type
+from typing import Mapping, List, Tuple, Optional
 from collections import deque
 
 
@@ -10,9 +10,9 @@ class StdType:
     Object = "Object"
 
 
-class _TypeEnvironment:
+class TypeEnvironment:
     def __init__(self, type: str):
-        self._type = type
+        self.type = type
         self._object_types: Mapping[str, str] = {}
         self._method_types: Mapping[str, Tuple[List[str], str]] = {}
 
@@ -28,27 +28,49 @@ class _TypeEnvironment:
     def set_method_type(self, name: str, type: str):
         self._method_types[name] = type
 
+    def clone(self):
+        te = TypeEnvironment(self.type)
 
-TypeEnvironment = Type[_TypeEnvironment]
+        te._object_types = dict(**self._object_types)
+        for key, value in self._method_types.items():
+            te._method_types[key] = (
+                value[0].copy(),
+                value[1]
+            )
+
+        return te
 
 
-_TYPE_TO_TE: Mapping[str, '_TypeEnvironment'] = {}
+_TYPE_TO_TE: Mapping[str, 'TypeEnvironment'] = {}
+_TYPE_TO_PARENTTYPE: Mapping[str, str] = {}
+_SELF_TYPE = 'SELF_TYPE'
 
 
 def type_env_of(type: str):
     if type in _TYPE_TO_TE:
         return _TYPE_TO_TE[type]
 
-    te = _TypeEnvironment(type)
+    te = TypeEnvironment(type)
     _TYPE_TO_TE[type] = te
     return te
 
 
-_TYPE_TO_PARENTTYPE: Mapping[str, str] = {}
+def make_inherit(type: str, parent_type: str):
+    _TYPE_TO_PARENTTYPE[type] = parent_type
 
 
 def inherits(type: str, parent_type: str):
-    _TYPE_TO_PARENTTYPE[type] = parent_type
+    if parent_type == StdType.Object:
+        return True
+
+    t = type
+    while t != None and t != StdType.Object:
+        if t == parent_type:
+            return True
+
+        t = _TYPE_TO_PARENTTYPE[t]
+
+    return False
 
 
 def union_type(types: List[str]):
@@ -72,7 +94,7 @@ def union_type(types: List[str]):
 
         ancestors_list.append(ancestors)
 
-    least_type = StdType.Object
+    least_type: Optional[str] = None
     for types in zip(*ancestors_list):
         type_set = set(types)
         if len(type_set) == 1:
@@ -80,4 +102,8 @@ def union_type(types: List[str]):
         else:
             break
 
-    return least_type
+    return least_type if least_type != None else StdType.Object
+
+
+def normalize(type: str, te: TypeEnvironment):
+    return type if type != _SELF_TYPE else te.type
