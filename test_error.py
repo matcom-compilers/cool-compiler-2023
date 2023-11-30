@@ -55,7 +55,7 @@ def test_codegen(cls, out, inp):
 
         errors = Semantic.check(ast)
 
-        mips_script = Codegen.execute(ast)
+        mips_script = Codegen.codegen(ast)
         print(mips_script)
         break
 

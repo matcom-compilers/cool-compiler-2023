@@ -14,9 +14,8 @@ class Dispatch(Node):
 
     def check(self, visitor:Visitor_Class):
         return visitor.visit_dispatch(self)
-        
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -27,9 +26,8 @@ class CodeBlock(Node):
 
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
-        
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 class If(Node):

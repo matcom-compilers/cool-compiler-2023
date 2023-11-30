@@ -43,7 +43,7 @@ if __name__ == "__main__":
     errors = Semantic.check(ast)
     check_errors(errors)
 
-    mips_code = Codegen.execute(ast)
+    mips_code = Codegen.codegen(ast)
     save_output(os.path.join(Path(__file__).parent.parent, "tests", "codegen", output_path), mips_code)
     
     exit(0)
