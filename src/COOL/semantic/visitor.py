@@ -224,27 +224,32 @@ class Visitor_Class:
         if not self.all_types.get(node.type):
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {node.type}.'))
             return None
-        class_meths = self.all_types[node.type].methods_dict 
-        if not node.id in class_meths.keys():
-            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+        static_type = node.expr.check(self)
+        if not static_type:
             return None
-        elif not len(class_meths[node.id].formals) == len(node.exprs):
-            self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
+        if not static_type in self.all_types.keys():
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {static_type}.'))
             return None
-        elif len(class_meths[node.id].formals)>0:
-            for i, formal in enumerate(class_meths[node.id].formals):
-                type = self.all_types.get(node.exprs[i].check(self))
-                if not type: type = self.temporal_scope.get(node.exprs[i])
-                if not type: type = self.basic_types.get(node.exprs[i].check(self))
-                
-                if not(type.type == formal.type) and not (formal.type in type.lineage):
-                    self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
-                    return None
-        return class_meths[node.id].type
+        static_type = self.all_types.get(static_type)
+        disp_type = self.all_types.get(node.type)
+
+        # if not (static_type.type == disp_type.type) and not (static_type.type in disp_type.lineage):
+        #     #TODO search this error
+        #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
+        #     return None
+        
+        if not node.id in static_type.methods_dict.keys() or not node.id in disp_type.methods_dict.keys():
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
+            return None
+        
+        node.expr = disp_type.type
+        node.type = None
+        node.check(self)
+
 
 
     def visit_dispatch_expr(self,node):
-        expr_type = node.expr.check(self)
+        expr_type = node.expr if isinstance(node.expr, str) else node.expr.check(self)
         if expr_type:
             if not expr_type in self.all_types.keys():
                 #TODO search this error
