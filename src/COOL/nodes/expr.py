@@ -105,3 +105,13 @@ class Isvoid(Node):
 
     def codegen(self):
         raise NotImplementedError()
+    
+class Self(Node):
+    def __init__(self, line: int, column: int):
+        super().__init__(line, column)
+
+    def check(self, visitor):
+        return visitor.visit_self(self)
+
+    def codegen(self):
+        raise NotImplementedError()

@@ -50,7 +50,8 @@ class Class(Node):
             'lineage': self.lineage,
             'all_types':visitor.types,
             'inheritance_tree':visitor.tree,
-            'basic_types':visitor.basic_types
+            'basic_types':visitor.basic_types,
+            'type': self.type
             })
         for feature in self.features:
             feature.check(self.class_visitor)
