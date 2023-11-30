@@ -82,14 +82,8 @@ class ConditionalExpressionAST(IAST):
         if self.condition.check_type() is not StdType.Bool:
             raise TypeError()
         else:
-            try:
-                true = self.then_expr.check_type()
-            except:
-                raise TypeError('Then condition has an invalid type')
-            try:
-                false = self.else_expr.check_type()
-            except:
-                raise TypeError('Else condition has an invalid type')
+            true = self.then_expr.check_type()
+            false = self.else_expr.check_type()
             return true + ' ' + false
 
 class LoopExpressionAST(IAST):
@@ -98,7 +92,11 @@ class LoopExpressionAST(IAST):
         self.body = body
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        if self.condition.check_type() != 'Bool':
+            raise TypeError('Loop condition must be a boolean.')
+        else:
+            self.body.check_type()
+            return StdType.Object
 
 
 class BlockExpressionAST(IAST):
