@@ -11,6 +11,9 @@ class Object(Node):
         self.value = value
         super().__init__(line, column)
 
+    def check(self,visitor):
+        return 'Object'
+
 
 class Interger(Object):
     def __init__(self, line: int, column: int, value: Any) -> None:
@@ -19,8 +22,8 @@ class Interger(Object):
     def codegen(self, mips_visitor: MipsVisitor):
         return f"    la  $t0, {self.value}"
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self,visitor):
+        return 'Int'
 
 
 class String(Object):
@@ -34,8 +37,9 @@ class String(Object):
         )
         return f"    la  $t0, {str_name}"
 
-    def check(self):
-        raise NotImplementedError()
+    
+    def check(self,visitor):
+        return 'String'
 
 
 class Boolean(Object):
@@ -45,5 +49,5 @@ class Boolean(Object):
     def codegen(self, mips_visitor: MipsVisitor):
         return f"    la  $t0, {TRUE if self.value else FALSE}"
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self,visitor):
+        return 'Bool'

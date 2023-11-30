@@ -1,14 +1,15 @@
 from typing import List
 
-from COOL.semantic.visitor import Visitor
 from COOL.codegen.mips_visitor import MipsVisitor
+from COOL.semantic.visitor import Visitor_Program
+
 from COOL.nodes import Node
 from COOL.nodes.classdef import Class
 
 
 class Program(Node):
     def __init__(self, classes: List[Class]) -> None:
-        self.visitor = Visitor()
+        self.visitor = Visitor_Program()
         self.classes = classes
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:   

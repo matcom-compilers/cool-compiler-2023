@@ -1,7 +1,6 @@
 from typing import List
 
 from COOL.nodes import Node
-from COOL.semantic.visitor import Visitor
 from COOL.codegen.mips_visitor import MipsVisitor
 
 from COOL.nodes.codegen_rules import Types
@@ -33,21 +32,22 @@ class Method(Node):
         # TODO: execute expr
         return data, text
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         visitor.visit_method(self)
 
 
 class ExecuteMethod(Node):
     def __init__(self, line: int, column: int, id: str, exprs: List[Node]) -> None:
         self.exprs: List[Node] = exprs
+        self.expr: Node = None
         self.id = id
         super().__init__(line, column)
 
     def codegen(self):
         raise NotImplementedError()
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self,visitor):
+        visitor.visit_execute_method(node = self)
 
 
 class Attribute(Node):
@@ -55,7 +55,10 @@ class Attribute(Node):
         self.id = id
         super().__init__(line, column)
 
-    def check(self, visitor: Visitor):
+    def execute(self):
+        return [], []
+
+    def check(self, visitor):
         visitor.visit_attribute(self)
 
 class AttributeDeclaration(Attribute):
@@ -74,8 +77,9 @@ class AttributeDeclaration(Attribute):
         mips_visitor.class_memory += 4
         mips_visitor.unvisit_attribute(self)
 
-    def check(self, visitor: Visitor):
-        visitor.visit_attribute_declaration(self)
+    def check(self, visitor):
+        ...
+        # visitor.visit_attribute_declaration(self)
 
 
 class AttributeInicialization(Attribute):
@@ -109,18 +113,18 @@ class AttributeInicialization(Attribute):
         mips_visitor.class_memory += 4
         mips_visitor.unvisit_attribute(self)
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         visitor.visit_attribute_inicialization(self)
 
 
 class Formal(Node):
-    def __init__(self, line: int, column: int, id: str, type: str) -> None:
+    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
         super().__init__(line, column)
 
-    def codegen(self, mips_visitor: MipsVisitor):
+    def execute(self):
         raise NotImplementedError()
 
-    def check(self, visitor: Visitor):
+    def check(self, visitor):
         raise NotImplementedError()

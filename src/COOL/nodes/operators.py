@@ -5,8 +5,10 @@ from COOL.codegen.mips_visitor import MipsVisitor
 
 
 class UnaryOperator(Node):
-    def __init__(self, line: int, column: int, expr: Node) -> None:
+    def __init__(self, line: int, column: int, expr: Node, possibles_types:list, return_type:str) -> None:
         self.expr: Node = expr
+        self.possibles_types = possibles_types
+        self.return_type = return_type
         super().__init__(line, column)
 
     def codegen(self, mips_visitor: MipsVisitor, out_register: str="$t0"):
@@ -18,14 +20,17 @@ class UnaryOperator(Node):
     def operator(self, out_register: str="$t0") -> str:
         pass
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self, visitor):
+        return visitor.visit_unary_operator(self)
 
 
 class Operator(Node):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: int, expr1: Node, expr2: Node, possibles_types:list, return_type:str) -> None:
         self.expr1: Node = expr1
         self.expr2: Node = expr2
+        self.possibles_types = possibles_types
+        self.return_type = return_type
+
         super().__init__(line, column)
 
     def codegen(self, mips_visitor: MipsVisitor, out_register: str="$t0"):
@@ -38,13 +43,12 @@ class Operator(Node):
     def operator(self, out_register: str="$t0") -> str:
         pass
 
-    def check(self):
-        raise NotImplementedError()
-
+    def check(self,visitor):
+        return visitor.visit_operator(self)
 
 class Add(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
     def operator(self, out_register: str="$t0"):
         return f"    add {out_register}, $t0, $t1"
@@ -52,7 +56,7 @@ class Add(Operator):
 
 class Sub(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
     def operator(self, out_register: str="$t0"):
         return f"    sub {out_register}, $t0, $t1"
@@ -60,7 +64,7 @@ class Sub(Operator):
 
 class Div(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
     def operator(self, out_register: str="$t0"):
         return f"    div {out_register}, $t0, $t1"
@@ -68,7 +72,9 @@ class Div(Operator):
 
 class Times(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        self.possibles_types = ['Int']
+        self.return_type = 'Int'
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
 
     def operator(self, out_register: str="$t0"):
         return f"    mul {out_register}, $t0, $t1"
@@ -76,7 +82,9 @@ class Times(Operator):
 
 class Less(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        self.possibles_types = ['Int']
+        self.return_type = 'Bool'
+        super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
     def operator(self, out_register: str="$t0"):
         return f"    slt {out_register}, $t0, $t1"
@@ -84,7 +92,8 @@ class Less(Operator):
 
 class LessEqual(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+
+        super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
     def operator(self, out_register: str="$t0"):
         return f"    sle {out_register}, $t0, $t1"
@@ -92,7 +101,8 @@ class LessEqual(Operator):
 
 class Equal(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2)
+        
+        super().__init__(line, column, expr1, expr2, ['All'],'Bool')
 
     def operator(self, out_register: str="$t0"):
         return f"    seq {out_register}, $t0, $t1"
@@ -100,7 +110,7 @@ class Equal(Operator):
 
 class Not(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
-        super().__init__(line, column, expr)
+        super().__init__(line, column, expr, ['Bool'],'Bool')
 
     def operator(self, out_register: str="$t0"):
         # TODO: check this
@@ -109,7 +119,7 @@ class Not(UnaryOperator):
 
 class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
-        super().__init__(line, column, expr)
+        super().__init__(line, column, expr, ['Int'],'Int')
 
     def operator(self, out_register: str="$t0"):
         # TODO: check this

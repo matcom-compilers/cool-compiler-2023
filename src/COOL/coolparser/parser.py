@@ -18,10 +18,10 @@ from COOL.nodes.operators import Bitwise
 
 from COOL.nodes.program import Program
 from COOL.nodes.classdef import Class
-from COOL.nodes.feature import Formal
 from COOL.nodes.feature import Attribute
 from COOL.nodes.feature import AttributeDeclaration
 from COOL.nodes.feature import AttributeInicialization
+from COOL.nodes.feature import Formal
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import ExecuteMethod
 from COOL.nodes.variable import GetVariable
@@ -32,12 +32,13 @@ from COOL.nodes.object import Interger
 from COOL.nodes.object import String
 from COOL.nodes.object import Boolean
 from COOL.nodes.expr import If
+from COOL.nodes.expr import CodeBlock
 from COOL.nodes.expr import While
 from COOL.nodes.expr import Let
 from COOL.nodes.expr import Case
 from COOL.nodes.expr import New
 from COOL.nodes.expr import Isvoid
-from COOL.nodes.expr import Expr
+from COOL.nodes.expr import Dispatch
 
 
 # TODO: fix return clases
@@ -62,7 +63,7 @@ class CoolParser(Parser):
        ('nonassoc', '@'),
        ('nonassoc', 'NUMBER'),
        ('nonassoc', '(',')'),
-       ('nonassoc', '.'),
+       ('left', '.'),
     )
 
     @_('program')
@@ -162,6 +163,14 @@ class CoolParser(Parser):
             type=p.TYPE
         )
     
+    @_('NEW TYPE')
+    def expr(self, p: YaccProduction):
+        return New(
+            line=p.lineno,
+            column=0,
+            type=p.TYPE
+        )
+    
     @_('expr "," exprs')
     def exprs(self, p: YaccProduction):
         return [p.expr] + p.exprs
@@ -181,7 +190,7 @@ class CoolParser(Parser):
     
     @_('expr "." ID "(" exprs ")"')
     def expr(self, p: YaccProduction):
-        return Expr(
+        return Dispatch(
             line=p.lineno,
             column=0,
             expr=p.expr,
@@ -191,7 +200,7 @@ class CoolParser(Parser):
     
     @_('expr "." ID "(" ")"')
     def expr(self, p: YaccProduction):
-        return Expr(
+        return Dispatch(
             line=p.lineno,
             column=0,
             expr=p.expr,
@@ -201,7 +210,7 @@ class CoolParser(Parser):
 
     @_('expr "@" TYPE "." ID "(" exprs ")"')
     def expr(self, p: YaccProduction):
-        return Expr(
+        return Dispatch(
             line=p.lineno,
             column=0,
             expr=p.expr,
@@ -212,7 +221,7 @@ class CoolParser(Parser):
     
     @_('expr "@" TYPE "." ID "(" ")"')
     def expr(self, p: YaccProduction):
-        return Expr(
+        return Dispatch(
             line=p.lineno,
             column=0,
             expr=p.expr,
@@ -260,7 +269,7 @@ class CoolParser(Parser):
 
     @_('"{" nested_expr "}"')
     def expr(self, p: YaccProduction):
-        return p.nested_expr
+        return CodeBlock(p.lineno,0,p.nested_expr)
 
     @_('expr ";" nested_expr')
     def nested_expr(self, p: YaccProduction):
@@ -331,14 +340,6 @@ class CoolParser(Parser):
             id=p.ID,
             type=p.TYPE,
             expr=p.expr
-        )
-
-    @_('NEW TYPE')
-    def expr(self, p: YaccProduction):
-        return New(
-            line=p.lineno,
-            column=0,
-            type=p.TYPE
         )
 
     @_('ISVOID expr')
