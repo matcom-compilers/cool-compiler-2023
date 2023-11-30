@@ -2,7 +2,9 @@ import argparse
 import logging
 import os
 
+from codegen.cil_to_mips import CILVisitor
 from codegen.cool_to_cil import COOL2CIL
+from codegen.mips_codegen import MipsCodeGenerator
 from parsing.lex import Lexer
 from parsing.parser import Parser
 from semantic.type_builder import TypeBuilder
@@ -131,7 +133,13 @@ def main():
     cool_to_cil = COOL2CIL()
     cil_program = cool_to_cil.visit(program, context=type_checker.context, scope=scope)
 
-    print(cil_program)
+    cil_to_mips = CILVisitor()
+    mips_program = cil_program.accept(cil_to_mips)
+
+    mips_codegen_visitor = MipsCodeGenerator()
+    code = mips_program.accept(mips_codegen_visitor)
+
+    print(code)
 
     exit(exit_code)
 

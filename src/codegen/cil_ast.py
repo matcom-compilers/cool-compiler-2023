@@ -4,11 +4,17 @@ tab = "\t"
 
 
 class Node:
-    pass
+    def accept(self, visitor, *args, **kwargs):
+        return visitor.visit(self, *args, **kwargs)
 
 
 class ProgramNode(Node):
-    def __init__(self, dottypes: List["TypeNode"], dotdata, dotcode):
+    def __init__(
+        self,
+        dottypes: List["TypeNode"],
+        dotdata: List["DataNode"],
+        dotcode: List["FunctionNode"],
+    ):
         self.dottypes = dottypes
         self.dotdata = dotdata
         self.dotcode = dotcode

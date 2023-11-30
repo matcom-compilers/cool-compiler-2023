@@ -1,7 +1,9 @@
 class MipsAstNode:
     """Nodo base para todos los nodos del AST de MIPS."""
 
-    pass
+    def accept(self, visitor, *args, **kwargs):
+        """Permite a un visitor aceptar este nodo."""
+        return visitor.visit(self, *args, **kwargs)
 
 
 class ProgramNode(MipsAstNode):
@@ -33,6 +35,11 @@ class DataNode(MipsAstNode):
         self.label = label
         self.storage_type = storage_type
         self.data = data
+
+
+class RegisterNode(MipsAstNode):
+    def __init__(self, number):
+        self.number = number
 
 
 class LabelNode(MipsAstNode):
