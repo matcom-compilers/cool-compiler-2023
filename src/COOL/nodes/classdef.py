@@ -37,7 +37,10 @@ class Class(Node):
             'inherits_instance': self.inherits_instance, 
             'line': self.line, 
             'column': self.column,
-            'lineage': self.lineage
+            'lineage': self.lineage,
+            'all_types':visitor.types,
+            'inheritance_tree':visitor.tree,
+            'basic_types':visitor.basic_types
             })
         for feature in self.features:
             feature.check(self.class_visitor)

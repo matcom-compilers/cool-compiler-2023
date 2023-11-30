@@ -1,6 +1,23 @@
 from typing import List
 
 from COOL.nodes import Node
+from COOL.semantic.visitor import Visitor_Class
+
+
+class Dispatch(Node):
+    def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
+        self.expr: Node = expr
+        self.id: str = id
+        self.type: str = type
+        self.exprs: List[Node] = exprs
+        super().__init__(line, column)
+
+    def check(self, visitor:Visitor_Class):
+        return visitor.visit_dispatch(self)
+        
+
+    def execute(self):
+        raise NotImplementedError()
 
 
 class If(Node):
@@ -61,8 +78,8 @@ class New(Node):
         self.type: str = type
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self,visitor:Visitor_Class):
+        return visitor.visit_new(self)
 
     def execute(self):
         raise NotImplementedError()
@@ -79,20 +96,6 @@ class Isvoid(Node):
     def execute(self):
         raise NotImplementedError()
 
-
-class Expr(Node):
-    def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
-        self.expr: Node = expr
-        self.id: str = id
-        self.type: str = type
-        self.exprs: List[Node] = exprs
-        super().__init__(line, column)
-
-    def check(self):
-        raise NotImplementedError()
-
-    def execute(self):
-        raise NotImplementedError()
 
 class Block(Node):
     def __init__(self, line: int, column: int, exprs: List[Node]) -> None:

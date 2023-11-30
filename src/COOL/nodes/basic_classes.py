@@ -7,6 +7,10 @@ class BasicClass:
         self.inherits = inherits
         self.methods = []
         self.attributes = []
+        self.lineage = []
+
+    def check(self,visitor):
+        return self.type
 
 class BasicObject(BasicClass):
     def __init__(self, features: list=[], type: str = 'Object', inherits: str = None) -> None:
