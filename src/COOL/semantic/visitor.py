@@ -239,29 +239,79 @@ class Visitor_Class:
         
             
     def visit_method(self, node):
-        pass
+        node.expr.check(self)
 
     # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
     # def visit_variable(self, node):
     #     pass
 
-    def visit_execute_method(self,node):
-        pass
+    def visit_operator(self, node):
+        ex1 = node.expr1
+        ex2 = node.expr2
 
+        for formal in node.formals:
+            if formal.id == ex1.id:
+                type1 = formal.type
+            elif formal.id == ex2.id:
+                type2 = formal.type
 
-    def visit_let(self, node,scope):
-        pass
+        if not type1:
+            ex1.check(self)
+        if not type2:
+            ex2.check(self)
 
-    def visit_case(self, node, scope):
-        pass
+        possible_types = node.posibles_types
+        if  possible_types[0] == 'All':
+            possible_types = self.basic_types.keys()
+        elif not (type1 in possible_types and type2 in possible_types):
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {type2}'))
+        return node.return_type
+        
+    def visit_unary_operator(self, node):
+        ex1 = node.expr
+        type1 = ex1.check(self)
+        for formal in node.formals:
+            if formal.id == ex1.id:
+                type1 = formal.type
+        if not type1:
+            return None
+        
+        possible_types = node.posibles_types
+        if not (type1 in possible_types):
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
+        return node.return_type
+
 
     def visit_new(self, node):
         return node.type 
 
-    def visit_conditionals(self, node, scope):
+    def visit_execute_method(self,node):
+        self.visit_dispatch(node)
+
+    def visit_get_variable(self, node):
+        #FIX copilot
+        if node.id in self.scope['attributes'].keys():
+            return self.scope['attributes'][node.id].type
+        else:
+            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Attribute {node.id} is not defined in this scope.'))
+            return None
+
+
+    def visit_let(self, node):
         pass
 
-    def visit_loops(self, node, scope):
+    def visit_case(self, node):
         pass
 
+
+
+    def visit_conditionals(self, node):
+        pass
+
+    def visit_loops(self, node):
+        pass
+
+class 

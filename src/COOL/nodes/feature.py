@@ -16,7 +16,7 @@ class Method(Node):
         raise NotImplementedError()
 
     def check(self, visitor: Visitor_Class):
-        visitor.visit_method(node = self)
+        visitor.visit_method(self)
 
 
 class ExecuteMethod(Node):

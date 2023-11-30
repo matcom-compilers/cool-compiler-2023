@@ -11,7 +11,7 @@ class GetVariable(Node):
         raise NotImplementedError()
 
     def check(self, visitor):
-        raise NotImplementedError()
+        return visitor.visit_get_variable(self)
 
 class Initialization(Node):
     def __init__(self, line: int, column: int, id:str, type: str, expr: Node) -> None:
