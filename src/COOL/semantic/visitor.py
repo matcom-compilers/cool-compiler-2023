@@ -182,55 +182,99 @@ class Visitor_Class:
         self.type = scope['type']
 
 
+
     def visit_attribute_inicialization(self, node):
         attrb = node
         if attrb.__dict__.get('expr'):
             attrb_expr = attrb.expr
-            if attrb_expr.__dict__.get('type'):
-                expr_type = attrb_expr.type 
-                if not (attrb.type == expr_type):
-                    lineage_expr_type = self.scope['lineage']
-                    if not (attrb.type in lineage_expr_type):
-                        self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
-            else:
-                type = attrb_expr.check(self)
-                if type:
-                    if self.all_types.get(type):
-                        if not(attrb.type == type) or attrb.type not in self.all_types[type].lineage:
-                            self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+            type = attrb_expr.check(self)
+            if type:
+                if self.all_types.get(type):
+                    if not(attrb.type == type) and attrb.type not in self.all_types[type].lineage:
+                        self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+
+
+    # def visit_attribute_inicialization(self, node):
+    #     attrb = node
+    #     if attrb.__dict__.get('expr'):
+    #         attrb_expr = attrb.expr
+    #         if attrb_expr.__dict__.get('type'):
+    #             expr_type = attrb_expr.type 
+    #             if not (attrb.type == expr_type):
+    #                 # lineage_expr_type = self.scope['lineage']
+    #                 lineage_expr_type = self.all_types[expr_type].lineage
+    #                 if not (attrb.type in lineage_expr_type):
+    #                     self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+    #         else:
+    #             type = attrb_expr.check(self)
+    #             if type:
+    #                 if self.all_types.get(type):
+    #                     if not(attrb.type == type) or attrb.type not in self.all_types[type].lineage:
+    #                         self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
 
     def visit_dispatch(self,node):
-        if node.expr:
-            expr_type = node.expr.check(self)
-            if expr_type:
-                if not expr_type in self.all_types.keys():
-                    #TODO search this error
-                    self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
-                
-                class_meths = self.all_types[expr_type].methods_dict 
-                if not node.id in class_meths.keys():
-                    self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
-                    return None
-                elif not len(class_meths[node.id].formals) == len(node.exprs):
-                    #TODO search this error    
-                    self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
-                
-                elif len(class_meths[node.id].formals)>0:
-                    for i, formal in enumerate(class_meths[node.id].formals):
-                        type = self.all_types.get(node.exprs[i].check(self))
-                        if not type: type = self.temporal_scope.get(node.exprs[i])
-                        if not type: type = self.basic_types.get(node.exprs[i].check(self))
-                        
-                        if not(type.type == formal.type) and not (formal.type in type.lineage):
-                            #TODO search this error
-                             self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
-                             return None
-                return class_meths[node.id].type
+        if node.type:
+            return self.visit_dispatch_type(node)
+        if node.expr:                        
+            return self.visit_dispatch_expr(node)
         else:
-            if not self.scope['methods'].get(node.id):
+            return self.visit_dispatch_not_expr(node)
+
+    def visit_dispatch_type(self,node):
+        if not self.all_types.get(node.type):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {node.type}.'))
+            return None
+        class_meths = self.all_types[node.type].methods_dict 
+        if not node.id in class_meths.keys():
+            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+            return None
+        elif not len(class_meths[node.id].formals) == len(node.exprs):
+            self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
+            return None
+        elif len(class_meths[node.id].formals)>0:
+            for i, formal in enumerate(class_meths[node.id].formals):
+                type = self.all_types.get(node.exprs[i].check(self))
+                if not type: type = self.temporal_scope.get(node.exprs[i])
+                if not type: type = self.basic_types.get(node.exprs[i].check(self))
+                
+                if not(type.type == formal.type) and not (formal.type in type.lineage):
+                    self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
+                    return None
+        return class_meths[node.id].type
+
+
+    def visit_dispatch_expr(self,node):
+        expr_type = node.expr.check(self)
+        if expr_type:
+            if not expr_type in self.all_types.keys():
+                #TODO search this error
+                self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
+            
+            class_meths = self.all_types[expr_type].methods_dict 
+            if not node.id in class_meths.keys():
                 self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
                 return None
-            return self.scope['methods'][node.id].type
+            elif not len(class_meths[node.id].formals) == len(node.exprs):
+                #TODO search this error    
+                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
+            
+            elif len(class_meths[node.id].formals)>0:
+                for i, formal in enumerate(class_meths[node.id].formals):
+                    type = self.all_types.get(node.exprs[i].check(self))
+                    if not type: type = self.temporal_scope.get(node.exprs[i])
+                    if not type: type = self.basic_types.get(node.exprs[i].check(self))
+                    
+                    if not(type.type == formal.type) and not (formal.type in type.lineage):
+                        #TODO search this error
+                            self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
+                            return None
+            return class_meths[node.id].type
+
+    def visit_dispatch_not_expr(self,node):
+        if not self.scope['methods'].get(node.id):
+            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+            return None
+        return self.scope['methods'][node.id].type
         
             
     def visit_method(self, node):
@@ -307,7 +351,7 @@ class Visitor_Class:
         return self.type
     
     def visit_execute_method(self,node):
-        self.visit_dispatch(node)
+        self.visit_dispatch_not_expr(node)
 
     def visit_get_variable(self, node):
         if node.id in self.temporal_scope.keys():
