@@ -181,8 +181,6 @@ class Visitor_Class:
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
 
-
-
     def visit_attribute_inicialization(self, node):
         attrb = node
         if attrb.__dict__.get('expr'):
@@ -192,25 +190,6 @@ class Visitor_Class:
                 if self.all_types.get(type):
                     if not(attrb.type == type) and attrb.type not in self.all_types[type].lineage:
                         self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
-
-
-    # def visit_attribute_inicialization(self, node):
-    #     attrb = node
-    #     if attrb.__dict__.get('expr'):
-    #         attrb_expr = attrb.expr
-    #         if attrb_expr.__dict__.get('type'):
-    #             expr_type = attrb_expr.type 
-    #             if not (attrb.type == expr_type):
-    #                 # lineage_expr_type = self.scope['lineage']
-    #                 lineage_expr_type = self.all_types[expr_type].lineage
-    #                 if not (attrb.type in lineage_expr_type):
-    #                     self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {expr_type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
-    #         else:
-    #             type = attrb_expr.check(self)
-    #             if type:
-    #                 if self.all_types.get(type):
-    #                     if not(attrb.type == type) or attrb.type not in self.all_types[type].lineage:
-    #                         self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
 
     def visit_dispatch(self,node):
         if node.type:
@@ -233,11 +212,6 @@ class Visitor_Class:
         static_type = self.all_types.get(static_type)
         disp_type = self.all_types.get(node.type)
 
-        # if not (static_type.type == disp_type.type) and not (static_type.type in disp_type.lineage):
-        #     #TODO search this error
-        #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
-        #     return None
-        
         if not node.id in static_type.methods_dict.keys() or not node.id in disp_type.methods_dict.keys():
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
             return None
@@ -245,8 +219,6 @@ class Visitor_Class:
         node.expr = disp_type.type
         node.type = None
         node.check(self)
-
-
 
     def visit_dispatch_expr(self,node):
         expr_type = node.expr if isinstance(node.expr, str) else node.expr.check(self)
