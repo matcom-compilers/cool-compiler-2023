@@ -6,7 +6,7 @@ class MipsCodeGenerator(Visitor):
     def visit__ProgramNode(self, node: mips.ProgramNode, *args, **kwargs):
         text_section = "\t.text\n\t.globl main\n\t" + node.text_section.accept(self)
         data_section = "\t.data\n" + node.data_section.accept(self)
-        return f"{data_section}\n\n{text_section}\n"
+        return f"{text_section}\n\n{data_section}\n"
 
     def visit__TextNode(self, node, *args, **kwargs):
         return "\n\t".join(self.visit(instr) for instr in node.instructions)

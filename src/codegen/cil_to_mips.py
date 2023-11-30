@@ -72,7 +72,7 @@ class CILVisitor(Visitor):
         self.data_section[node.name] = mips.DataNode(
             mips.LabelNode(node.name),
             ".word",
-            [mips.LabelNode(f"{method.id}") for method in node.methods],
+            [mips.LabelNode(f"{method.function_id }") for method in node.methods],
         )
 
     def visit__DataNode(self, node: cil.DataNode):
