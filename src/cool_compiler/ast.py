@@ -58,7 +58,7 @@ class VarMutationAST(IAST):
         self.value = value
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        return self.value.check_type()
 
 
 class FunctionCallAST(IAST):
@@ -84,7 +84,7 @@ class ConditionalExpressionAST(IAST):
         else:
             true = self.then_expr.check_type()
             false = self.else_expr.check_type()
-            return true + ' ' + false
+            return [true, false]
 
 class LoopExpressionAST(IAST):
     def __init__(self, condition: IAST, body: IAST):
@@ -104,7 +104,9 @@ class BlockExpressionAST(IAST):
         self.expr_list = expr_list
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        for exp in self.expr_list:
+            exp.check_type()
+        return self.expr_list[-1].check_type()
 
 
 class VarsInitAST(IAST):
@@ -142,7 +144,14 @@ class TypeMatchingAST(IAST):
         self.cases = cases  # tuple is (object id, object type, expr)
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        cases_type = []
+        for case in self.cases:
+            case_type = case[2].check_type()
+            if not cases_type in cases_type:
+                cases_type.append(case_type)
+            else:
+                raise TypeError('Only one case must have a type.')
+        return cases_type
 
 
 class ObjectInitAST(IAST):
@@ -156,21 +165,23 @@ class ObjectInitAST(IAST):
 class UnaryOpAST(IAST):
     def __init__(self, expr: IAST):
         self.expr = expr
+    
 
 
 class VoidCheckingOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+       return self.expr.check_type()
+        
 
 
 class NegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+       return self.expr.check_type()
 
 
 class BooleanNegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+       return self.expr.check_type()
 
 
 BINARY_OPERATIONS = {
@@ -194,7 +205,7 @@ class BinaryOpAST(IAST):
 class ArithmeticOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
         if self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
-            raise TypeError()
+            raise TypeError('The both arguments must be Int type to be valids.')
         else:
             return StdType.Int
 
