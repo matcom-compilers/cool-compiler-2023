@@ -19,10 +19,8 @@ class ConditionalExpressionAST(IAST):
     def check_type(self, te) -> str:
         if self.condition.check_type() is not StdType.Bool:
             raise TypeError()
-        elif self.condition:
-            return self.then_expr.check_type()
         else:
-            return self.else_expr.check_type()
+            return self.then_expr.check_type() + ' ' + self.else_expr.check_type()
         
 
 
@@ -57,7 +55,7 @@ class ObjectInitAST(IAST):
         self.type = type
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        raise self.type
 
 
 class UnaryOpAST(IAST):
@@ -100,13 +98,20 @@ class BinaryOpAST(IAST):
 
 class ArithmeticOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        if self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
+            raise TypeError()
+        else:
+            return StdType.Int
 
 
 class ComparisonOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
-        raise NotImplementedError()
-
+        if self.op[0] is '=':
+            return StdType.Bool
+        elif self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
+            raise TypeError()
+        else:
+            return StdType.Bool
 
 class GroupingAST(IAST):
     def __init__(self, expr: IAST):
