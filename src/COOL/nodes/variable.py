@@ -7,7 +7,7 @@ class GetVariable(Node):
         self.id = id
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self, visitor: Visitor):
@@ -20,7 +20,7 @@ class Initialization(Node):
         self.expr = expr
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self, visitor: Visitor):
@@ -32,7 +32,7 @@ class Declaration(Node):
         self.type = type
         super().__init__(line, column)
     
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self, visitor: Visitor):
@@ -44,7 +44,7 @@ class Assign(Node):
         self.id = id
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self):

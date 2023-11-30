@@ -2,6 +2,7 @@ from typing import List
 from typing import Tuple
 
 from COOL.semantic.visitor import Visitor
+from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.nodes import Node
 from COOL.nodes.feature import Method
 from COOL.nodes.feature import Attribute
@@ -24,14 +25,14 @@ class Class(Node):
         self.attributes = [i for i in features if isinstance(i, Attribute)]
         self.inherits_instance: Class = None
         super().__init__(line,column)
-
-    def execute(self) -> Tuple[List[str], List[str]]:
-        data, text = [], []
-        for _feature in self.features:
-            feature_data, feature_text = _feature.execute()
-            data.extend(feature_data)
-            text.extend(feature_text)
-        return data, text
+    
+    def codegen(self, mips_visitor: MipsVisitor) -> Tuple[List[str], List[str]]:
+        mips_visitor.visit_class(self)
+        for attribute in self.attributes:
+            attribute.codegen(mips_visitor)
+        for method in self.methods:
+            method.codegen(mips_visitor)
+        mips_visitor.unvisit_class(self)
 
     def check(self, visitor: Visitor):
         visitor.visit_class(self)

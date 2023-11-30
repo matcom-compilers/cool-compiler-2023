@@ -13,7 +13,7 @@ class If(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -26,7 +26,7 @@ class While(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -39,7 +39,7 @@ class Let(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -52,7 +52,7 @@ class Case(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -64,7 +64,7 @@ class New(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -76,7 +76,7 @@ class Isvoid(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 
@@ -91,7 +91,7 @@ class Expr(Node):
     def check(self):
         raise NotImplementedError()
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
 class Block(Node):
@@ -99,7 +99,7 @@ class Block(Node):
         self.exprs: List[Node] = exprs
         super().__init__(line, column)
 
-    def execute(self):
+    def codegen(self):
         raise NotImplementedError()
 
     def check(self):

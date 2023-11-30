@@ -2,6 +2,8 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Any
 
+from COOL.codegen.mips_visitor import MipsVisitor
+
 
 class Node(ABC):
     '''
@@ -15,10 +17,10 @@ class Node(ABC):
         self.column = column
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        return self.execute(*args, **kwds)
+        return self.codegen(*args, **kwds)
 
     @abstractmethod
-    def execute(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         pass
 
     @abstractmethod
