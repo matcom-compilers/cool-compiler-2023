@@ -1,4 +1,5 @@
 from typing import List
+from typing import Tuple
 
 from COOL.semantic.visitor import Visitor_Program, Visitor_Class
 from COOL.nodes import Node
@@ -6,6 +7,7 @@ from COOL.nodes.feature import Method
 from COOL.nodes.feature import Attribute
 
 
+# TODO: data and text can be a list?
 class Class(Node):
     def __init__(
         self,
@@ -23,8 +25,13 @@ class Class(Node):
         self.inherits_instance: Class = None
         super().__init__(line,column)
 
-    def execute(self):
-        raise NotImplementedError()
+    def execute(self) -> Tuple[List[str], List[str]]:
+        data, text = [], []
+        for _feature in self.features:
+            feature_data, feature_text = _feature.execute()
+            data.extend(feature_data)
+            text.extend(feature_text)
+        return data, text
 
     def check(self, visitor:Visitor_Program):
         visitor.visit_class(self)

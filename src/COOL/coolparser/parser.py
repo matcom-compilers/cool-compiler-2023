@@ -46,7 +46,7 @@ from COOL.nodes.expr import Dispatch
 # TODO: set the column to the ast
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
-    debugfile = 'parser.out'
+    # debugfile = 'parser.out'
 
     def __init__(self):
         self.errors = []
