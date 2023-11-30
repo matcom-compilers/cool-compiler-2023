@@ -70,13 +70,15 @@ class CILVisitor(Visitor):
         self.types[node.name] = node
 
         self.data_section[node.name] = mips.DataNode(
-            mips.LabelInstructionNode(node.name),
+            mips.LabelNode(node.name),
             ".word",
             [mips.LabelNode(f"{method.id}") for method in node.methods],
         )
 
     def visit__DataNode(self, node: cil.DataNode):
-        pass
+        self.data_section[node.name] = mips.DataNode(
+            mips.LabelNode(node.name), ".asciiz", [node.value]
+        )
 
     def visit__FunctionNode(self, node: cil.FunctionNode, *args, **kwargs):
         instructions = []

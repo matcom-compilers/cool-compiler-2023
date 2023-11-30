@@ -4,15 +4,15 @@ from utils.visitor import Visitor
 
 class MipsCodeGenerator(Visitor):
     def visit__ProgramNode(self, node: mips.ProgramNode, *args, **kwargs):
-        text_code = "\n".join(self.visit(n) for n in node.text_section.instructions)
-        data_code = "\n".join(self.visit(n) for n in node.data_section.data.values())
-        return f".data\n{data_code}\n.text\n{text_code}"
+        text_section = "\t.text\n\t.globl main\n\t" + node.text_section.accept(self)
+        data_section = "\t.data\n" + node.data_section.accept(self)
+        return f"{data_section}\n\n{text_section}\n"
 
     def visit__TextNode(self, node, *args, **kwargs):
-        return "\n".join(self.visit(instr) for instr in node.instructions)
+        return "\n\t".join(self.visit(instr) for instr in node.instructions)
 
-    def visit__DataSectionNode(self, node, *args, **kwargs):
-        return "\n".join(self.visit(data) for data in node.data)
+    def visit__DataSectionNode(self, node: mips.DataSectionNode, *args, **kwargs):
+        return "\n".join(self.visit(data) for data in node.data.values())
 
     def visit__DataNode(self, node: mips.DataNode, *args, **kwargs):
         def visit_value(value):
@@ -23,13 +23,13 @@ class MipsCodeGenerator(Visitor):
             )
 
         data_value = ",".join(visit_value(value) for value in node.data)
-        return f"{self.visit(node.label)} {node.storage_type} {data_value}"
+        return f"{self.visit(node.label)}: {node.storage_type} {data_value}"
 
     def visit__LabelNode(self, node, *args, **kwargs):
         return f"{node.label}"
 
     def visit__LabelInstructionNode(self, node, *args, **kwargs):
-        return f"{node.label}:"
+        return f"\r{node.label}:"
 
     def visit__SyscallNode(self, node, *args, **kwargs):
         return "syscall"

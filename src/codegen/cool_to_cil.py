@@ -235,11 +235,13 @@ class COOL2CIL(Visitor):
                 arg_sid = self.register_new(param_type.name, arg_sid)  # boxing
             args.append(cil.ArgNode(arg_sid))
 
+        typeof_local = self.add_local()
+        self.instructions.append(cil.TypeOfNode(sid, typeof_local))
+
         self.instructions.extend(args)
+        method_id = self.get_method_id(self.type.name, node.method)
         self.instructions.append(
-            cil.StaticCallNode(
-                self.get_func_id(self.type.name, node.method), return_local
-            )
+            cil.DynamicCallNode(typeof_local, method_id, return_local)
         )
         return return_local
 
@@ -399,7 +401,7 @@ class COOL2CIL(Visitor):
         return self.register_int(1 if node.value == "true" else 0)
 
     def visit__StringNode(self, node: StringNode, context: Context, scope: Scope):
-        return self.add_data("STR", node._value)
+        return self.add_data("STR", f'"{node._value}"')
 
     def visit__IdentifierNode(
         self, node: IdentifierNode, context: Context, scope: Scope
