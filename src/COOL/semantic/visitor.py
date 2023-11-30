@@ -179,6 +179,7 @@ class Visitor_Class:
         self.all_types = scope['all_types']
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
+        self.type = scope['type']
 
 
     def visit_attribute_inicialization(self, node):
@@ -302,6 +303,9 @@ class Visitor_Class:
     def visit_new(self, node):
         return node.type 
 
+    def visit_self(self, node):
+        return self.type
+    
     def visit_execute_method(self,node):
         self.visit_dispatch(node)
 
