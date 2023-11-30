@@ -79,29 +79,72 @@ class SubNode(InstructionNode):
         self.rt = rt
 
 
+class LoadByteNode(InstructionNode):
+    """Nodo para la instrucción 'lb' en MIPS."""
+
+    def __init__(self, rt, address):
+        self.rt = rt
+        self.address = address
+
+
 class LoadWordNode(InstructionNode):
     """Nodo para la instrucción 'lw' en MIPS."""
 
-    def __init__(self, rt, offset, base):
+    def __init__(self, rt, address):
         self.rt = rt
-        self.offset = offset
-        self.base = base
+        self.address = address
+
+
+class LoadInmediateNode(InstructionNode):
+    """Nodo para la instrucción 'li' en MIPS."""
+
+    def __init__(self, rt, immediate):
+        self.rt = rt
+        self.immediate = immediate
+
+
+class LoadAddressNode(InstructionNode):
+    """Nodo para la instrucción 'la' en MIPS."""
+
+    def __init__(self, rt, label):
+        self.rt = rt
+        self.label = label
 
 
 class StoreWordNode(InstructionNode):
     """Nodo para la instrucción 'sw' en MIPS."""
 
-    def __init__(self, rt, offset, base):
+    def __init__(self, rt, ramdir):
         self.rt = rt
-        self.offset = offset
-        self.base = base
+        self.ramdir = ramdir
 
 
 class JumpNode(InstructionNode):
     """Nodo para instrucciones de salto en MIPS."""
 
-    def __init__(self, target):
-        self.target = target
+    def __init__(self, label: str):
+        self.label = label
+
+
+class JumpRegisterNode(InstructionNode):
+    """Nodo para instrucciones de salto en MIPS."""
+
+    def __init__(self, register: RegisterNode):
+        self.rs = register
+
+
+class JumpAndLinkNode(InstructionNode):
+    """Nodo para la instrucción 'jal' en MIPS."""
+
+    def __init__(self, label: str):
+        self.label = label
+
+
+class JumpRegisterAndLinkNode(InstructionNode):
+    """Nodo para la instrucción 'jalr' en MIPS."""
+
+    def __init__(self, register: RegisterNode):
+        self.rs = register
 
 
 class BranchEqualNode(InstructionNode):
@@ -111,6 +154,14 @@ class BranchEqualNode(InstructionNode):
         self.rs = rs
         self.rt = rt
         self.offset = offset
+
+
+class BeqzNode(InstructionNode):
+    """Nodo para la instrucción 'beqz' en MIPS."""
+
+    def __init__(self, rs, label):
+        self.rs = rs
+        self.label = label
 
 
 class AddiNode(InstructionNode):
@@ -143,3 +194,19 @@ class MoveFromLoNode(InstructionNode):
 
     def __init__(self, rd):
         self.rd = rd
+
+
+class MoveNode(InstructionNode):
+    """Nodo para la instrucción 'move' en MIPS."""
+
+    def __init__(self, rd, rs):
+        self.rd = rd
+        self.rs = rs
+
+
+class MemoryAddressRegisterNode(MipsAstNode):
+    """Nodo para el registro de dirección de memoria."""
+
+    def __init__(self, register, index):
+        self.register = register
+        self.index = index
