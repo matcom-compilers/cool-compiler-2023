@@ -161,28 +161,84 @@
 	%----------------------------------------------------------------------------------------
 	%	ARTICLE CONTENTS
 	%----------------------------------------------------------------------------------------
-	
-	\section*{Repositorio del proyecto}
-	
-	\begin{center}
-		\href{https://github.com/computer-science-crows/cool-compiler-2023}{https://github.com/computer-science-crows/cool-compiler-2023}
-	\end{center}
-	
+
 	\section{Uso del compilador}
-	
-	\section{Arquitectura}
 	
 	\subsection{M\'odulos}
 	
+	El proyecto está estructurado en varios módulos ubicados en la carpeta /src:
+	
+	\begin{itemize}
+		\item main.py: Proporciona una interfaz para la configuración y ejecución del compilador.
+		\item cool\_compiler.py: El punto de entrada del compilador que coordina la ejecución de las fases del proceso de compilación.
+		\item /lexic\_analysis/lexer.py: Contiene la implementación del analizador léxico, responsable de identificar los tokens en el código fuente. 
+		\item /sintactic\_analysis/parser.py: Implementa el analizador sintáctico, que verifica la estructura gramatical correcta del código.
+		\item /semantic\_analysis/ast\_.py: Define las clases y estructuras de datos que representan el Árbol de Sintaxis Abstracta (AST).
+		\item /semantic\_analysis/semantic.py: Contiene la lógica para el análisis semántico, que evalúa el significado del código.
+		\item /type\_checker/type\_checker.py: Implementa el type checker, encargado de verificar la coherencia de tipos en el programa.
+		\item /cil\_generation/cil\_generator.py: Realiza la generación de código intermedio en representación de bajo nivel.
+		\item /mips\_generation/mips\_generator.py: Se encarga de la generación de código de máquina específico para MIPS.
+		\item /utils/constants.py: Define constantes utilizadas en varias partes del compilador.
+		\item /utils/errors.py: Contiene las clases de errores personalizadas que se utilizan para informar sobre problemas durante el proceso de compilación.
+		\item /utils/environment.py: Implementa la estructura de entorno utilizada en varias fases del compilador.
+	\end{itemize}
+	
 	\subsection{Fases}
 	
+	El proceso de compilación consta de varias fases esenciales que transforman el código fuente en COOL en un programa ejecutable. Comienza con el análisis léxico, donde se identifican los componentes básicos del código. Luego, el análisis sintáctico verifica la estructura gramatical correcta. A continuación, el análisis semántico evalúa el significado del código. El chequeo de tipos garantiza la coherencia entre los tipos en el programa. La generación de código intermedio crea una representación más abstracta del programa, seguida de la optimización para mejorar el rendimiento. Finalmente, la generación de código de máquinas traduce el programa a instrucciones específicas del hardware para su ejecución. Cada fase desempeña un papel crucial en la creación de un software funcional y eficiente.
+	
 	\includegraphics[width=15cm]{flow}
+	
+	\subsubsection{An\'alisis L\'exico}
+	
+	\subsubsection{An\'alisis Sint\'actico}
+	
+	\subsubsection{An\'alisis Sem\'antico}
+	
+	\subsubsection{Comprobaci\'on de Tipos}
+	
+	El chequeo de tipos se realiza utilizando el patrón de diseño Visitor, y puede ser encontrado en type\_checker.py.
+	
+	\vspace{0.5em}
+	\begin{itemize}
+	\item \textbf{Conformance Test:} Previo al análisis de tipos, es esencial verificar si un nodo U \textit{conforma} con otro nodo V. En este contexto, la conformidad indica que el nodo U puede ser manejado como si perteneciera al tipo del nodo V.
+	
+	Durante esta validación, se asegura que las expresiones y operaciones del programa sigan las reglas de tipos establecidas por COOL, posibilitando el polimorfismo al permitir que objetos de clases derivadas se utilicen en contextos donde se espera una clase base. La conformidad de tipos se establece en función del árbol de herencia, donde un tipo se considera conforme a otro si comparten el mismo tipo o están en su cadena de herencia. 
+	
+	Para llevar a cabo esta tarea, se emplea un Depth-First Search (DFS) que calcula dos valores para cada nodo $x$: $td(x)$, el tiempo de descubrimiento de $x$, es decir, el primer momento en que el DFS llega a X; y $tf(x)$, el tiempo de finalización de $x$, es decir, el último momento en que el DFS está en $x$. La relación de conformidad entre dos nodos $U$ y $V$ se verifica mediante las propiedades de $td$ y $tf$. $U$ conforma con $V$ si $td(V) \leq td(U) \leq tf(V)$.
+	
+	\item \textbf{Lowest Common Ancestor:} La operación \textit{join} en COOL se utiliza para determinar el tipo estático común más bajo de dos tipos dados. Esta operación es necesaria cuando se realiza una operación de "dispatch" o llamada a método en COOL para garantizar que se esté invocando el método correcto según la jerarquía de tipos.
+	
+	Para encontrar el tipo estático común más bajo, se utiliza el concepto de Lowest Common Ancestor (LCA) o ancestro común más bajo de dos nodos en el AST. La implementación sigue un proceso básico: si el nodo U está más lejos de la raíz que el nodo V, se establece que LCA(U, V) = LCA(padre(U), V). Este proceso se repite hasta que U y V son iguales, momento en el cual el LCA es U. 
+	
+	\item \textbf{Inicialización del Orden:}
+	Durante la traversa DFS del AST, se inicializan los valores td y tf para cada nodo. Además, se verifican las compatibilidades de los métodos heredados y se precálcula el tipo estático de los formales de los métodos antes de la visita.
+
+	\item \textbf{Resolución de Problemas Técnicos:}
+	
+	Conformidad de Métodos Inherentes: Se asegura que los métodos heredados sean compatibles con los métodos en la clase hija.
+	
+	Ciclos en la Herencia: Se verifica la presencia de ciclos durante la construcción del árbol de herencia.
+	
+	Consideraciones
+	Ambiente de Tipos: Se mantiene un entorno actual (current\_environment) durante el recorrido del AST para realizar comprobaciones de tipos.
+	
+	Ámbito de Clases: Se realiza un seguimiento del ambiente de clases actual (current\_class) para lidiar con herencias y definiciones de clases.
+	
+	\end{itemize}
+	
+	\subsubsection{Generaci\'on de C\'odigo Intermedio}
+	
+	\subsubsection{Generaci\'on de C\'odigo de M\'aquina}
 	
 	\subsection{Gram\'atica}
 	
 	\section{Problemas técnicos}
 	
-	
+	\section*{Repositorio del proyecto}
+	\begin{center}
+		\url{https://github.com/computer-science-crows/cool-compiler-2023}
+	\end{center}
 	
 	\begin{thebibliography}
 		a
