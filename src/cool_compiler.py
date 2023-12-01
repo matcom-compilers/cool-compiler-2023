@@ -5,6 +5,7 @@ from cil_generation.cil_generator import CILCodeGenerator
 from semantic_analysis.semantic import SemanticChecker
 from utils.errors import *
 from semantic_analysis.ast_ import *
+from utils.constants import *
 
 class CoolCompiler:
     def __init__(self, code, tab_size=4):
