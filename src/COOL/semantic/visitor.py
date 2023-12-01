@@ -181,7 +181,7 @@ class Visitor_Class:
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
 
-    def visit_attribute_inicialization(self, node):
+    def visit_attribute_initialization(self, node):
         attrb = node
         if attrb.id == 'self':
             self.errors.append(Error.error(attrb.line,attrb.column, 'SemanticError', '\'self\' cannot be the name of an attribute.'))
@@ -191,13 +191,16 @@ class Visitor_Class:
             type = attrb_expr.check(self)
             if type:
                 if attrb.type == type:
+                    node.dynamic_type = type
                     return type
                 if self.all_types.get(type):
                     lineage = self.all_types[type].lineage
                     if attrb.type not in lineage:
                         self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
                         return None
-                    else: return type
+                    else: 
+                        node.dynamic_type = type
+                        return type
                 self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
         return None
 
@@ -387,9 +390,6 @@ class Visitor_Class:
 
         return type
 
-    def visit_case(self, node):
-        pass
-
 
     def _search_min_common_type(self, type1, type2):
         lineage1 = [type1.type] + type1.lineage
@@ -399,6 +399,58 @@ class Visitor_Class:
                 if i == j:
                     return i
         return 'Object'
+
+    def visit_case_expr(self, node):
+        return node.expr.check(self)
+
+    # def _repeat_elem(self, types:list):
+    #     for i in range(len(types)):
+    #         for j in range(i+1,len(types)):
+    #             if types[i] == types[j]:
+    #                 return types[i]
+    #     return None
+
+    def visit_case(self, node):
+        dynamic_type = node.expr.check(self)
+        if not dynamic_type or dynamic_type =='void':
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Case on void.'))
+            return None
+        cases = node.cases
+        return_types = []
+        types = []
+        for case in cases:
+            if case.id == 'self':
+                self.errors.append(Error.error(node.line,node.column,'SemanticError','Identifier \'self\' bound in \'case\'.'))
+                return None
+            
+            return_type = case.check(self)
+            if not return_type:
+                return None            
+            return_types.append(return_type)
+
+            type = case.type
+            if not type in self.basic_types.keys() and not type in self.all_types.keys():
+                self.errors.append(Error.error(case.line,case.column,'TypeError',f'Class {type} of case branch is undefined.'))
+                return None
+            if type in types:
+                self.errors.append(Error.error(case.line,case.column,'SemanticError',f'Duplicate branch {type} in case statement.'))
+                return None
+            types.append(type)
+
+        # rep_elem = self._repeat_elem(types)
+        # if rep_elem:
+        #     self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Duplicate branch {rep_elem} in case statement.'))
+        #     return None
+
+        comm_type = 'Object'
+        for i in range(len(return_types)-1):
+            type1 = self.all_types.get(return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
+            type2 = self.all_types.get(return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
+            comm_type = self._search_min_common_type(type1,type2)
+            return_types[i] = comm_type
+        return comm_type
+        
 
 
     def visit_conditionals(self, node):
@@ -447,7 +499,7 @@ class Visitor_Class:
         # if (not (type == node.type) ) and (not (node.type in type_lineage)):
         #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
         #     return None
-        
+        node.dynamic_type = type
         return type
 
     def visit_initialization(self, node):
@@ -465,7 +517,7 @@ class Visitor_Class:
             #TODO search this error
             self.errors.append(Error.error(node.line,node.column,'TypeError',f' Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.'))
             return None
-        
+        node.dynamic_type = type
         return type
 
     def visit_declaration(self, node):

@@ -65,6 +65,8 @@ class AttributeDeclaration(Attribute):
     def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
+        self.dynamic_type = 'void'
+
         super().__init__(line, column, id)
 
     def codegen(self, mips_visitor: MipsVisitor):
@@ -87,6 +89,7 @@ class AttributeInicialization(Attribute):
         self.type = type
         self.expr = expr
         self.id = id
+        self.dynamic_type = type
         super().__init__(line, column, id)
     
     def codegen(self, mips_visitor: MipsVisitor):
@@ -114,7 +117,7 @@ class AttributeInicialization(Attribute):
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
-        visitor.visit_attribute_inicialization(self)
+        visitor.visit_attribute_initialization(self)
 
 
 class Formal(Node):

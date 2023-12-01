@@ -81,6 +81,18 @@ class Case(Node):
     def codegen(self):
         raise NotImplementedError()
 
+class Case_expr(Node):
+    def __init__(self, line: int, column: int, id:str, type:str, expr:Node) -> None:
+        self.id = id
+        self.type = type
+        self.expr = expr
+        super().__init__(line, column)
+
+    def check(self, visitor):
+        return visitor.visit_case_expr(self)
+    
+    def codegen(self):
+        raise NotImplementedError()
 
 class New(Node):
     def __init__(self, line: int, column: int, type: str):

@@ -39,6 +39,7 @@ from COOL.nodes.expr import Case
 from COOL.nodes.expr import New
 from COOL.nodes.expr import Isvoid
 from COOL.nodes.expr import Dispatch
+from COOL.nodes.expr import Case_expr
 # from COOL.nodes.expr import Self
 
 
@@ -335,7 +336,7 @@ class CoolParser(Parser):
 
     @_('ID ":" TYPE DARROW expr')
     def case(self, p: YaccProduction):
-        return Initialization(
+        return Case_expr(
             line=p.lineno,
             column=0,
             id=p.ID,
