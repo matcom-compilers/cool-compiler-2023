@@ -367,11 +367,11 @@ class Visitor_Class:
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
             return None
         
-        type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
+        # type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
         
-        if (not (type == node.type) ) and (not (node.type in type_lineage)):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
-            return None
+        # if (not (type == node.type) ) and (not (node.type in type_lineage)):
+        #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
+        #     return None
         
         return type
 
