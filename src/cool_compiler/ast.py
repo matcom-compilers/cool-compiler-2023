@@ -75,9 +75,9 @@ class FunctionCallAST(IAST):
 
 class ConditionalExpressionAST(IAST):
     def __init__(self, condition: IAST, then_expr: IAST, else_expr: IAST):
-        self.condition = condition #type: IAST
-        self.then_expr = then_expr #type: IAST
-        self.else_expr = else_expr #type: IAST
+        self.condition = condition  # type: IAST
+        self.then_expr = then_expr  # type: IAST
+        self.else_expr = else_expr  # type: IAST
 
     def check_type(self, te) -> str:
         if self.condition.check_type() is not StdType.Bool:
@@ -86,6 +86,7 @@ class ConditionalExpressionAST(IAST):
             true = self.then_expr.check_type()
             false = self.else_expr.check_type()
             return [true, false]
+
 
 class LoopExpressionAST(IAST):
     def __init__(self, condition: IAST, body: IAST):
@@ -166,23 +167,21 @@ class ObjectInitAST(IAST):
 class UnaryOpAST(IAST):
     def __init__(self, expr: IAST):
         self.expr = expr
-    
 
 
 class VoidCheckingOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-       return self.expr.check_type()
-        
+        return self.expr.check_type()
 
 
 class NegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-       return self.expr.check_type()
+        return self.expr.check_type()
 
 
 class BooleanNegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-       return self.expr.check_type()
+        return self.expr.check_type()
 
 
 BINARY_OPERATIONS = {
@@ -206,7 +205,8 @@ class BinaryOpAST(IAST):
 class ArithmeticOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
         if self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
-            raise TypeError('The both arguments must be Int type to be valids.')
+            raise TypeError(
+                'The both arguments must be Int type to be valids.')
         else:
             return StdType.Int
 
@@ -221,6 +221,7 @@ class ComparisonOpAST(BinaryOpAST):
             raise TypeError('Both arguments must be Int,')
         else:
             return StdType.Bool
+
 
 class GroupingAST(IAST):
     def __init__(self, expr: IAST):
