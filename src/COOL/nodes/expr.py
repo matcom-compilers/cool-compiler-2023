@@ -37,9 +37,8 @@ class If(Node):
         self.else_expr: Node = else_expr
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
+    def check(self, visitor):
+        return visitor.visit_conditionals(self)
     def codegen(self):
         raise NotImplementedError()
 
@@ -50,9 +49,9 @@ class While(Node):
         self.loop_expr: Node = loop_expr
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
+    def check(self, visitor):
+        return visitor.visit_loop(self)
+    
     def codegen(self):
         raise NotImplementedError()
 
@@ -63,8 +62,8 @@ class Let(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self, visitor):
+        return visitor.visit_let(self)
 
     def codegen(self):
         raise NotImplementedError()
@@ -76,9 +75,9 @@ class Case(Node):
         self.cases: List[Node] = cases
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
+    def check(self, visitor):
+        return visitor.visit_case(self)
+    
     def codegen(self):
         raise NotImplementedError()
 
@@ -100,7 +99,7 @@ class Isvoid(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
-    def check(self):
+    def check(self, visitor):
         raise NotImplementedError()
 
     def codegen(self):
