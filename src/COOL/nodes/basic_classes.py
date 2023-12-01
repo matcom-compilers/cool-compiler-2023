@@ -32,8 +32,8 @@ class BasicObject(BasicClass):
 class BasicIO(BasicClass):
     def __init__(self) -> None:
         self.features:list = [
-            Method(line=0, column=0, id='out_string', type='SELF_TYPE', expr=None, formals=[Formal(line=0, column=0, id='x', type='String')]),
-            Method(line=0, column=0, id='out_int', type='Int', expr=None, formals=[Formal(line=0, column=0, id='x', type='Int')]),
+            Method(line=0, column=0, id='out_string', type='IO', expr=None, formals=[Formal(line=0, column=0, id='x', type='String')]),
+            Method(line=0, column=0, id='out_int', type='IO', expr=None, formals=[Formal(line=0, column=0, id='x', type='Int')]),
             Method(line=0, column=0, id='in_string', type='String', expr=None, formals=[]),
             Method(line=0, column=0, id='in_int', type='Int', expr=None, formals=[])
         ]

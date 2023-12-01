@@ -326,7 +326,7 @@ class Visitor_Class:
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
             return None
               
-        possible_types = node.posibles_types
+        possible_types = node.possibles_types
         if not (type1 in possible_types):
             #TODO search this error
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
