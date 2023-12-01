@@ -202,7 +202,7 @@ class COOL2CIL(Visitor):
 
         lhs_data = scope.find_variable_or_attribute(node.name, self.type)
         assert lhs_data is not None
-        if lhs_data.type.name in ["Int", "Bool", "String"]:
+        if lhs_data.type.name not in ["Int", "Bool"]:
             rhs_local = self.register_new(lhs_data.type.name, rhs_local)  # boxing
 
         local_sid = self.get_local(node.name)
@@ -232,7 +232,7 @@ class COOL2CIL(Visitor):
         args = [cil.ArgNode(sid)]
         for arg_expr, param_type in zip(node.args, meth.param_types):
             arg_sid = arg_expr.accept(self, context=context, scope=scope)
-            if param_type.name in ["Int", "Bool", "String"]:
+            if param_type.name not in ["Int", "Bool"]:
                 arg_sid = self.register_new(param_type.name, arg_sid)  # boxing
             args.append(cil.ArgNode(arg_sid))
 
