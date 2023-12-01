@@ -160,7 +160,7 @@ class CILCodeGenerator:
     def visit_Mult(self, node):
         left_expression = self.visit(node.left)
         right_expression = self.visit(node.right)
-        return Star(left_expression, right_expression)
+        return Mul(left_expression, right_expression)
 
     def visit_Div(self, node):
         left_expression = self.visit(node.left)
