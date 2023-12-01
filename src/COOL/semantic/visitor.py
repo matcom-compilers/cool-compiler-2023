@@ -153,11 +153,12 @@ class Visitor_Program:
         node.methods_dict = {}
         node.attributes_dict = {}
         node.features_dict = {}
-
+        lineage.append('Object')
         for anc_class in reversed(lineage):
             if not anc_class or not self.inheritable_class(anc_class):
                 break
             anc_class = self.types[anc_class]
+            
             for attrb in anc_class.attributes:
                 node.attributes_dict[attrb.id] = attrb
             for meth in anc_class.methods:
@@ -240,11 +241,12 @@ class Visitor_Class:
     def visit_dispatch_expr(self,node):
         expr_type = node.expr if isinstance(node.expr, str) else node.expr.check(self)
         if expr_type:
-            if not expr_type in self.all_types.keys():
+            if not expr_type in self.all_types.keys() and not expr_type in self.basic_types.keys():
                 #TODO search this error
                 self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
-            
-            class_meths = self.all_types[expr_type].methods_dict 
+                return None
+            class_meths = self.all_types[expr_type] if self.all_types.get(expr_type) else self.basic_types.get(expr_type)
+            class_meths = class_meths.methods_dict
             if not node.id in class_meths.keys():
                 self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
                 return None
@@ -300,13 +302,13 @@ class Visitor_Class:
         return type
     # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
-    def search_variable_in_scope(self, id):
-        if self.temporal_scope.get(id):
-            return self.temporal_scope.get(id)
+    def search_variable_in_scope(self, exp):
+        if self.temporal_scope.get(exp.id):
+            return self.temporal_scope.get(exp.id)
         for attr in self.scope['attributes'].values():
-            if attr.id == id:
+            if attr.id == exp.id:
                 return attr
-        return None
+        return exp.check(self)
 
 
     def visit_operator(self, node):
@@ -317,23 +319,28 @@ class Visitor_Class:
         if not ex1.__dict__.get('id'):
             type1 = ex1.check(self)
         else:
-            type1 = self.search_variable_in_scope(ex1.id).type
+            type1 = self.search_variable_in_scope(ex1)
+            if type1 and not isinstance(type1,str):
+                type1 = type1.type
+
         if not ex2.__dict__.get('id'):
             type2 = ex2.check(self)
         else:
-            type2 = self.search_variable_in_scope(ex2.id).type
+            type2 = self.search_variable_in_scope(ex2)
+            if type2 and not isinstance(type2,str):
+                type2 = type2.type
 
         if not type1 or not type2:
-            #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {type2}'))
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
             return None
         
         possible_types = node.possibles_types
         if  possible_types[0] == 'All':
             possible_types = self.basic_types.keys()
+        
+        
         elif not (type1 in possible_types and type2 in possible_types):
-            #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {type2}'))
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
         return node.return_type
         
     def visit_unary_operator(self, node):
@@ -341,17 +348,17 @@ class Visitor_Class:
         if not ex1.__dict__.get('id'):
             type1 = ex1.check(self)
         else:
-            type1 = self.search_variable_in_scope(ex1.id).type
+            type1 = self.search_variable_in_scope(ex1)
+            if type1 and not isinstance(type1,str):
+                type1 = type1.type
         
         if not type1:
-            #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
             return None
               
         possible_types = node.possibles_types
         if not (type1 in possible_types):
-            #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1}'))
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
         return node.return_type
 
     def visit_new(self, node):
@@ -515,3 +522,7 @@ class Visitor_Class:
 
     def visit_self(self, node):
         return self.type
+
+    def visit_isvoid(self, node):
+        node.expr.check(self)
+        return 'Bool'

@@ -112,7 +112,7 @@ class Isvoid(Node):
         super().__init__(line, column)
 
     def check(self, visitor):
-        raise NotImplementedError()
+        return visitor.visit_isvoid(self)
 
     def codegen(self):
         raise NotImplementedError()
