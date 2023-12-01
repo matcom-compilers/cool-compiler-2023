@@ -47,5 +47,5 @@ class Assign(Node):
     def codegen(self):
         raise NotImplementedError()
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self, visitor):
+        return visitor.visit_assign(self)
