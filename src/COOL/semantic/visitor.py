@@ -183,6 +183,9 @@ class Visitor_Class:
 
     def visit_attribute_inicialization(self, node):
         attrb = node
+        if attrb.id == 'self':
+            self.errors.append(Error.error(attrb.line,attrb.column, 'SemanticError', '\'self\' cannot be the name of an attribute.'))
+            return None
         if attrb.__dict__.get('expr'):
             attrb_expr = attrb.expr
             type = attrb_expr.check(self)
@@ -263,6 +266,10 @@ class Visitor_Class:
         
             
     def visit_method(self, node):
+        for i in node.formals:
+            if i.id == 'self':
+                self.errors.append(Error.error(node.line,node.column,'SemanticError','\'self\' cannot be the name of a formal parameter.'))
+                return None
         self.temporal_scope = {i.id:i for i in node.formals}     
         type = node.expr.check(self)        
         self.temporal_scope = {}
@@ -281,7 +288,7 @@ class Visitor_Class:
         return type
 
     def visit_code_block(self, node):
-        type=None
+        type = None
         for expr in node.exprs:
             type = expr.check(self)
         return type
@@ -364,6 +371,10 @@ class Visitor_Class:
 
     def visit_let(self, node):
         for i in node.let_list:
+            if i.id == 'self':
+                self.errors.append(Error.error(node.line,node.column,'SemanticError','\'self\' cannot be bound in a \'let\' expression.'))
+                return None
+        for i in node.let_list:
             i.check(self)
         self.temporal_scope = {i.id:i for i in node.let_list}     
         type = node.expr.check(self)        
@@ -416,6 +427,9 @@ class Visitor_Class:
         pass
 
     def visit_assign(self, node):
+        if node.id == 'self':
+            self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Cannot assign to \'self\'.'))
+            return None
         type = node.expr.check(self)
         if not type:
             return None
