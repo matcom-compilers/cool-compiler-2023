@@ -32,7 +32,7 @@ class VarInitFeatureAST(IAST):
         self.value = value
 
     def check_type(self, te) -> str:
-        raise NotImplementedError()
+        return self.type
 
 
 class FunctionDeclarationFeatureAST(IAST):
@@ -49,7 +49,7 @@ class FunctionDeclarationFeatureAST(IAST):
         self.body = body
 
     def check_type(self, te) -> str:
-        self.body.check_type()
+        self.body.check_type(te)
         return self.type
 
 
@@ -59,7 +59,7 @@ class VarMutationAST(IAST):
         self.value = value
 
     def check_type(self, te) -> str:
-        return self.value.check_type()
+        return self.value.check_type(te)
 
 
 class FunctionCallAST(IAST):
@@ -80,11 +80,11 @@ class ConditionalExpressionAST(IAST):
         self.else_expr = else_expr  # type: IAST
 
     def check_type(self, te) -> str:
-        if self.condition.check_type() is not StdType.Bool:
+        if self.condition.check_type(te) is not StdType.Bool:
             raise TypeError()
         else:
-            true = self.then_expr.check_type()
-            false = self.else_expr.check_type()
+            true = self.then_expr.check_type(te)
+            false = self.else_expr.check_type(te)
             return [true, false]
 
 
@@ -94,10 +94,10 @@ class LoopExpressionAST(IAST):
         self.body = body
 
     def check_type(self, te) -> str:
-        if self.condition.check_type() != 'Bool':
+        if self.condition.check_type(te) != 'Bool':
             raise TypeError('Loop condition must be a boolean.')
         else:
-            self.body.check_type()
+            self.body.check_type(te)
             return StdType.Object
 
 
@@ -107,8 +107,9 @@ class BlockExpressionAST(IAST):
 
     def check_type(self, te) -> str:
         for exp in self.expr_list:
-            exp.check_type()
-        return self.expr_list[-1].check_type()
+            clone = te.clone()
+            exp.check_type(clone)
+        return self.expr_list[-1].check_type(te)
 
 
 class VarsInitAST(IAST):
