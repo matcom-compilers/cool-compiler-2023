@@ -424,7 +424,12 @@ class Visitor_Class:
 
 
     def visit_loops(self, node):
-        pass
+        predicate_type = node.while_expr.check(self)
+        body_type = node.loop_expr.check(self)
+        if not predicate_type == 'Bool':
+            self.errors.append(Error.error(node.line,node.column,'TypeError', 'Loop condition does not have type Bool.'))
+        return 'Object'
+
 
     def visit_assign(self, node):
         if node.id == 'self':

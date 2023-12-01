@@ -39,7 +39,7 @@ from COOL.nodes.expr import Case
 from COOL.nodes.expr import New
 from COOL.nodes.expr import Isvoid
 from COOL.nodes.expr import Dispatch
-from COOL.nodes.expr import Self
+# from COOL.nodes.expr import Self
 
 
 # TODO: fix return clases

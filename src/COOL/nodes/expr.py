@@ -50,7 +50,7 @@ class While(Node):
         super().__init__(line, column)
 
     def check(self, visitor):
-        return visitor.visit_loop(self)
+        return visitor.visit_loops(self)
     
     def codegen(self):
         raise NotImplementedError()
@@ -105,12 +105,12 @@ class Isvoid(Node):
     def codegen(self):
         raise NotImplementedError()
     
-class Self(Node):
-    def __init__(self, line: int, column: int):
-        super().__init__(line, column)
+# class Self(Node):
+#     def __init__(self, line: int, column: int):
+#         super().__init__(line, column)
 
-    def check(self, visitor):
-        return visitor.visit_self(self)
+#     def check(self, visitor):
+#         return visitor.visit_self(self)
 
     def codegen(self):
         raise NotImplementedError()
