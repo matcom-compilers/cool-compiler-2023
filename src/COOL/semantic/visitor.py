@@ -385,7 +385,8 @@ class Visitor_Class:
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:
-            # self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Attribute {node.id} is not defined in this scope.'))
+            if node.id == 'self':
+                return self.scope['type']
             self.errors.append(Error.error(node.line,node.column,'NameError',f'Undeclared identifier {node.id}.'))
             return None
 
