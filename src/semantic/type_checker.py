@@ -457,7 +457,8 @@ class TypeChecker(Visitor):
         assert self.current_type
         if scope.is_defined(node.name, self.current_type):
             var_or_attr = scope.find_variable_or_attribute(node.name, self.current_type)
-            return var_or_attr.type if var_or_attr else ErrorType()
+            node.type = var_or_attr.type if var_or_attr else ErrorType()
+            return node.type
         else:
             self.error(
                 f"NameError: Identifier {node.name} is not defined in current scope",
