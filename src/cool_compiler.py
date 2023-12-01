@@ -83,8 +83,8 @@ class CoolCompiler:
     def _semantic_analysis(self, ast_root):
         semantics = SemanticChecker(ast_root)
 
-        self.cls_refs = semantics.build_inheritance_tree(self.native_classes)
-        semantics.check_cycles()
+        self.cls_refs = semantics.build_class_hierarchy(self.native_classes)
+        semantics.check_inheritance()
 
     def _run_type_checker(self):
         chk = TypeChecker(self.root, self.cls_refs)
@@ -103,10 +103,17 @@ class CoolCompiler:
         pass
     
     def compile_program(self):
+        print("Starting compilation...!!!!!!!!!!!!!!!!!!!!!!!!")
         lexer = self._lexical_analysis()
+        print("Lexicographic analysis finished")
         ast_root = self._syntactic_analysis(lexer)
+        print("Syntactic analysis finished")
         self._semantic_analysis(ast_root)
+        print("Semantic analysis finished")
         self._run_type_checker()
+        print("Type checker finished")
         cil_code = self._gen_cil_code()
+        print("CIL code generation finished")
         mips_code = self._gen_mips_code(cil_code)
+        print("MIPS code generation finished")
         return mips_code
