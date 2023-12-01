@@ -50,7 +50,7 @@ class While(Node):
         super().__init__(line, column)
 
     def check(self, visitor):
-        return visitor.visit_loop(self)
+        return visitor.visit_loops(self)
     
     def codegen(self):
         raise NotImplementedError()
@@ -81,6 +81,18 @@ class Case(Node):
     def codegen(self):
         raise NotImplementedError()
 
+class Case_expr(Node):
+    def __init__(self, line: int, column: int, id:str, type:str, expr:Node) -> None:
+        self.id = id
+        self.type = type
+        self.expr = expr
+        super().__init__(line, column)
+
+    def check(self, visitor):
+        return visitor.visit_case_expr(self)
+    
+    def codegen(self):
+        raise NotImplementedError()
 
 class New(Node):
     def __init__(self, line: int, column: int, type: str):
@@ -100,17 +112,17 @@ class Isvoid(Node):
         super().__init__(line, column)
 
     def check(self, visitor):
-        raise NotImplementedError()
+        return visitor.visit_isvoid(self)
 
     def codegen(self):
         raise NotImplementedError()
     
-class Self(Node):
-    def __init__(self, line: int, column: int):
-        super().__init__(line, column)
+# class Self(Node):
+#     def __init__(self, line: int, column: int):
+#         super().__init__(line, column)
 
-    def check(self, visitor):
-        return visitor.visit_self(self)
+#     def check(self, visitor):
+#         return visitor.visit_self(self)
 
     def codegen(self):
         raise NotImplementedError()

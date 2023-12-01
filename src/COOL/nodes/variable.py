@@ -18,6 +18,8 @@ class Initialization(Node):
         self.id = id
         self.type = type
         self.expr = expr
+        self.dynamic_type = 'void'
+
         super().__init__(line, column)
 
     def codegen(self):
@@ -30,6 +32,8 @@ class Declaration(Node):
     def __init__(self, line: int, column: int, id:str, type:str) -> None:
         self.id = id
         self.type = type
+        self.dynamic_type = 'void'
+
         super().__init__(line, column)
     
     def codegen(self):
@@ -42,6 +46,8 @@ class Assign(Node):
     def __init__(self, line: int, column: int, id: str, expr: Node) -> None:
         self.expr: Node = expr
         self.id = id
+        self.dynamic_type = 'void'
+
         super().__init__(line, column)
 
     def codegen(self):
