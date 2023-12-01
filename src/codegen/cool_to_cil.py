@@ -129,7 +129,7 @@ class COOL2CIL(Visitor):
             self.instructions.append(cil.ArgNode(self_local))
             self.instructions.append(
                 cil.StaticCallNode(
-                    self.get_func_id(htype.name, f"{attr}___init"),
+                    self.get_func_id(htype, f"{attr}___init"),
                     attr_local,
                 )
             )
@@ -158,17 +158,18 @@ class COOL2CIL(Visitor):
             attr_type = scope.find_variable_or_attribute(node.name, self.type)
             assert attr_type is not None  # Semantic correctness
             sid = node.init.accept(self, context=context, scope=scope)
-            if attr_type.type.name in ["Int", "Bool", "String"]:
-                sid = self.register_new(node.attr_type.type.name, sid)  # boxing
+            
         else:
-            sid = self.register_default(node.attr_type)
+            sid = self.register_default(node.name)
         self.instructions.append(cil.ReturnNode(sid))
         return cil.FunctionNode(
-            self.get_func_id(self.type.name, f"{node.attr_type}___init"),
+            self.get_func_id(self.type.name, f"{node.name}___init"),
             self.params,
             self.locals,
             self.instructions,
         )
+    
+    
 
     def visit__MethodNode(
         self, node: MethodNode, context: Context, scope: Scope
@@ -484,7 +485,7 @@ class COOL2CIL(Visitor):
         self.register_io__in_string()
         self.register_io__in_int()
 
-        # String
+        # # String
         self.register_string__length()
         self.register_string__concat()
         self.register_string__substr()
@@ -535,9 +536,8 @@ class COOL2CIL(Visitor):
         self.clear_state()
         self_param = self.add_param("self")
         str_param = self.add_param("str")
-        str_param_instance = self.register_new("String", str_param)
-
-        self.instructions.append(cil.PrintNode(str_param_instance, True))
+        
+        self.instructions.append(cil.PrintNode(str_param, True))
         self.instructions.append(cil.ReturnNode(self_param))
         self.dotcode.append(
             cil.FunctionNode(
@@ -551,10 +551,11 @@ class COOL2CIL(Visitor):
     def register_io__out_int(self):
         self.clear_state()
         self_param = self.add_param("self")
-        int_param = self.add_param("int")
-        int_param_instance = self.register_new("Int", int_param)
-
-        self.instructions.append(cil.PrintNode(int_param_instance, False))
+        int_param = self.add_param("value")
+        
+        
+        self.instructions.append(cil.PrintNode(int_param, False))
+        
         self.instructions.append(cil.ReturnNode(self_param))
         self.dotcode.append(
             cil.FunctionNode(

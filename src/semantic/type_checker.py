@@ -94,9 +94,8 @@ class TypeChecker(Visitor):
                     type="Attribute",
                     value=expr_type,
                 )
-            scope.define_variable(node.name, expr_type)
-        else:
-            scope.define_variable(node.name, attr_type)
+            
+        scope.define_variable(node.name, attr_type)
 
     def visit__MethodNode(self, node: MethodNode, scope: Scope):
         assert self.current_type
@@ -157,6 +156,7 @@ class TypeChecker(Visitor):
         assert self.current_type
         obj_type: Type = node.expr.accept(self, scope=scope)
         method_name = node.method
+        
 
         if node.method_type:
             if not self.context.type_exists(node.method_type):

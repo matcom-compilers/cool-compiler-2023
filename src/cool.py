@@ -129,6 +129,7 @@ def main():
         for error in type_checker.errors:
             print(error)
         exit_code = 1
+        exit(exit_code)
     ######
 
     cool_to_cil = COOL2CIL()

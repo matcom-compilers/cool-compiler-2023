@@ -386,3 +386,9 @@ class ComplementNode(InstructionNode):
     def __init__(self, dest, source):
         self.source = source
         self.dest = dest
+
+
+class UnBoxNode(InstructionNode):
+    def __init__(self, dest, source):
+        self.source = source
+        self.dest = dest
