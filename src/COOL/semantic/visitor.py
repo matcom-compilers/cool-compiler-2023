@@ -384,10 +384,10 @@ class Visitor_Class:
 
 
     def _search_min_common_type(self, type1, type2):
-        lineage1 = type1.lineage
-        lineage2 = type2.lineage
-        for i in reversed(lineage1):
-            for j in reversed(lineage2):
+        lineage1 = [type1.type] + type1.lineage
+        lineage2 = [type2.type] + type2.lineage
+        for i in lineage1:
+            for j in lineage2:
                 if i == j:
                     return i
         return 'Object'
