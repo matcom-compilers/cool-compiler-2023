@@ -480,21 +480,21 @@ class COOL2CIL(Visitor):
         self.register_object__abort()
 
         # IO
-        # self.register_io__out_string()
+        self.register_io__out_string()
         self.register_io__out_int()
-        # self.register_io__in_string()
-        # self.register_io__in_int()
+        self.register_io__in_string()
+        self.register_io__in_int()
 
         # # String
-        # self.register_string__length()
-        # self.register_string__concat()
-        # self.register_string__substr()
+        self.register_string__length()
+        self.register_string__concat()
+        self.register_string__substr()
 
         # Inits
         self.register_int_init()
-        # self.register_bool_init()
-        # self.register_string_init()
-        # self.register_object_init()
+        self.register_bool_init()
+        self.register_string_init()
+        self.register_object_init()
 
         for type_name, t in types.items():
             self.register_conforms_to(type_name, t.parent and t.parent.name)
@@ -536,9 +536,8 @@ class COOL2CIL(Visitor):
         self.clear_state()
         self_param = self.add_param("self")
         str_param = self.add_param("str")
-        str_param_instance = self.register_new("String", str_param)
-
-        self.instructions.append(cil.PrintNode(str_param_instance, True))
+        
+        self.instructions.append(cil.PrintNode(str_param, True))
         self.instructions.append(cil.ReturnNode(self_param))
         self.dotcode.append(
             cil.FunctionNode(
@@ -556,6 +555,7 @@ class COOL2CIL(Visitor):
         
         
         self.instructions.append(cil.PrintNode(int_param, False))
+        
         self.instructions.append(cil.ReturnNode(self_param))
         self.dotcode.append(
             cil.FunctionNode(
