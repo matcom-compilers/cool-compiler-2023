@@ -347,9 +347,6 @@ class Visitor_Class:
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'{new_} used with undefined class {node.type}.'))
             return None
         return node.type 
-
-    def visit_self(self, node):
-        return self.type
     
     def visit_execute_method(self,node):
         self.visit_dispatch_not_expr(node)
@@ -458,3 +455,6 @@ class Visitor_Class:
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'Class {node.type} of let-bound identifier {node.id} is undefined.'))
             return None
         return node.type
+
+    def visit_self(self, node):
+        return self.type
