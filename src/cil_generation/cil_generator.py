@@ -19,7 +19,7 @@ class CILCodeGenerator:
         self.attributes = List()  # to hold attributes
         self.cil_code = CILCode(List(), List(), defaultdict(lambda: []), {})
         self.pos = -1
-        self.max_idx = -1
+        self.max_index = -1
         self.cur_env = None  # environment for locals only
         self.cur_cls = None
 
