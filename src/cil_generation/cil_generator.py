@@ -302,7 +302,7 @@ class CILCodeGenerator:
         self._save_str_literal(node.type.value)
 
         # Own attributes
-        own_attributes = [feature for feature in node.feature_list if isinstance(feature, Attribute)]
+        own_attributes = [feature for feature in node.feat_list if isinstance(feature, Attribute)]
 
         self.attribute_dict = {}
 

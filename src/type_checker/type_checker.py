@@ -27,7 +27,7 @@ class TypeChecker:
         self.current_environment = None
         self.current_class = None
 
-    def _initialize_order(self, current_node, current_environment):
+    def _initialize_order(self, current_node, env):
         """
         Initialize the order (td and tf) during depth-first traversal.
 
@@ -45,7 +45,7 @@ class TypeChecker:
         # Traverse methods in the current class
         for method_name, method_ref in current_node.methods.items():
             # Check for compatibility with inherited methods
-            old_method = current_environment.get(method_name)
+            old_method = env.get(method_name)
 
             if old_method and old_method.get_signature() != method_ref.get_signature():
                 raise SemanticError(
@@ -55,25 +55,25 @@ class TypeChecker:
                 )
 
             # Define the method in the environment
-            current_environment.define(method_name, method_ref)
+            env.define(method_name, method_ref)
 
             # Precalculate static type of formals before doing visitor
             for formal in method_ref.formal_list:
-                if formal.type.value == 'Self_Type':
+                if formal.type.value == 'SELF_TYPE':
                     raise SemanticError(
                         formal.type.line,
                         formal.type.col,
                         f'Tried to declare {formal} with {formal.type}'
                     )
 
-                formal.set_static_type(self._get_correct_type(formal, current_node.self_type))
+                formal.set_static_type(self._get_correct_type_for_node(formal, current_node.self_type))
 
         # Traverse children nodes
         for child_node in current_node.children:
             child_node.parent = current_node
             child_node.level = current_node.level + 1
 
-            self._initialize_order(child_node, Environment(current_environment))
+            self._initialize_order(child_node, Environment(env))
 
         # Set the tf value for the current node
         current_node.tf = self.traversal_counter
@@ -132,12 +132,12 @@ class TypeChecker:
 
         Args:
             node: The node for which to determine the correct type.
-            default_type: The default type to use if the node's type is 'Self_Type'.
+            default_type: The default type to use if the node's type is 'SELF_TYPE'.
 
         Returns:
             Type: The correct type for the node.
         """
-        if node.type.value == 'Self_Type':
+        if node.type.value == 'SELF_TYPE':
             return default_type
 
         if node.type.value not in self.class_references:
@@ -156,13 +156,6 @@ class TypeChecker:
         Returns:
             The result of visiting the AST node.
         """
-        # try:
-        #     method_name = 'visit_' + node.__class__.__name__
-        #     visit_method = getattr(self, method_name)
-        #     return visit_method(node)
-        # except:
-        #     print("EL NODE JODEDOR", node, node.__class__, node.__class__.__name__)
-        #     raise AttributeError(node.line, node.col, f'Visit method not implemented for node type: {node.__class__.__name__}')
         
         fn = getattr(self, f'visit_{node.__class__.__name__}')
         res = fn(node)
@@ -442,7 +435,7 @@ class TypeChecker:
         old_class = self.current_class
         self.current_class = node
 
-        self.current_environment.define('self', Attribute(Id('self'), Type('Self_Type'), None))
+        self.current_environment.define('self', Attribute(Id('self'), Type('SELF_TYPE'), None))
 
         for feature in node.feat_list:
             if isinstance(feature, Attribute):

@@ -55,7 +55,7 @@ class CoolCompiler:
 
         for cls in self.native_classes:
             if cls.type.value in methods:
-                cls.feature_list = methods[cls.type.value]
+                cls.feat_list = methods[cls.type.value]
 
         self.root = self.native_classes[0]  # reference to the root of the inheritance tree
 
