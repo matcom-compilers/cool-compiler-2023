@@ -187,9 +187,17 @@ class Visitor_Class:
             attrb_expr = attrb.expr
             type = attrb_expr.check(self)
             if type:
+                if attrb.type == type:
+                    return type
                 if self.all_types.get(type):
-                    if not(attrb.type == type) and attrb.type not in self.all_types[type].lineage:
+                    lineage = self.all_types[type].lineage
+                    if attrb.type not in lineage:
                         self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+                        return None
+                    else: return type
+                self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+        return None
+
 
     def visit_dispatch(self,node):
         if node.type:
@@ -368,13 +376,7 @@ class Visitor_Class:
         if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
             return None
-        
-        # type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
-        
-        # if (not (type == node.type) ) and (not (node.type in type_lineage)):
-        #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
-        #     return None
-        
+
         return type
 
     def visit_case(self, node):
