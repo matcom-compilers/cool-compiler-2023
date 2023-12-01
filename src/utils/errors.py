@@ -25,7 +25,11 @@ class AttributeError(Error):
     pass
 
 class LexicographicError(Error):
-    pass
+    def __init__(self, message):
+        self.msg = message
+    
+    def __str__(self) -> str:
+        return self.msg
 
 class TypeError(Error):
     pass
