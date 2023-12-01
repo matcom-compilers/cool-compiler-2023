@@ -1,824 +1,604 @@
-from collections import defaultdict
-from typing import Optional
-
 from codegen import cil_ast as cil
 from parsing.ast import (
     AssignNode,
     AttributeNode,
-    BinaryOperator,
-    BinaryOperatorNode,
     BlockNode,
-    BooleanNode,
     ClassNode,
     IdentifierNode,
     IntegerNode,
-    LetNode,
     MethodCallNode,
     MethodNode,
-    NotNode,
     ProgramNode,
-    StringNode,
-    WhileNode,
 )
 from semantic.context import Context
-from semantic.scope import Scope
-from semantic.types import SelfType, Type
+from semantic.scope import Scope, VariableInfo
+from semantic.types import VoidType
 from utils.visitor import Visitor
 
 
 class COOL2CIL(Visitor):
-    def __init__(self) -> None:
-        self.dottypes = []
-        self.dotdata = []
-        self.dotcode = []
-
-        self.type = SelfType()
-        self.params = []
-        self.locals = []
-        self.instructions = []
-
-        self.attrs = {}
+    def __init__(self):
+        self.types = []
+        self.code = []
+        self.data = []
+        self.current_type = None
+        self.current_function = None
+        self.string_count = 0
+        self._count = 0
+        self.internal_count = 0
+        self.context = None
         self.methods = {}
+        self.attrs = {}
 
-        self.label = defaultdict(lambda: 0)
+    def generate_next_string_id(self):
+        self.string_count += 1
+        return "string_" + str(self.string_count)
 
-    def visit__ProgramNode(
-        self, node: ProgramNode, context: Context, scope: Scope
-    ) -> cil.ProgramNode:
-        self.attrs, self.methods = dict(), dict()
-        for type_name, ctype in context.types.items():
-            self.attrs[type_name] = {
-                attr.name: (i, attr_type.name)
-                for i, (attr, attr_type) in enumerate(ctype.all_attributes())
-            }
-            object_specials, generated_specials = (
-                ["type_name", "copy"],
-                ["__conforms_to"],
-            )
-            self.methods[type_name] = {
-                method.name: (i + len(generated_specials), attr_type.name)
-                if (attr_type.name != "Object" or method.name not in object_specials)
-                else (i + len(generated_specials), ctype.name)
-                for i, (method, attr_type) in enumerate(ctype.all_methods())
-            }
+    def next_id(self):
+        self._count += 1
+        return str(self._count)
 
-            for i, special in enumerate(generated_specials):
-                self.methods[type_name][special] = (i, type_name)
-
-            sorted_methods = sorted(
-                self.methods[type_name].items(), key=lambda kv: kv[1][0]
-            )
-            self.dottypes.append(
-                cil.TypeNode(
-                    type_name,
-                    [
-                        cil.AttributeNode(name, ctype)
-                        for name in list(self.attrs[type_name].keys())
-                    ],
-                    [
-                        cil.MethodNode(method, self.get_func_id(ftype, method))
-                        for method, (_, ftype) in sorted_methods
-                    ],
-                )
-            )
-
-        # TYPES section Completed
-
-        self.clear_state()
-        self_local = self.add_local("self")
-
-        self.instructions.append(cil.AllocateNode("Void", self_local))
-        self.instructions.append(cil.ReturnNode(self_local))
-
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("Void", "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-        self.clear_state()
-        main_instance = self.register_new("Main")
-        self.instructions.append(cil.ArgNode(main_instance))
-        self.instructions.append(
-            cil.StaticCallNode(self.get_func_id("Main", "main"), self.add_local())
-        )
-        self.instructions.append(cil.ExitNode(0))
-        self.dotcode.append(
-            cil.FunctionNode("main", self.params, self.locals, self.instructions)
-        )
-
-        self.register_builtins(context.types)
-
-        for scope_index, cool_class in enumerate(node.classes):
-            cool_class.accept(self, context=context, scope=scope.children[scope_index])
-
-        return cil.ProgramNode(self.dottypes, self.dotdata, self.dotcode)
-
-    def visit__ClassNode(self, node: ClassNode, context: Context, scope: Scope):
-        self.type = context.get_type(node.name)
-        self.clear_state()
-        self_local = self.add_local("self")
-
-        self.instructions.append(cil.AllocateNode(self.type.name, self_local))
-
-        for attr, (i, htype) in self.attrs[self.type.name].items():
-            attr_local = self.add_local(attr)
-            self.instructions.append(cil.ArgNode(self_local))
-            self.instructions.append(
-                cil.StaticCallNode(
-                    self.get_func_id(htype, f"{attr}___init"),
-                    attr_local,
-                )
-            )
-            self.instructions.append(cil.SetAttrNode(self_local, i, attr_local))
-        self.instructions.append(cil.ReturnNode(self_local))
-
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id(self.type.name, "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-        for feat in node.features:
-            function = feat.accept(self, context=context, scope=scope)
-            self.dotcode.append(function)
-
-    def visit__AttributeNode(
-        self, node: AttributeNode, context: Context, scope: Scope
-    ) -> cil.FunctionNode:
-        self.clear_state()
-        self.add_param("self")
-        if node.init is not None:
-            attr_type = scope.find_variable_or_attribute(node.name, self.type)
-            assert attr_type is not None  # Semantic correctness
-            sid = node.init.accept(self, context=context, scope=scope)
-            
-        else:
-            sid = self.register_default(node.name)
-        self.instructions.append(cil.ReturnNode(sid))
-        return cil.FunctionNode(
-            self.get_func_id(self.type.name, f"{node.name}___init"),
-            self.params,
-            self.locals,
-            self.instructions,
-        )
-    
-    
-
-    def visit__MethodNode(
-        self, node: MethodNode, context: Context, scope: Scope
-    ) -> cil.FunctionNode:
-        self.clear_state()
-        self.add_param("self")
-        for formal in node.formals:
-            self.add_param(formal.name)
-
-        sid = node.body.accept(
-            self, context=context, scope=scope.get_child(self.type.name, node.name)
-        )
-        self.instructions.append(cil.ReturnNode(sid))
-        return cil.FunctionNode(
-            self.get_func_id(self.type.name, node.name),
-            self.params,
-            self.locals,
-            self.instructions,
-        )
-
-    def visit__BlockNode(self, node: BlockNode, context: Context, scope: Scope):
-        sid = None
-        for expr in node.expressions:
-            sid = expr.accept(self, context=context, scope=scope)
-        assert sid is not None  # Semantic correct => Block nonempty
-        return sid
-
-    def visit__AssignNode(self, node: AssignNode, context: Context, scope: Scope):
-        rhs_local = node.expr.accept(self, context=context, scope=scope)
-
-        lhs_data = scope.find_variable_or_attribute(node.name, self.type)
-        assert lhs_data is not None
-        if lhs_data.type.name not in ["Int", "Bool"]:
-            rhs_local = self.register_new(lhs_data.type.name, rhs_local)  # boxing
-
-        local_sid = self.get_local(node.name)
-        if any(local_sid == l.name for l in self.locals):
-            self.instructions.append(cil.AssignNode(local_sid, rhs_local))
-            return local_sid
-
-        param_sid = self.get_param(node.name)
-        if any(param_sid == p.name for p in self.params):
-            self.instructions.append(cil.AssignNode(param_sid, rhs_local))
-            return param_sid
-
-        attr_id = self.get_attr_id(self.type.name, node.name)
-        self.instructions.append(
-            cil.SetAttrNode(self.get_param("self"), attr_id, rhs_local)
-        )
-        return rhs_local
-
-    def visit__MethodCallNode(
-        self, node: MethodCallNode, context: Context, scope: Scope
-    ):
-        return_local = self.add_local()
-
-        meth = self.type.get_method(node.method)
-        sid = self.get_param("self")
-        # Translate all call arguments to cil
-        args = [cil.ArgNode(sid)]
-        for arg_expr, param_type in zip(node.args, meth.param_types):
-            arg_sid = arg_expr.accept(self, context=context, scope=scope)
-            if param_type.name not in ["Int", "Bool"]:
-                arg_sid = self.register_new(param_type.name, arg_sid)  # boxing
-            args.append(cil.ArgNode(arg_sid))
-
-        typeof_local = self.add_local()
-        self.instructions.append(cil.TypeOfNode(sid, typeof_local))
-
-        self.instructions.extend(args)
-        method_id = self.get_method_id(self.type.name, node.method)
-        self.instructions.append(
-            cil.DynamicCallNode(typeof_local, method_id, return_local)
-        )
-        return return_local
-
-    def visit__LetNode(self, node: LetNode, context: Context, scope: Scope):
-        let_scope = scope.get_child(scope.class_name, scope.method_name)
-        for var_name, var_type, init_expr, _ in node.bindings:
-            lhs_local = self.get_local(var_name)
-            if not any(lhs_local == l.name for l in self.locals):
-                lhs_local = self.add_local(var_name)
-            if init_expr is not None:
-                rhs_local = init_expr.accept(self, context=context, scope=let_scope)
-                if var_type in ["Int", "Bool", "String"]:
-                    rhs_local = self.register_new(var_type, rhs_local)  # boxing
-                self.instructions.append(cil.AssignNode(lhs_local, rhs_local))
-            else:
-                self.register_default(var_name, dest=lhs_local)
-
-        return node.body.accept(self, context=context, scope=let_scope)
-
-    def visit__WhileNode(self, node: WhileNode, context: Context, scope: Scope):
-        while_label = self.get_label("while_label")
-        loop_label = self.get_label("loop_label")
-        pool_label = self.get_label("pool_label")
-
-        # Label while
-        self.instructions.append(cil.LabelNode(while_label))
-
-        # IF condition GOTO loop
-        while_ret = node.condition.accept(self, context=context, scope=scope)
-        self.instructions.append(cil.GotoIfGtNode(while_ret, loop_label))
-
-        # GOTO pool
-        self.instructions.append(cil.GotoNode(pool_label))
-
-        # Label loop
-        self.instructions.append(cil.LabelNode(loop_label))
-        node.body.accept(self, context=context, scope=scope)
-
-        # GOTO while
-        self.instructions.append(cil.GotoNode(while_label))
-
-        # Label pool
-        self.instructions.append(cil.LabelNode(pool_label))
-
-        return self.register_new("Void")
-
-    def visit__NotNode(self, node: NotNode, context: Context, scope: Scope):
-        ret_local = self.add_local()
-        sid = node.expr.accept(self, context=context, scope=scope)
-        self.instructions.append(cil.MinusNode(ret_local, self.register_int(1), sid))
-        return ret_local
-
-    def visit__BinaryOperatorNode(
-        self, node: BinaryOperatorNode, context: Context, scope: Scope
-    ):
-        left = node.left.accept(self, context=context, scope=scope)
-        right = node.right.accept(self, context=context, scope=scope)
-
-        ret_local = self.add_local()
-
-        if node.operator == BinaryOperator.PLUS:
-            self.instructions.append(cil.PlusNode(ret_local, left, right))
-        elif node.operator == BinaryOperator.MINUS:
-            self.instructions.append(cil.MinusNode(ret_local, left, right))
-
-        elif node.operator == BinaryOperator.TIMES:
-            self.instructions.append(cil.StarNode(ret_local, left, right))
-
-        elif node.operator == BinaryOperator.DIVIDE:
-            self.instructions.append(cil.DivNode(ret_local, left, right))
-
-        elif node.operator == BinaryOperator.LT:
-            cond_local = self.add_local()
-            self.instructions.append(cil.MinusNode(cond_local, left, right))
-
-            then_label = self.get_label("then")
-            continue_label = self.get_label("continue")
-
-            # IF condition GOTO then_label
-            self.instructions.append(cil.GotoIfLtNode(cond_local, then_label))
-
-            # Label else_label
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
-            # GoTo continue_label
-            self.instructions.append(cil.GotoNode(continue_label))
-
-            # Label then_label
-            self.instructions.append(cil.LabelNode(then_label))
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
-
-            # Label continue_label
-            self.instructions.append(cil.LabelNode(continue_label))
-
-        elif node.operator == BinaryOperator.LE:
-            cond_local = self.add_local()
-            self.instructions.append(cil.MinusNode(cond_local, left, right))
-            self.instructions.append(
-                cil.MinusNode(cond_local, cond_local, self.register_int(1))
-            )
-
-            ret_local = self.add_local()
-            then_label = self.get_label("then")
-            continue_label = self.get_label("continue")
-
-            # IF condition GOTO then_label
-            self.instructions.append(cil.GotoIfLtNode(cond_local, then_label))
-
-            # Label else_label
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
-            # GoTo continue_label
-            self.instructions.append(cil.GotoNode(continue_label))
-
-            # Label then_label
-            self.instructions.append(cil.LabelNode(then_label))
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
-
-            # Label continue_label
-            self.instructions.append(cil.LabelNode(continue_label))
-
-        elif node.operator == BinaryOperator.EQ:
-            cond_local = self.add_local()
-
-            assert node.left.type
-            if node.left.type.name == "String":
-                self.instructions.append(cil.StrEqNode(cond_local, left, right))
-                self.instructions.append(
-                    cil.MinusNode(cond_local, self.register_int(1), cond_local)
-                )
-            else:
-                self.instructions.append(cil.MinusNode(cond_local, left, right))
-
-            ret_local = self.add_local()
-            then_label = self.get_label("then")
-            continue_label = self.get_label("continue")
-
-            # IF condition GOTO then_label
-            self.instructions.append(cil.GotoIfEqNode(cond_local, then_label))
-
-            # Label else_label
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(0)))
-            # GoTo continue_label
-            self.instructions.append(cil.GotoNode(continue_label))
-
-            # Label then_label
-            self.instructions.append(cil.LabelNode(then_label))
-            self.instructions.append(cil.AssignNode(ret_local, self.register_int(1)))
-
-            # Label continue_label
-            self.instructions.append(cil.LabelNode(continue_label))
-
-        return ret_local
-
-    def visit__IntegerNode(self, node: IntegerNode, context: Context, scope: Scope):
-        return self.register_int(int(node._value))
-
-    def visit__BooleanNode(self, node: BooleanNode, context: Context, scope: Scope):
-        return self.register_int(1 if node.value == "true" else 0)
-
-    def visit__StringNode(self, node: StringNode, context: Context, scope: Scope):
-        return self.add_data("STR", f'"{node._value}"')
-
-    def visit__IdentifierNode(
-        self, node: IdentifierNode, context: Context, scope: Scope
-    ):
-        local_sid = self.get_local(node.name)
-        if any(local_sid == l.name for l in self.locals):
-            return local_sid
-
-        param_sid = self.get_param(node.name)
-        if any(param_sid == p.name for p in self.params):
-            return param_sid
-
-        local_sid = self.add_local()
-        attr_id = self.get_attr_id(self.type.name, node.name)
-        self.instructions.append(
-            cil.GetAttrNode(self.get_param("self"), attr_id, local_sid)
-        )
-        return local_sid
-
-    def get_func_id(self, type_name: str, method_name: str):
+    def to_function_name(self, method_name, type_name):
         return f"{type_name}__{method_name}"
 
-    def get_method_id(self, type_name: str, method_name: str):
-        method_id, _ = self.methods[type_name][method_name]
+    def to_data_name(self, type_name, value):
+        return f"{type_name}_{value}"
+
+    def to_attr_name(self, type_name, attr_name):
+        return f"{type_name}__{attr_name}"
+
+    @property
+    def params(self):
+        return self.current_function.params
+
+    @property
+    def localvars(self):
+        return self.current_function.localvars
+
+    @property
+    def instructions(self):
+        return self.current_function.instructions
+
+    def get_method_id(self, typex, name):
+        method_id, _ = self.methods[typex][name]
         return method_id
 
+    def register_instruction(self, instruction):
+        self.current_function.instructions.append(instruction)
+
+    def register_type(self, name):
+        type_node = cil.TypeNode(name, [], [])
+        self.types.append(type_node)
+        return type_node
+
+    def register_function(self, function_name):
+        function_node = cil.FunctionNode(function_name, [], [], [])
+        self.code.append(function_node)
+        return function_node
+
+    def get_local(self, name):
+        return f"_l_{name}"
+
+    def register_local(self, name=None):
+        local_name = (
+            f"_l_{name}" if name else f"_l_{len(self.current_function.localvars)}"
+        )
+        local_node = cil.LocalNode(local_name)
+        self.current_function.localvars.append(local_node)
+        return local_name
+
+    def register_param(self, value_info):
+        value_info.name = self.build_internal_vname(value_info.name)
+        arg_node = cil.ParamNode(value_info.name)
+        self.params.append(arg_node)
+        return value_info
+
+    def get_param(self, name):
+        return f"param_{name}"
+
+    def build_internal_vname(self, vname):
+        vname = f"param_{vname}"
+        self.internal_count += 1
+        return vname
+
+    def define_internal_local(self):
+        return self.register_local()
+
+    def is_attribute(self, vname):
+        return vname not in [var.name for var in self.current_function.localvars] and (
+            vname not in [param.name for param in self.current_function.params]
+        )
+
+    def add_builtin_init(self):
+        builtin_types = ["Object", "IO", "Int", "Bool", "String"]
+        for typex in builtin_types:
+            self.current_function = cil.FunctionNode(
+                self.to_function_name("init", typex), [], [], []
+            )
+            self.params.append(cil.ParamNode("self"))
+
+            self.register_instruction(cil.ReturnNode("self"))
+            self.code.append(self.current_function)
+
+        self.current_function = None
+
+    def register_init(self, node: ClassNode):
+        self.current_function = self.register_function(
+            self.to_function_name("init", node.name)
+        )
+
+        self.params.append(cil.ParamNode("self"))
+        self.current_type.define_method("init", [], [], "Object")
+
+        for attr, (_, typex) in self.attrs[self.current_type.name].items():
+            instance = self.define_internal_local()
+            self.register_instruction(cil.ArgNode("self"))
+            self.register_instruction(
+                cil.StaticCallNode(
+                    self.to_function_name(f"{attr}__init", typex), instance
+                )
+            )
+            self.register_instruction(
+                cil.SetAttrNode(
+                    "self", self.to_attr_name(node.name, attr), instance, node.name
+                )
+            )
+
+        self.register_instruction(cil.ReturnNode("self"))
+
+    def add_builtin_functions(self):
+        # Object
+        object_type = cil.TypeNode(
+            "Object",
+            [],
+            [
+                self.cil_predef_method("abort", "Object", self.object_abort),
+                self.cil_predef_method("copy", "Object", self.object_copy),
+                self.cil_predef_method("type_name", "Object", self.object_type_name),
+            ],
+        )
+
+        # "IO"
+
+        io_type = cil.TypeNode(
+            "IO",
+            [],
+            [
+                self.cil_predef_method("abort", "IO", self.object_abort),
+                self.cil_predef_method("copy", "IO", self.object_copy),
+                self.cil_predef_method("type_name", "IO", self.object_type_name),
+                self.cil_predef_method("out_string", "IO", self.register_io_out_string),
+                self.cil_predef_method("out_int", "IO", self.register_io_out_int),
+                self.cil_predef_method("in_string", "IO", self.register_io_in_string),
+                self.cil_predef_method("in_int", "IO", self.register_io_in_int),
+            ],
+        )
+
+        # String
+        self.attrs["String"] = {"length": (0, "Int"), "str_ref": (1, "String")}
+        string_type = cil.TypeNode(
+            "String",
+            [cil.AttributeNode("length"), cil.AttributeNode("str_ref")],
+            [
+                self.cil_predef_method("abort", "String", self.object_abort),
+                self.cil_predef_method("copy", "String", self.object_copy),
+                self.cil_predef_method("type_name", "String", self.object_type_name),
+                self.cil_predef_method("length", "String", self.string_length),
+                self.cil_predef_method("concat", "String", self.string_concat),
+                self.cil_predef_method("substr", "String", self.string_substr),
+            ],
+        )
+
+        # Int
+        int_type = cil.TypeNode(
+            "Int",
+            [cil.AttributeNode("value")],
+            [
+                self.cil_predef_method("abort", "Int", self.object_abort),
+                self.cil_predef_method("copy", "Int", self.object_copy),
+                self.cil_predef_method("type_name", "Int", self.object_type_name),
+            ],
+        )
+
+        # Bool
+        bool_type = cil.TypeNode(
+            "Bool",
+            [cil.AttributeNode("value")],
+            [
+                self.cil_predef_method("abort", "Bool", self.object_abort),
+                self.cil_predef_method("copy", "Bool", self.object_copy),
+                self.cil_predef_method("type_name", "Bool", self.object_type_name),
+            ],
+        )
+
+        for typex in [object_type, io_type, string_type, int_type, bool_type]:
+            self.types.append(typex)
+
+    # predefined functions cil
+    def cil_predef_method(self, mname, cname, specif_code):
+        self.current_type = self.context.get_type(cname)
+        self.current_method = self.current_type.get_method(mname)
+        self.current_function = cil.FunctionNode(
+            self.to_function_name(mname, cname), [], [], []
+        )
+
+        if mname == "abort":
+            specif_code(cname)
+        else:
+            specif_code()
+
+        self.code.append(self.current_function)
+        self.current_function = None
+        self.current_type = None
+
+        return cil.MethodNode(mname, self.to_function_name(mname, cname))
+
+    def register_abort(self):
+        self.current_function = cil.FunctionNode(
+            self.to_function_name("abort", self.current_type.name), [], [], []
+        )
+        self.object_abort(self.current_type.name)
+        self.code.append(self.current_function)
+        self.current_function = None
+
+    def register_copy(self):
+        self.current_function = cil.FunctionNode(
+            self.to_function_name("copy", self.current_type.name), [], [], []
+        )
+        self.object_copy()
+        self.code.append(self.current_function)
+        self.current_function = None
+
+    def register_type_name(self):
+        self.current_function = cil.FunctionNode(
+            self.to_function_name("type_name", self.current_type.name), [], [], []
+        )
+        self.object_type_name()
+        self.code.append(self.current_function)
+        self.current_function = None
+
+    def string_length(self):
+        self.params.append(cil.ParamNode("self"))
+
+        result = self.define_internal_local()
+
+        self.register_instruction(cil.LengthNode(result, "self"))
+        self.register_instruction(cil.ReturnNode(result))
+
+    def string_concat(self):
+        self.params.append(cil.ParamNode("self"))
+        other_arg = VariableInfo("other_arg")
+        self.register_param(other_arg)
+
+        ret_vinfo = self.define_internal_local()
+
+        self.register_instruction(cil.ConcatNode(ret_vinfo, "self", other_arg.name))
+        self.register_instruction(cil.ReturnNode(ret_vinfo))
+
+    def string_substr(self):
+        self.params.append(cil.ParamNode("self"))
+        idx_arg = VariableInfo("idx_arg")
+        self.register_param(idx_arg)
+        length_arg = VariableInfo("length_arg")
+        self.register_param(length_arg)
+
+        ret_vinfo = self.define_internal_local()
+
+        self.register_instruction(
+            cil.SubstringNode(ret_vinfo, "self", idx_arg.name, length_arg.name)
+        )
+        self.register_instruction(cil.ReturnNode(ret_vinfo))
+
+    def object_abort(self, type):
+        self.data.append(
+            cil.DataNode(f"abort_{type}", f'"Abort called from class {type}\n"')
+        )
+        error = f"abort_{type}"
+        self.register_instruction(cil.RuntimeErrorNode(error))
+
+    def object_copy(self):
+        self.params.append(cil.ParamNode("self"))
+        copy_local = self.define_internal_local()
+        self.register_instruction(cil.AllocateNode(self.current_type.name, copy_local))
+
+        for attr in self.attrs[self.current_type.name].keys():
+            attr_copy_local = self.define_internal_local()
+            attr_name = (
+                self.to_attr_name(self.current_type.name, attr)
+                if self.current_type.name not in ["Int", "String", "Bool"]
+                else attr
+            )
+            self.register_instruction(
+                cil.GetAttrNode(
+                    "self",
+                    attr_name,
+                    attr_copy_local,
+                    self.current_type.name,
+                )
+            )
+            self.register_instruction(
+                cil.SetAttrNode(
+                    copy_local,
+                    attr_name,
+                    attr_copy_local,
+                    self.current_type.name,
+                )
+            )
+
+        self.register_instruction(cil.ReturnNode(copy_local))
+
+    def object_type_name(self):
+        self.params.append(cil.ParamNode("self"))
+        label = f"TYPE_NAME_{self.current_type.name}"
+        self.data.append(cil.DataNode(label, f'"{self.current_type.name}"'))
+        type_name = self.define_internal_local()
+        self.register_instruction(
+            cil.LoadNode(type_name, label, self.current_type.name)
+        )
+        self.register_instruction(cil.ReturnNode(type_name))
+
+    def register_io_out_string(self):
+        self.params.append(cil.ParamNode("self"))
+        str_arg = VariableInfo("str")
+        self.register_param(str_arg)
+        self.register_instruction(cil.PrintNode(str_arg.name, True))
+        self.register_instruction(cil.ReturnNode("self"))
+
+    def register_io_out_int(self):
+        self.params.append(cil.ParamNode("self"))
+        int_arg = VariableInfo("int")
+        self.register_param(int_arg)
+        self.register_instruction(cil.PrintNode(int_arg.name, False))
+        self.register_instruction(cil.ReturnNode("self"))
+
+    def register_io_in_string(self):
+        self.params.append(cil.ParamNode("self"))
+        ret_vinfo = self.define_internal_local()
+        self.register_instruction(cil.ReadNode(ret_vinfo, True))
+        self.register_instruction(cil.ReturnNode(ret_vinfo))
+
+    def register_io_in_int(self):
+        self.params.append(cil.ParamNode("self"))
+        ret_vinfo = self.define_internal_local()
+        self.register_instruction(cil.ReadNode(ret_vinfo, False))
+        self.register_instruction(cil.ReturnNode(ret_vinfo))
+
     def clear_state(self):
-        self.params, self.locals, self.instructions = [], [], []
+        self.types = []
+        self.code = []
+        self.data = []
+        self.current_type = None
+        self.current_function = None
+        self.string_count = 0
+        self._count = 0
+        self.context = None
 
-    def get_local(self, name: Optional[str]):
-        return f"_l_{len(self.locals) if name is None else name}"
+    def visit__ProgramNode(
+        self, node: ProgramNode, context: Context, scope: Scope, return_var=None
+    ):
+        self.context = context
 
-    def add_local(self, name: Optional[str] = None):
-        local = self.get_local(name)
-        self.locals.append(cil.LocalNode(local))
-        return local
+        for type in self.context.types.values():
+            self.attrs[type.name] = {
+                attr.name: (i, htype.name)
+                for i, (attr, htype) in enumerate(type.all_attributes())
+            }
+            self.methods[type.name] = {
+                method.name: (i, htype.name)
+                if htype.name != "Object"
+                or method.name not in ["abort", "type_name", "copy"]
+                else (i, type.name)
+                for i, (method, htype) in enumerate(type.all_methods())
+            }
 
-    def get_param(self, name: str):
-        return f"param__{name}"
+        self.current_function = cil.FunctionNode("main", [], [], [])
+        self.code.append(self.current_function)
 
-    def add_param(self, name: str):
-        param = self.get_param(name)
-        self.params.append(cil.ParamNode(param))
-        return param
+        main_init = self.to_function_name("init", "Main")
+        main_method_name = self.to_function_name("main", "Main")
 
-    def get_attr_id(self, type_name: str, name: str):
-        attr_id, _ = self.attrs[type_name][name]
-        return attr_id
+        # Get instance from constructor
+        a = self.define_internal_local()
+        self.register_instruction(cil.AllocateNode("Main", a))
+        self.register_instruction(cil.ArgNode(a))
+        instance = self.define_internal_local()
+        self.register_instruction(cil.StaticCallNode(main_init, instance))
 
-    def add_data(self, name: str, value: str):
-        for data in self.dotdata:
-            if data.value == value:
-                data_id = data.name
-                break
+        # Pass instance as parameter and call Main__main
+        result = self.define_internal_local()
+        self.register_instruction(cil.ArgNode(instance))
+        self.register_instruction(cil.StaticCallNode(main_method_name, result))
+
+        # self.register_instruction(ReturnNode(0))
+        self.register_instruction(cil.ExitNode(0))
+
+        self.current_function = None
+
+        self.add_builtin_functions()
+        self.add_builtin_init()
+
+        for cls in node.classes:
+            cls.accept(self, context=context, scope=scope)
+
+        program_node = cil.ProgramNode(self.types, self.data, self.code)
+
+        self.clear_state()
+
+        return program_node
+
+    def visit__ClassNode(
+        self, node: ClassNode, context: Context, scope: Scope, return_var=None
+    ):
+        self.current_type = self.context.get_type(node.name)
+
+        self.register_abort()
+        self.register_copy()
+        self.register_type_name()
+
+        type_node = self.register_type(self.current_type.name)
+
+        current_type = self.current_type
+        while current_type is not None:
+            attributes = [
+                cil.AttributeNode(node.name + "__" + attr.name, attr.type)
+                for attr in current_type.attributes
+            ]
+
+            type_node.attributes.extend(attributes[::-1])
+
+            current_type = current_type.parent
+
+        type_node.attributes.reverse()
+
+        type_node.methods = [
+            cil.MethodNode(method_name, self.to_function_name(method_name, typex))
+            for method_name, (_, typex) in self.methods[node.name].items()
+        ]
+
+        self.register_init(node)
+
+        for feature in node.features:
+            feature.accept(self, context=context, scope=scope)
+
+    def visit__AttributeNode(
+        self, node: AttributeNode, context: Context, scope: Scope, return_var=None
+    ):
+        self.current_function = self.register_function(
+            self.to_function_name(f"{node.name}__init", self.current_type.name)
+        )
+
+        self.params.append(cil.ParamNode("self"))
+
+        # Assign init_expr if not None
+        if node.init:
+            init_expr_value = self.define_internal_local()
+            node.init.accept(
+                self, context=context, scope=scope, return_var=init_expr_value
+            )
+            self.register_instruction(cil.ReturnNode(init_expr_value))
+
+        else:  # Assign default value
+            default_var = self.define_internal_local()
+            self.register_instruction(cil.DefaultValueNode(default_var, node.attr_type))
+            self.register_instruction(cil.ReturnNode(default_var))
+
+        self.current_function = None
+
+    def visit__MethodNode(
+        self, node: MethodNode, context: Context, scope: Scope, return_var=None
+    ):
+        self.current_method = self.current_type.get_method(node.name)
+
+        self.current_function = self.register_function(
+            self.to_function_name(node.name, self.current_type.name)
+        )
+
+        # Add params
+        self.current_function.params.append(cil.ParamNode("self"))
+        for formal in node.formals:
+            self.register_param(VariableInfo(formal.name))
+
+        # Body
+        value = self.define_internal_local()
+        node.body.accept(self, context=context, scope=scope, return_var=value)
+
+        # Return
+        if isinstance(self.current_method.return_type, VoidType):
+            value = None
+
+        self.register_instruction(cil.ReturnNode(value))
+
+        self.current_method = None
+        self.current_function = None
+
+    def visit__AssignNode(
+        self, node: AssignNode, context: Context, scope: Scope, return_var
+    ):
+        node.expr.accept(self, context, scope, return_var)
+
+        local_id = self.get_local(node.name)
+        if any(local_id == l.name for l in self.current_function.localvars):
+            self.register_instruction(cil.AssignNode(local_id, return_var))
+            return
+
+        param_id = self.get_param(node.name)
+        if any(param_id == p.name for p in self.current_function.params):
+            self.register_instruction(cil.AssignNode(param_id, return_var))
+            return
+
+        self.register_instruction(
+            cil.SetAttrNode(
+                "self",
+                self.to_attr_name(self.current_type.name, node.name),
+                return_var,
+                self.current_type.name,
+            )
+        )
+
+    def visit__MethodCallNode(
+        self, node: MethodCallNode, context: Context, scope: Scope, return_var
+    ):
+        obj_type = self.current_type.name
+        instance = self.define_internal_local()
+
+        self.register_instruction(cil.AssignNode(instance, "self"))
+
+        instance_type = self.define_internal_local()
+
+        if obj_type in ["Int", "Bool"]:
+            self.register_instruction(
+                cil.TypeOfNode(instance, instance_type, True, obj_type)
+            )
         else:
-            data_id = f"data_{len(self.dotdata)}_{name}"
-            self.dotdata.append(cil.DataNode(data_id, value))
+            self.register_instruction(cil.TypeOfNode(instance, instance_type))
 
-        return_sid = self.add_local()
-        self.instructions.append(cil.LoadNode(return_sid, data_id))
-        return return_sid
+        args = [instance]
+        for arg in node.args:
+            arg_value = self.define_internal_local()
+            arg.accept(self, context, scope, arg_value)
+            args.append(arg_value)
 
-    def register_new(self, type: str, *args, dest: Optional[str] = None):
-        if dest is None:
-            dest = self.add_local()
         for arg in args:
-            self.instructions.append(cil.ArgNode(arg))
-        self.instructions.append(
-            cil.StaticCallNode(self.get_func_id(type, "__init"), dest)
+            self.register_instruction(cil.ArgNode(arg))
+
+        method_index = self.get_method_id(obj_type, node.method)
+        self.register_instruction(
+            cil.DynamicCallNode(instance_type, method_index, return_var)
         )
-        return dest
 
-    def register_builtins(self, types):
-        # Abort
-        self.register_object__abort()
+    def visit__BlockNode(
+        self, node: BlockNode, context: Context, scope: Scope, return_var
+    ):
+        for expr in node.expressions:
+            expr.accept(self, context, scope, return_var)
 
-        # IO
-        self.register_io__out_string()
-        self.register_io__out_int()
-        self.register_io__in_string()
-        self.register_io__in_int()
+    def visit__IntegerNode(
+        self, node: IntegerNode, context: Context, scope: Scope, return_var
+    ):
+        self.register_instruction(cil.AssignNode(return_var, int(node._value)))
 
-        # # String
-        self.register_string__length()
-        self.register_string__concat()
-        self.register_string__substr()
+    def visit__IdentifierNode(
+        self, node: IdentifierNode, context: Context, scope: Scope, return_var
+    ):
+        if node.name == "self":
+            self.register_instruction(cil.AssignNode(return_var, "self"))
+            return
 
-        # Inits
-        self.register_int_init()
-        self.register_bool_init()
-        self.register_string_init()
-        self.register_object_init()
+        local_id = self.get_local(node.name)
+        if any(local_id == l.name for l in self.current_function.localvars):
+            self.register_instruction(cil.AssignNode(return_var, local_id))
+            return
 
-        for type_name, t in types.items():
-            self.register_conforms_to(type_name, t.parent and t.parent.name)
+        param_id = self.get_param(node.name)
+        if any(param_id == p.name for p in self.current_function.params):
+            self.register_instruction(cil.AssignNode(return_var, param_id))
+            return
 
-            self.register_type_name(t.name)
-            self.register_copy(t.name)
-
-    def register_object__abort(self):
-        self.clear_state()
-
-        self_param = self.add_param("self")
-        self_type = self.add_local("self")
-        type_name = self.add_local("type")
-        self.instructions.append(cil.TypeOfNode(self_param, self_type))
-        self.instructions.append(
-            cil.DynamicCallNode(
-                self_type, self.get_method_id("Object", "type_name"), type_name
+        self.register_instruction(
+            cil.GetAttrNode(
+                "self",
+                self.to_attr_name(self.current_type.name, node.name),
+                return_var,
+                self.current_type.name,
             )
         )
-        type_name_instance = self.register_new("String", type_name)
-        eol = self.register_new("String", self.add_data("EOL", '"\\n"'))
-        msg = self.register_new(
-            "String", self.add_data("abort_msg", '"Abort called from class "')
-        )
-        self.instructions.append(cil.PrintNode(msg, True))
-        self.instructions.append(cil.PrintNode(type_name_instance, True))
-        self.instructions.append(cil.PrintNode(eol, True))
-        self.instructions.append(cil.ExitNode(1))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("Object", "abort"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_io__out_string(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        str_param = self.add_param("str")
-        
-        self.instructions.append(cil.PrintNode(str_param, True))
-        self.instructions.append(cil.ReturnNode(self_param))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("IO", "out_string"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_io__out_int(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        int_param = self.add_param("value")
-        
-        
-        self.instructions.append(cil.PrintNode(int_param, False))
-        
-        self.instructions.append(cil.ReturnNode(self_param))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("IO", "out_int"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_io__in_string(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        dest = self.add_local()
-        self.instructions.append(cil.ReadNode(dest, is_string=True))
-        self.instructions.append(cil.ReturnNode(dest))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("IO", "in_string"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_io__in_int(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        dest = self.add_local()
-        self.instructions.append(cil.ReadNode(dest, is_string=False))
-        self.instructions.append(cil.ReturnNode(dest))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("IO", "in_int"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_string__length(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        length_local = self.add_local()
-        self.instructions.append(cil.LengthNode(length_local, self_param))
-        self.instructions.append(cil.ReturnNode(length_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("String", "length"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_string__concat(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        str_param = self.add_param("s")
-
-        # Calcular la longitud de las cadenas
-        self_length = self.add_local()
-        str_length = self.add_local()
-        self.instructions.append(cil.LengthNode(self_length, self_param))
-        self.instructions.append(cil.LengthNode(str_length, str_param))
-
-        # Concatenar las cadenas
-        concat_local = self.add_local()
-        total_length = self.add_local()  # Longitud total para la cadena resultante
-        self.instructions.append(cil.PlusNode(total_length, self_length, str_length))
-
-        self.instructions.append(
-            cil.ConcatNode(concat_local, self_param, str_param, total_length)
-        )
-        self.instructions.append(cil.ReturnNode(concat_local))
-
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("String", "concat"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_string__substr(self):
-        self.clear_state()
-        self_param = self.add_param("self")
-        index_param = self.add_param("i")
-        length_param = self.add_param("l")
-        substr_local = self.add_local()
-        self.instructions.append(
-            cil.SubstringNode(substr_local, self_param, length_param, index_param)
-        )
-        self.instructions.append(cil.ReturnNode(substr_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("String", "substr"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_object_init(self):
-        self.clear_state()
-        self_local = self.add_local("self")
-        self.instructions.append(cil.AllocateNode("Object", self_local))
-        self.instructions.append(cil.ReturnNode(self_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("Object", "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_int_init(self):
-        self.clear_state()
-        value_param = self.add_param("value")
-        self_local = self.add_local("self")
-        self.instructions.append(cil.AllocateNode("Int", self_local))
-        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
-        self.instructions.append(cil.ReturnNode(self_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("Int", "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_bool_init(self):
-        self.clear_state()
-        value_param = self.add_param("value")
-        self_local = self.add_local("self")
-        self.instructions.append(cil.AllocateNode("Bool", self_local))
-        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
-        self.instructions.append(cil.ReturnNode(self_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("Bool", "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_string_init(self):
-        self.clear_state()
-        value_param = self.add_param("value")
-        self_local = self.add_local("self")
-        self.instructions.append(cil.AllocateNode("String", self_local))
-        self.instructions.append(cil.SetAttrNode(self_local, 0, value_param))
-        self.instructions.append(cil.ReturnNode(self_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id("String", "__init"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def get_label(self, name: str):
-        label = f"LABEL_{name}_{self.label[name]}"
-        self.label[name] += 1
-        return label
-
-    def register_int(self, value: int, name: Optional[str] = None):
-        return_sid = self.add_local(name)
-        self.instructions.append(cil.LoadNode(return_sid, value))
-        return return_sid
-
-    def register_type_name(self, type: str):
-        self.clear_state()
-        self.add_param("self")
-        type_name = self.add_data(f"TYPE_NAME_{type}", f'"{type}"')
-        self.instructions.append(cil.ReturnNode(type_name))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id(type, "type_name"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_copy(self, type: str):
-        self.clear_state()
-        self_param = self.add_param("self")
-        copy_local = self.add_local("copy")
-        self.instructions.append(cil.AllocateNode(type, copy_local))
-        for attr, _ in self.attrs[type].values():
-            attr_copy_local = self.add_local("attr_copy")
-            self.instructions.append(cil.GetAttrNode(self_param, attr, attr_copy_local))
-            self.instructions.append(cil.SetAttrNode(copy_local, attr, attr_copy_local))
-
-        self.instructions.append(cil.ReturnNode(copy_local))
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id(type, "copy"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_conforms_to(self, type, parent=None):
-        self.clear_state()
-        other_param = self.add_param("other_type")
-
-        type_local = self.add_local()
-        self.instructions.append(cil.LoadNode(type_local, type))
-
-        then_label = self.get_label("then")
-
-        # IF condition GOTO then_label
-        types_eq_local = self.add_local()
-        self.instructions.append(cil.MinusNode(types_eq_local, type_local, other_param))
-        self.instructions.append(cil.GotoIfEqNode(types_eq_local, then_label))
-
-        # Label else_label
-        if parent is None:
-            self.instructions.append(cil.ReturnNode(self.register_int(0)))
-        else:
-            recursive_local = self.add_local("rec_call")
-            parent_type_local = self.add_local()
-            self.instructions.append(cil.LoadNode(parent_type_local, parent))
-            method_id = self.get_method_id("Object", "__conforms_to")
-            self.instructions.append(cil.ArgNode(other_param))
-            self.instructions.append(
-                cil.DynamicCallNode(parent_type_local, method_id, recursive_local)
-            )
-            self.instructions.append(cil.ReturnNode(recursive_local))
-
-        # Label then_label
-        self.instructions.append(cil.LabelNode(then_label))
-        self.instructions.append(cil.ReturnNode(self.register_int(1)))
-
-        self.dotcode.append(
-            cil.FunctionNode(
-                self.get_func_id(type, "__conforms_to"),
-                self.params,
-                self.locals,
-                self.instructions,
-            )
-        )
-
-    def register_default(self, type: str, dest: Optional[str] = None):
-        if type == "Int" or type == "Bool":
-            val = self.register_int(0)
-            if dest is not None:
-                self.instructions.append(cil.AssignNode(dest, val))
-                return dest
-            return val
-        elif type == "String":
-            val = self.add_data("DEFAULT_STR", '""')
-            if dest is not None:
-                self.instructions.append(cil.AssignNode(dest, val))
-                return dest
-            return val
-        else:
-            return self.register_new("Void", dest=dest)
