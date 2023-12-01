@@ -256,7 +256,17 @@ class MoveNode(InstructionNode):
 class MemoryAddressRegisterNode(MipsAstNode):
     """Nodo para el registro de dirección de memoria."""
 
-    def __init__(self, register, index,comment = ""):
+    def __init__(self, register, index):
         self.register = register
         self.index = index
-        super().__init__(comment)
+        super().__init__()
+
+class MemoryAddressLabelNode(MipsAstNode):
+    """Nodo para dirección de memoria"""
+    def __init__(self, address, index):
+        self.address = address
+        self.index = index
+        super().__init__()
+
+
+

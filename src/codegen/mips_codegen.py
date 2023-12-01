@@ -6,7 +6,7 @@ class MipsCodeGenerator(Visitor):
     def visit__ProgramNode(self, node: mips.ProgramNode, *args, **kwargs):
         text_section = "\t.text\n\t.globl main\n\t" + node.text_section.accept(self)
         data_section = "\t.data\n" + node.data_section.accept(self)
-        return f"{text_section}\n\n{data_section}\n"
+        return f"{data_section}\n\n{text_section}\n"
 
     def visit__TextNode(self, node, *args, **kwargs):
         return "\n\t".join(self.visit(instr) for instr in node.instructions)
@@ -93,7 +93,10 @@ class MipsCodeGenerator(Visitor):
     def visit__MemoryAddressRegisterNode(
         self, node: mips.MemoryAddressRegisterNode, *args, **kwargs
     ):
-        return f"{str(node.index)}({node.register.accept(self)})"+"\t# " + node.comment
+        return f"{str(node.index)}({node.register.accept(self)})"
+    
+    def visit__MemoryAddressLabelNode(self, node: mips.MemoryAddressLabelNode, *args, **kwargs):
+        return node.address.accept(self)
 
     def visit__LoadImmediateNode(self, node: mips.LoadImmediateNode, *args, **kwargs):
         return f"li {node.rt.accept(self)}, {node.immediate}"+"\t# " + node.comment

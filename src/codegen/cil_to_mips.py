@@ -91,8 +91,8 @@ class CILVisitor(Visitor):
 
         self.memory_manager.save()
         fp_save = self.memory_manager.get_unused_register()
-        instructions.append(mips.MoveNode(fp_save, FP_REG))
-        instructions.append(mips.MoveNode(FP_REG, SP_REG))
+        instructions.append(mips.MoveNode(fp_save, FP_REG, comment="Save FP"))
+        instructions.append(mips.MoveNode(FP_REG, SP_REG, comment="Put SP on FP"))
 
         for i in range(len(node.params)):
             param = node.params[i]
@@ -103,15 +103,15 @@ class CILVisitor(Visitor):
             self.locals.append(local.name)
 
         locals_size = len(node.localvars)
-        instructions.append(mips.AddiNode(SP_REG, SP_REG, locals_size * WORD_SIZE))
+        instructions.append(mips.AddiNode(SP_REG, SP_REG, locals_size * WORD_SIZE, comment=f"Push {locals_size} local(s) to the Stack"))
 
         instructions.append(
-            mips.StoreWordNode(RA_REG, mips.MemoryAddressRegisterNode(SP_REG, 0))
+            mips.StoreWordNode(RA_REG, mips.MemoryAddressRegisterNode(SP_REG, 0), comment="Save return Address to come back later")
         )
         instructions.append(mips.AddiNode(SP_REG, SP_REG, WORD_SIZE))
 
         instructions.append(
-            mips.StoreWordNode(fp_save, mips.MemoryAddressRegisterNode(SP_REG, 0))
+            mips.StoreWordNode(fp_save, mips.MemoryAddressRegisterNode(SP_REG, 0), comment="Put save frame pointer on Stack")
         )
         instructions.append(mips.AddiNode(SP_REG, SP_REG, WORD_SIZE))
 
@@ -143,36 +143,38 @@ class CILVisitor(Visitor):
             mips.LoadImmediateNode(
                 V0_REG,
                 9,
+                comment="Put 9 (sbrk) syscode on v0"
             )
         )
         instructions.append(
             mips.LoadImmediateNode(
                 ARG_REGISTERS[0],
                 reserved_bytes,
+                comment=f"Put reserved bytes on a0. Reserving {reserved_bytes} bytes"
             )
         )
-        instructions.append(mips.SyscallNode())
+        instructions.append(mips.SyscallNode(comment=f"Allocating {node.type}"))
 
         reg1 = self.memory_manager.get_unused_register()
 
         if node.type != "Void":
-            instructions.append(mips.LoadAddressNode(reg1, mips.LabelNode(node.type)))
+            instructions.append(mips.LoadAddressNode(reg1, mips.LabelNode(node.type), comment="Save new instance address on Register"))
             instructions.append(
-                mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+                mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0), "Save type address in firts position of memory allocated")
             )
         else:
-            instructions.append(mips.LoadImmediateNode(reg1, 0))
+            instructions.append(mips.LoadImmediateNode(reg1, 0, comment="Void type initialize on 0"))
             instructions.append(
-                mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+                mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0), "Save value 0 in firts position of memory allocated")
             )
 
-        # Move offset of instance (type addres is in index -1)
-        instructions.append(mips.AddiNode(V0_REG, V0_REG, WORD_SIZE))
+        
+        instructions.append(mips.AddiNode(V0_REG, V0_REG, WORD_SIZE, comment="Move offset of instance (keep type addres at index -1)"))
 
         # Save instance address in destination
         dest_dir = self.search_mem(node.dest)
         instructions.append(
-            mips.StoreWordNode(V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_dir))
+            mips.StoreWordNode(V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_dir), comment="Save instance address in destination")
         )
 
         self.memory_manager.clean()
@@ -190,6 +192,7 @@ class CILVisitor(Visitor):
                 mips.LoadWordNode(
                     reg1,
                     mips.MemoryAddressRegisterNode(FP_REG, value_dir),
+                    f"Obtain return value",
                 )
             )
         else:
@@ -198,32 +201,33 @@ class CILVisitor(Visitor):
                 mips.LoadImmediateNode(
                     reg1,
                     0,
+                    f"Void value is 0",
                 )
             )
 
         # remove prev $fp from stack
-        instructions.append(mips.AddiNode(SP_REG, SP_REG, -WORD_SIZE))
+        instructions.append(mips.AddiNode(SP_REG, SP_REG, -WORD_SIZE, comment="remove prev $fp from stack"))
         instructions.append(
             mips.LoadWordNode(FP_REG, mips.MemoryAddressRegisterNode(SP_REG, 0))
         )
 
         # remove prev $ra from stack
-        instructions.append(mips.AddiNode(SP_REG, SP_REG, -WORD_SIZE))
+        instructions.append(mips.AddiNode(SP_REG, SP_REG, -WORD_SIZE, comment="remove prev $ra from stack"))
         instructions.append(
             mips.LoadWordNode(RA_REG, mips.MemoryAddressRegisterNode(SP_REG, 0))
         )
 
         # Remove locals from Stack
         locals_size = len(self.locals)
-        instructions.append(mips.AddiNode(SP_REG, SP_REG, -locals_size * WORD_SIZE))
+        instructions.append(mips.AddiNode(SP_REG, SP_REG, -locals_size * WORD_SIZE, comment="remove locals from stack"))
 
         # Save return value in Stack
         instructions.append(
-            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0))
+            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0), comment="Put return value in stack")
         )
         instructions.append(mips.AddiNode(SP_REG, SP_REG, 4))
 
-        instructions.append(mips.JumpRegisterNode(RA_REG))
+        instructions.append(mips.JumpRegisterNode(RA_REG, comment="return"))
 
         self.memory_manager.clean()
         return instructions
@@ -235,16 +239,16 @@ class CILVisitor(Visitor):
         dest_dir = self.search_mem(node.dest)
 
         # Jump to function and save link
-        instructions.append(mips.JumpAndLinkNode(node.function))
+        instructions.append(mips.JumpAndLinkNode(node.function, comment=f"CALL {node.function}") )
 
         instructions.append(mips.AddiNode(SP_REG, SP_REG, -WORD_SIZE))
         reg1 = self.memory_manager.get_unused_register()
         # Obtain return value from stack
         instructions.append(
-            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0))
+            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0), comment="Obtein return value from Stack")
         )
         instructions.append(
-            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, dest_dir))
+            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, dest_dir), comment="Store return Value on Frame")
         )
 
         # Remove args from stack
@@ -253,6 +257,7 @@ class CILVisitor(Visitor):
                 SP_REG,
                 SP_REG,
                 -self.pushed_args * WORD_SIZE,
+                comment=f"Remove {self.pushed_args} args from stack"
             )
         )
         self.clean_pushed_args()
@@ -271,12 +276,13 @@ class CILVisitor(Visitor):
             mips.LoadWordNode(
                 reg1,
                 mips.MemoryAddressRegisterNode(FP_REG, local_dir),
+                f"Obtain value of Arg at {local_dir}({FP_REG})",
             )
         )
 
         # Push to Stack
         instructions.append(
-            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0))
+            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(SP_REG, 0), comment="Push to stack")
         )
         instructions.append(mips.AddiNode(SP_REG, SP_REG, WORD_SIZE))
 
@@ -286,8 +292,8 @@ class CILVisitor(Visitor):
 
     def visit__ExitNode(self, node: cil.ExitNode, *args, **kwargs):
         instructions = []
-        instructions.append(mips.LoadImmediateNode(V0_REG, 10))  # exit syscall
-        instructions.append(mips.SyscallNode())
+        instructions.append(mips.LoadImmediateNode(V0_REG, 10, comment="Store syscall for exit"))  # exit syscall
+        instructions.append(mips.SyscallNode(comment="Exit"))
         return instructions
 
     # Aquí agregarías métodos visit__ específicos para cada tipo de instrucción
@@ -373,8 +379,10 @@ class CILVisitor(Visitor):
         instructions = []
 
         if isinstance(node.msg, int):
+            
             instructions.append(mips.LoadImmediateNode(reg1, node.msg))
         else:
+            
             instructions.append(mips.LoadAddressNode(reg1, mips.LabelNode(node.msg)))
 
         dest_dir = self.search_mem(node.dest)
@@ -398,15 +406,20 @@ class CILVisitor(Visitor):
             sys_code = 1
 
         reg1 = self.memory_manager.get_unused_register()
+        reg2 = self.memory_manager.get_unused_register()
 
-        instructions.append(mips.LoadImmediateNode(V0_REG, sys_code))
+        instructions.append(mips.LoadImmediateNode(V0_REG, sys_code, comment="Load Code for Print"))
         instructions.append(
-            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, str_dir))
+            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, str_dir), comment="Load value to PRINT")
         )
         instructions.append(
-            mips.LoadWordNode(ARG_REGISTERS[0], mips.MemoryAddressRegisterNode(reg1, 0))
+            mips.LoadWordNode(reg2, mips.MemoryAddressRegisterNode(reg1, 0), comment="For DEBUG")
         )
-        instructions.append(mips.SyscallNode())
+        
+        instructions.append(
+            mips.LoadWordNode(ARG_REGISTERS[0], mips.MemoryAddressRegisterNode(reg1, 0), comment="Put value on arg reg")
+        )
+        instructions.append(mips.SyscallNode(comment="PRINT"))
 
         self.memory_manager.clean()
         return instructions
@@ -717,23 +730,58 @@ class CILVisitor(Visitor):
 
         source_dir = self.search_mem(node.source)
         instructions.append(
-            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, source_dir))
+            mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, source_dir), comment="Obtein value from src")
         )
         instance_dir = self.search_mem(node.instance)
         instructions.append(
             mips.LoadWordNode(
-                reg2, mips.MemoryAddressRegisterNode(FP_REG, instance_dir)
+                reg2, mips.MemoryAddressRegisterNode(FP_REG, instance_dir), comment="Address of instance's attribute to set"
             )
         )
         instructions.append(
             mips.StoreWordNode(
                 reg1,
                 mips.MemoryAddressRegisterNode(reg2, node.attr * WORD_SIZE),
+                comment=f"Set attribute in index {node.attr}",
             )
         )
 
         self.memory_manager.clean()
         return instructions
+    
+    def visit__GetAttrNode(self, node: cil.GetAttrNode, *args, **kwargs):
+        instructions = []
+        self.memory_manager.save()
+        reg1 = self.memory_manager.get_unused_register()
+        reg2 = self.memory_manager.get_unused_register()
+
+        instance_dir = self.search_mem(node.instance)
+        instructions.append(
+            mips.LoadWordNode(
+                reg1,
+                mips.MemoryAddressRegisterNode(FP_REG, instance_dir),
+                f"Dir of instance of attribute to get",
+            )
+        )
+        instructions.append(
+            mips.LoadWordNode(
+                reg2,
+                mips.MemoryAddressRegisterNode(reg1, node.attr * WORD_SIZE),
+                f"Load attribute in index {node.attr}",
+            )
+        )
+        dest_dir = self.search_mem(node.dest)
+        instructions.append(
+            mips.StoreWordNode(
+                reg2,
+                mips.MemoryAddressRegisterNode(FP_REG, dest_dir),
+                f"Save obtained attribute in destination",
+            )
+        )
+
+        self.memory_manager.clean()
+        return instructions
+
 
     def visit__GotoNode(self, node: cil.GotoNode, *args, **kwargs):
         return [mips.JumpNode(node.label)]
