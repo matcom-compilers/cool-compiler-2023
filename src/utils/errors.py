@@ -12,6 +12,8 @@ class Error(Exception):
         self.column = column
         self.message = message
 
+class NameError(Error):
+    pass
 
 class SyntacticError(Error):
     pass
@@ -23,4 +25,7 @@ class AttributeError(Error):
     pass
 
 class LexicographicError(Error):
+    pass
+
+class TypeError(Error):
     pass
