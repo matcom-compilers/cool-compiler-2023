@@ -16,7 +16,7 @@ class CILCodeGenerator:
             cls_refs (dict): A dictionary containing references to Cool classes.
         """
         self.cls_refs = cls_refs
-        self.attrs = List()  # to hold attributes
+        self.attributes = List()  # to hold attributes
         self.cil_code = CILCode(List(), List(), defaultdict(lambda: []), {})
         self.pos = -1
         self.max_idx = -1
@@ -91,7 +91,7 @@ class CILCodeGenerator:
         Returns:
             Expr: The declaration expression in CIL.
         """
-        expr = self.get_default_value(node.type.value)
+        expr = CILCodeGenerator.get_default_value(node.type.value)
 
         if node.opt_expr_init:
             expr = self.visit(node.opt_expr_init)
@@ -115,17 +115,17 @@ class CILCodeGenerator:
     
     # Atomic Expressions
     def visit_Int(self, node):
-        int_value = int(node.value)
-        self._save_int_literal(int_value)
-        return int_value
+        ref = Int(node.value)
+        self._save_int_literal(int(ref.value))
+        return ref
 
     def visit_Bool(self, node):
         return Bool(node.value)
 
     def visit_String(self, node):
-        str_literal = String(node.value)
-        self._save_str_literal(str_literal)
-        return str_literal
+        ref = String(node.value)
+        self._save_str_literal(ref.value)
+        return ref
 
     def visit_Id(self, node):
         reference = Reference(node.value)
@@ -133,18 +133,18 @@ class CILCodeGenerator:
         if reference.name == 'self':
             return reference
 
-        target = self.current_environment.get(reference.name)
+        target = self.cur_env.get(reference.name)
 
         if target is None:
-            assert reference.name in self.attribute_dictionary
-            reference.refers_to = ('attr', self.attribute_dictionary[reference.name])
+            assert reference.name in self.attribute_dict
+            reference.refers_to = ('attr', self.attribute_dict[reference.name])
         else:
             reference.refers_to = ('local', target)
 
         return reference
 
     def visit_New(self, node):
-        return New(node.type_name)
+        return New(node.type.value)
 
     # Arithmetic Operations
     def visit_Plus(self, node):
@@ -210,7 +210,7 @@ class CILCodeGenerator:
 
     # Let Expression
     def visit_LetVar(self, node):
-        expr_init = self._get_declaration_expr(node)
+        expr_init = self.get_declaration_expression(node)
         self.pos += 1  # Increment the position
         self.max_idx = max(self.max_idx, self.pos)
         self.cur_env.define(node.id.value, self.pos)
@@ -224,7 +224,7 @@ class CILCodeGenerator:
         let_vars = [self.visit(let_var) for let_var in node.let_list]
         body = self.visit(node.body)
 
-        self.pos -= self.cur_env.definitions  # Undo the position changes
+        self.pos -= self.cur_env.definitions_count  # Undo the position changes
         self.cur_env = old_environment
 
         return Let(List(let_vars), body)
@@ -250,7 +250,7 @@ class CILCodeGenerator:
         branch.set_times(type_description, type_functions)
         branch.level = level
 
-        self.pos -= self.cur_env.definitions  # Undo the position changes
+        self.pos -= self.cur_env.definitions_count  # Undo the position changes
         self.cur_env = old_environment
 
         return branch
@@ -292,11 +292,11 @@ class CILCodeGenerator:
         old_attributes = self.attributes
         self.attributes = List(old_attributes[:])
 
-        old_environment = self.current_environment
-        self.current_environment = Environment(old_environment)
+        old_environment = self.cur_env
+        self.cur_env = Environment(old_environment)
 
-        old_class = self.current_class
-        self.current_class = node
+        old_class = self.cur_cls
+        self.cur_cls = node
 
         # Save each class type as a String object in the data segment
         self._save_str_literal(node.type.value)
@@ -324,7 +324,7 @@ class CILCodeGenerator:
             self.attribute_dict[attribute.id.value] = position
             position += 1
 
-        for feature in node.feature_list:
+        for feature in node.feat_list:
             self.visit(feature)
 
         init_function = FuncInit(
@@ -337,8 +337,8 @@ class CILCodeGenerator:
         )
 
         # Needed for the static data segment of the type
-        init_function.td = self.current_class.td
-        init_function.tf = self.current_class.tf
+        init_function.td = self.cur_cls.td
+        init_function.tf = self.cur_cls.tf
 
         self.cil_code.init_functions.append(init_function)
         self.cil_code.dict_init_func[init_function.name] = init_function
@@ -346,23 +346,23 @@ class CILCodeGenerator:
         for child_class in node.children:
             self.visit(child_class)
 
-        self.position -= self.current_environment.definitions  # Undo
-        self.current_environment = old_environment
+        self.pos -= self.cur_env.definitions_count  # Undo
+        self.cur_env = old_environment
         self.attributes = old_attributes
-        self.current_class = old_class
+        self.cur_cls = old_class
 
     def visit_Formal(self, node):
-        self.position += 1  # Increment position
-        self.max_index = max(self.max_index, self.position)
-        self.current_environment.define(node.id.value, self.position)
+        self.pos += 1  # Increment position
+        self.max_index = max(self.max_index, self.pos)
+        self.cur_env.define(node.id.value, self.pos)
 
         return self.visit(node.id)
 
     def visit_Method(self, node):
-        old_environment = self.current_environment
-        self.current_environment = Environment(old_environment)
+        old_environment = self.cur_env
+        self.cur_env = Environment(old_environment)
 
-        assert self.position == -1
+        assert self.pos == -1
         assert self.max_index == -1
 
         formal_parameters = List([self.visit(formal) for formal in node.formal_list])
@@ -371,24 +371,24 @@ class CILCodeGenerator:
         new_function = Function(node.id.value, formal_parameters, body, self.max_index + 1)
 
         # Needed for fast dispatch
-        new_function.type_descriptor = self.current_class.type_descriptor
-        new_function.type_full = self.current_class.type_full
-        new_function.level = self.current_class.level
-        new_function.label = f'{self.current_class.type.value}.{new_function.name}'
+        new_function.td = self.cur_cls.td
+        new_function.tf = self.cur_cls.tf
+        new_function.level = self.cur_cls.level
+        new_function.label = f'{self.cur_cls.type.value}.{new_function.name}'
 
         self.cil_code.functions.append(new_function)
-        self.cil_code.function_dict[new_function.name].append(new_function)
+        self.cil_code.dict_func[new_function.name].append(new_function)
 
         self.max_index = -1
-        self.position -= self.current_environment.definitions  # Undo
-        self.current_environment = old_environment
+        self.pos -= self.cur_env.definitions  # Undo
+        self.cur_env = old_environment
 
     def visit_Attribute(self, node):
-        assert self.position == -1
+        assert self.pos == -1
         assert self.max_index == -1
 
         reference = self.visit(node.id)
-        expression = self._get_declaration_expression(node)
+        expression = self.get_declaration_expression(node)
 
         declaration = AttrDecl(reference, node.type.value, expression, self.max_index + 1)
         self.attributes.append(declaration)
