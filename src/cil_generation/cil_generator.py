@@ -380,7 +380,7 @@ class CILCodeGenerator:
         self.cil_code.dict_func[new_function.name].append(new_function)
 
         self.max_index = -1
-        self.pos -= self.cur_env.definitions  # Undo
+        self.pos -= self.cur_env.definitions_count  # Undo
         self.cur_env = old_environment
 
     def visit_Attribute(self, node):
