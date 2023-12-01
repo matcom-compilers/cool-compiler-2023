@@ -19,15 +19,6 @@ class CoolCompiler:
 
         self._inject_native_classes()
 
-    def compile_program(self):
-        lexer = self.lexical_analysis()
-        ast_root = self.syntactic_analysis(lexer)
-        self.semantic_analysis(ast_root)
-        self.run_type_checker()
-        cil_code = self.gen_cil_code()
-        mips_code = self.gen_mips_code(cil_code)
-        return mips_code
-
     def _inject_native_classes(self):
         """
         Injects the native classes such as Object, Int, String, Bool, and IO along with their methods into the compiler.
@@ -110,3 +101,12 @@ class CoolCompiler:
 
     def _gen_mips_code(self, cil_code):
         pass
+    
+    def compile_program(self):
+        lexer = self._lexical_analysis()
+        ast_root = self._syntactic_analysis(lexer)
+        self._semantic_analysis(ast_root)
+        self._run_type_checker()
+        cil_code = self._gen_cil_code()
+        mips_code = self._gen_mips_code(cil_code)
+        return mips_code
