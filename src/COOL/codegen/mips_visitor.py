@@ -3,8 +3,10 @@ from COOL.codegen.codegen_rules import TEXT_SECTION
 from COOL.codegen.codegen_rules import CREATE_CLASS
 from COOL.codegen.codegen_rules import REQUEST_MEMORY
 from COOL.codegen.codegen_rules import CREATE_FUNCTION
+from COOL.codegen.codegen_rules import FUNCTIONS
 
 
+# TODO: save the name of variables in stack and then load it
 class MipsVisitor:
     def __init__(self) -> None:
         # global data
@@ -46,14 +48,17 @@ class MipsVisitor:
                 attributes="\n".join(attributes),
                 request_memory=REQUEST_MEMORY.format(memory=memory),
             )
-            
+            # TODO: clean the stack
             for _method in methods.keys():
                 text_section +=\
                 CREATE_FUNCTION.format(
                     function_name=_method,
                     class_name=_cls,
+                    method="\n".join(methods[_method]),
+                    clean_stack="    <clean_stack>\n",
                 )
-                text_section += "\n".join(methods[_method])
+        for _function in FUNCTIONS:
+            text_section += _function
         
         return data_section + text_section
     

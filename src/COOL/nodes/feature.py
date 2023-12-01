@@ -33,7 +33,7 @@ class ExecuteMethod(Node):
         super().__init__(line, column)
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
     def check(self,visitor):
@@ -113,7 +113,7 @@ class Formal(Node):
 
     # TODO
     def codegen(self):
-        raise NotImplementedError()
+        formal = None
 
     def check(self, visitor):
         raise NotImplementedError()

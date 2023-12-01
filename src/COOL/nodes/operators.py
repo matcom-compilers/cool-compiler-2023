@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from COOL.nodes import Node
+
 from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.codegen.codegen_rules import PUSH_STACK
 from COOL.codegen.codegen_rules import POP_STACK
@@ -45,9 +46,9 @@ class Operator(Node):
         operation = self.operation()
         result =(
             expr1 +
-            PUSH_STACK.format(register="$t0") +
+            PUSH_STACK.format(register="t0") +
             expr2 +
-            POP_STACK.format(register="$t1") +
+            POP_STACK.format(register="t1") +
             operation
         )
         return result
@@ -99,9 +100,12 @@ class Less(Operator):
         self.return_type = 'Bool'
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
-    # FIX
     def operation(self):
-        return "    slt $t0, $t0, $t1\n"
+        operation = (
+            "    slt $t0, $t0, $t1\n"
+            "    jal set_bool\n"
+        )
+        return operation
 
 
 class LessEqual(Operator):
@@ -109,9 +113,14 @@ class LessEqual(Operator):
 
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
 
-    # FIX
     def operation(self):
-        return "    sle $t0, $t0, $t1\n"
+        operation = (
+            "    sgt $t2, $t0, $t1\n"
+            "    seq $t3, $t0, $t1\n"
+            "    or $t0, $t2, $t3\n"
+            "    jal set_bool\n"
+        )
+        return operation
 
 
 class Equal(Operator):
@@ -119,24 +128,27 @@ class Equal(Operator):
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool')
 
-    # FIX
     def operation(self):
-        return "    seq $t0, $t0, $t1\n"
+        operation = (
+            "    seq $t0, $t0, $t1\n"
+            "    jal set_bool\n"
+        )
+        return operation
 
 
 class Not(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Bool'],'Bool')
 
-    # FIX
     def operation(self):
-        return "    not $t0, $t0\n"
+        operation = "    xori $t0, $t0, 1\n"
+        return operation
 
 
 class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Int'],'Int')
 
-    # FIX
     def operation(self):
-        return "    and $t0, $t0, $t1\n"
+        operation = "    and $t0, $t0, $t1\n"
+        return operation

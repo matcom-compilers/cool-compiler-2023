@@ -10,7 +10,6 @@ from COOL.nodes.feature import Method
 from COOL.nodes.feature import Attribute
 
 
-# TODO: data and text can be a list?
 class Class(Node):
     def __init__(
         self,

@@ -15,6 +15,7 @@ def check_errors(errors):
     if errors:
         for error in errors:
             print(error)
+        
 
 def test_errors(cls, out):
     for _cl, _out in zip(cls, out):
@@ -33,12 +34,12 @@ def test_errors(cls, out):
         tokens, errors = lexer.tokenize(loaded_file)
         check_errors(errors)
 
-        parser = CoolParser()
-        ast, errors = parser.parse(tokens)
-        check_errors(errors)
+        # parser = CoolParser()
+        # ast, errors = parser.parse(tokens)
+        # check_errors(errors)
 
-        errors = Semantic.check(ast)
-        check_errors(errors)
+        # errors = Semantic.check(ast)
+        # check_errors(errors)
         print()
 
 def test_codegen(cls, out, inp):
@@ -78,11 +79,11 @@ def test_codegen_file(file):
 
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
-    # folder = "./tests/parser/"
-    # files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
-    # cls = [f for f in files if f.endswith(".cl")]
-    # out = [f[:-3] + "_error.txt" for f in cls]
-    # test_errors(cls, out)
+    folder = "./tests/semantic/"
+    files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
+    cls = [f for f in files if f.endswith(".cl")]
+    out = [f[:-3] + "_error.txt" for f in cls]
+    test_errors(cls, out)
 
     # Testing codegen
     # folder = "./tests/codegen/"
@@ -93,5 +94,6 @@ if __name__ == "__main__":
     # test_codegen(cls, out, inp)
 
     # Testing one file
-    file = "./t/a.cl"
-    test_codegen_file(file)
+    # file = "./t/a.cl"
+    # file = "./tests/semantic/self1.cl"
+    # test_codegen_file(file)

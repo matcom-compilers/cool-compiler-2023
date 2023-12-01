@@ -1,15 +1,10 @@
 from enum import Enum
 
 
-# TODO: calculate size of data
-# TODO: all data will be given in $t0 ?
 # NOTE: the strings cant be generated in .text section
-
-def concat(script: str, rule: str, indent: bool = True, newline: bool = True):
-    return script + (NEWLINE if newline else "") + (INDENT if indent else "") + rule
-
 def string_length(string: str):
     return len(string) + 1
+
 
 NULL = "null"
 
@@ -23,10 +18,12 @@ INDENT = "    "
 
 COMMENT = "# {comment}\n"
 
+
 class Types(Enum):
     INT = ".word"
     BOOL = ".byte"
     STRING = ".asciiz"
+
 
 DATA_SECTION =\
 f"""
@@ -38,9 +35,11 @@ newline:  .asciiz  "{NEWLINE}"
 {FALSE}:    .byte    0
 """
 
+
 SET_VAR_IN_DATA_SECTION=\
 """    {owner}_{var_name}: {type} {value}
 """
+
 
 TEXT_SECTION =\
 """\n
@@ -51,11 +50,13 @@ TEXT_SECTION =\
 main:
 """
 
+
 REQUEST_MEMORY=\
 """    # Request memory
     li $a0, {memory}
     li $v0, 9
     syscall"""
+
 
 PUSH_STACK=\
 """    # Push stack
@@ -63,11 +64,13 @@ PUSH_STACK=\
     sw ${register}, 0($sp)
 """
 
+
 POP_STACK=\
 """    # Pop stack
     lw ${register}, 0($sp)
     addiu $sp, $sp, 4
 """
+
 
 STORE_DATA=\
 """
@@ -75,11 +78,13 @@ STORE_DATA=\
     li $t0, {data}
     sw $t0, {offset}(${register})"""
 
+
 LOAD_DATA=\
 """
     # Load data
     lw $t0, {offset}(${register})
 """
+
 
 CREATE_CLASS=\
 """
@@ -90,64 +95,150 @@ CREATE_CLASS=\
 {attributes}
 """
 
+
 CREATE_FUNCTION=\
 """
 # Create function {function_name} from class {class_name}
 {function_name}:
+    addiu $sp, $sp, -4
+    sw $ra, 0($sp)
+{method}
+{clean_stack}
+    lw $ra, 0($sp)
+    addiu $sp, $sp, 4
+    jr $ra
 """
+
 
 STORE_VALUES_IN_REGISTER=\
 """    li ${register}, {value}
 """
 
+
 STORE_VALUES_IN_VARS=\
 """    sw ${register}, {offset}(${fp})
 """
 
-ARITMETIC=\
-"""    {operation} ${register}, ${register1}, ${register2}
-"""
 
-UNARY_ARITMETIC=\
-"""    {operation} ${register}, ${register1}
-"""
+# FUNCTIONS
 
 EXIT=\
 """
-    # Exit program
+# Exit program
+exit:
     li $v0, 10
     syscall
 """
 
-
+SET_BOOL=\
 """
-booleans:
-    - true: 1 / false: 0
-    - mempry = 1 byte
+set_bool:
+    lw $t0, 0($sp)
+    addiu $sp, $sp, 4
 
-integers:
-    - dan su propio valor
-    - memory = 4 bytes
+    lb  $t1, true
+    beq $t0, $t1, set_bool_true
+    la $t0, false
+    jr $ra
 
-strings:
-    - se deben guardar en el heap? o data section?
-    - every char is 1 byte
+    set_bool_true:
+    la $t0, true
+    jr $ra"""
 
-id:
-    - direccion de memoria de la variable?
-
-not:
-    - UNARY_ARITMETIC
-
-method:
-    - label de la funcion con nombre de la clase y el metodo
-
-new:
-    - go to the class label
-    - return the address of the object
-
-
-
-
-
+STR_LEN=\
 """
+str_len:
+    lb $t2, 0($t0)
+    beq $t2, $zero, str_len_end
+    addi $t1, $t1, 1
+    addi $t0, $t0, 1
+    j str_len
+
+    str_len_end:
+    move $t0, $t1
+    jr $ra"""
+
+
+STR_DATA_TO_STACK=\
+"""
+str_stack_in:
+    li $t1, 0
+    li $t2, 0
+
+str_stack_in_len:
+    lb $t2, 0($t0)
+    beq $t2, $zero, str_stack_in_len_end
+    addi $t1, $t1, 1
+    addi $t0, $t0, 1
+    j str_stack_in_len
+
+    str_stack_in_len_end:
+    addi $t0, $t0, -1
+
+str_stack_in_loop:
+    lb $t2, 0($t0)
+    beq $t1, $zero, str_stack_in_loop_end
+    addiu $sp, $sp, -1
+    sb $t2, 0($sp)
+    addi $t0, $t0, -1
+    addi $t1, $t1, -1
+    j str_stack_in_loop
+
+    str_stack_in_loop_end:
+    jr $ra"""
+
+
+STR_STACK_TO_HEAP=\
+"""
+str_heap_in:
+    li $t1, 0
+    li $t2, 0
+
+str_heap_in_loop:
+    lb $t2, 0($sp)
+    beq $t2, $zero, str_heap_in_loop_end
+    addi $sp, $sp, 1
+    sb $t2, 0($v0)
+    addi $t1, $t1, 1
+    addi $v0, $v0, 1
+    j str_heap_in_loop
+
+    str_heap_in_loop_end:
+    sub $v0, $v0, $t1
+    jr $ra"""
+
+
+STR_HEAP_TO_STACK=\
+"""
+str_heap_out:
+    li $t1, 0
+    li $t2, 0
+
+str_heap_out_len:
+    lb $t2, 0($v0)
+    addi $t1, $t1, 1
+    addi $v0, $v0, 1
+    beq $t2, $zero, str_heap_out_loop
+    j str_heap_out_len
+
+str_heap_out_loop:
+    lb $t2, 0($v0)
+    addi $sp, $sp, -1
+    sb $t2, 0($sp)
+    addi $v0, $v0, -1
+    beq $t1, $zero, str_heap_out_loop_end
+    addi $t1, $t1, -1
+    j str_heap_out_loop
+
+    str_heap_out_loop_end:
+    jr $ra"""
+
+
+FUNCTIONS = [
+    SET_BOOL,
+    STR_LEN,
+    STR_DATA_TO_STACK,
+    STR_STACK_TO_HEAP,
+    STR_HEAP_TO_STACK,
+    EXIT,
+]
