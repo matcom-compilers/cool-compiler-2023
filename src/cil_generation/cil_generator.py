@@ -19,7 +19,7 @@ class CILCodeGenerator:
         self.attributes = List()  # to hold attributes
         self.cil_code = CILCode(List(), List(), defaultdict(lambda: []), {})
         self.pos = -1
-        self.max_index = -1
+        self.max_idx = -1
         self.cur_env = None  # environment for locals only
         self.cur_cls = None
 
@@ -157,7 +157,7 @@ class CILCodeGenerator:
         right_expression = self.visit(node.right)
         return Minus(left_expression, right_expression)
 
-    def visit_Mult(self, node):
+    def visit_Mul(self, node):
         left_expression = self.visit(node.left)
         right_expression = self.visit(node.right)
         return Mul(left_expression, right_expression)
@@ -353,7 +353,7 @@ class CILCodeGenerator:
 
     def visit_Formal(self, node):
         self.pos += 1  # Increment position
-        self.max_index = max(self.max_index, self.pos)
+        self.max_idx = max(self.max_idx, self.pos)
         self.cur_env.define(node.id.value, self.pos)
 
         return self.visit(node.id)
@@ -363,12 +363,12 @@ class CILCodeGenerator:
         self.cur_env = Environment(old_environment)
 
         assert self.pos == -1
-        assert self.max_index == -1
+        assert self.max_idx == -1
 
         formal_parameters = List([self.visit(formal) for formal in node.formal_list])
         body = self.visit(node.expr) if node.expr else None  # If method is not native, visit the body, else None
 
-        new_function = Function(node.id.value, formal_parameters, body, self.max_index + 1)
+        new_function = Function(node.id.value, formal_parameters, body, self.max_idx + 1)
 
         # Needed for fast dispatch
         new_function.td = self.cur_cls.td
@@ -379,18 +379,18 @@ class CILCodeGenerator:
         self.cil_code.functions.append(new_function)
         self.cil_code.dict_func[new_function.name].append(new_function)
 
-        self.max_index = -1
+        self.max_idx = -1
         self.pos -= self.cur_env.definitions_count  # Undo
         self.cur_env = old_environment
 
     def visit_Attribute(self, node):
         assert self.pos == -1
-        assert self.max_index == -1
+        assert self.max_idx == -1
 
         reference = self.visit(node.id)
         expression = self.get_declaration_expression(node)
 
-        declaration = AttrDecl(reference, node.type.value, expression, self.max_index + 1)
+        declaration = AttrDecl(reference, node.type.value, expression, self.max_idx + 1)
         self.attributes.append(declaration)
 
-        self.max_index = -1    
+        self.max_idx = -1    

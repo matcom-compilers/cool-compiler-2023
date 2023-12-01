@@ -195,7 +195,7 @@ class TypeChecker:
     def visit_Minus(self, node):
         self.visit_Plus(node)
 
-    def visit_Mult(self, node):
+    def visit_Mul(self, node):
         self.visit_Plus(node)
 
     def visit_Div(self, node):
@@ -284,7 +284,7 @@ class TypeChecker:
             expr = node.opt_expr_init
             self.visit(expr)
 
-            self.cur_env.define(node.id.value, node)
+            self.current_environment.define(node.id.value, node)
             self.visit(node.id)
             node.set_static_type(node.id.static_type)
 
@@ -292,13 +292,13 @@ class TypeChecker:
                 raise TypeError(node.line, node.col, f'{expr} with {expr.static_type} doesnt conform to {node} with {node.static_type}')
 
         else:
-            self.cur_env.define(node.id.value, node)
+            self.current_environment.define(node.id.value, node)
             self.visit(node.id)
             node.set_static_type(node.id.static_type)
 
     def visit_Let(self, node):
-        old_env = self.cur_env
-        self.cur_env = Environment(old_env)
+        old_env = self.current_environment
+        self.current_environment = Environment(old_env)
 
         for let_var in node.let_list:
             self.visit(let_var)
@@ -306,7 +306,7 @@ class TypeChecker:
         self.visit(node.body)
         node.set_static_type(node.body.static_type)
 
-        self.cur_env = old_env
+        self.current_environment = old_env
 
     # Case Expression
     def visit_CaseVar(self, node):
@@ -316,7 +316,7 @@ class TypeChecker:
         if node.type.value == 'SELF_TYPE':
             raise SemanticError(node.type.line, node.type.col, f'Tried to declare {node} with {node.type}')
         
-        self.cur_env.define(node.id.value, node)
+        self.current_environment.define(node.id.value, node)
         self.visit(node.id)
         node.set_static_type(node.id.static_type)
 
@@ -332,7 +332,7 @@ class TypeChecker:
 
             type_dict[branch.case_var.type.value] = True
 
-            old_env = self.cur_env
+            old_env = self.current_environment
             self.cur_env = Environment(old_env)
 
             self.visit(branch.case_var)
@@ -343,7 +343,7 @@ class TypeChecker:
 
             else: lca = self._find_least_common_ancestor(lca, branch.expr.static_type)
 
-            self.cur_env = old_env
+            self.current_environment = old_env
 
         node.set_static_type(lca)
 

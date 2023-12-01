@@ -3,7 +3,7 @@ from semantic_analysis.ast_ import AttrStringLiteral, New, FunctionCall, Void
 from utils.constants import *
 
 class GenMIPS:
-    def __init__(self, cil_code):
+    def __init__(self, code, cil_code):
         self.str_literals = cil_code.str_literals
         self.int_literals = cil_code.int_literals
         self.dict_init_func = cil_code.dict_init_func
@@ -11,7 +11,7 @@ class GenMIPS:
         self.loops = 0  #keep counter of loops labels
         self.branches = 0 #keep counter of branches
 
-        self.code = DataSegment(cil_code).code
+        self.code = code
         self.code.append(Comment('Text Segment'))
         self.code.append(Directive('.text'))
         

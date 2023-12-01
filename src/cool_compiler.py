@@ -6,6 +6,7 @@ from semantic_analysis.semantic import SemanticChecker
 from utils.errors import *
 from semantic_analysis.ast_ import *
 from utils.constants import *
+from mips_generation.gen_mips import GenMIPS, DataSegment
 
 class CoolCompiler:
     def __init__(self, code, tab_size=4):
@@ -100,7 +101,12 @@ class CoolCompiler:
         return cil.cil_code
 
     def _gen_mips_code(self, cil_code):
-        pass
+        data = DataSegment(cil_code)
+
+        mips = GenMIPS(data.code, cil_code)
+        mips.visit(cil_code)
+
+        return '\n'.join(map(str, mips.code))
     
     def compile_program(self):
         print("Starting compilation...!!!!!!!!!!!!!!!!!!!!!!!!")
