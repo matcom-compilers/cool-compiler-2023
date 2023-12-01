@@ -161,7 +161,12 @@ class ObjectInitAST(IAST):
         self.type = type
 
     def check_type(self, te) -> str:
-        raise self.type
+        self._normalize(te)
+
+        return self.type
+
+    def _normalize(self, te: TypeEnvironment):
+        self.type = normalize(self.type, te)
 
 
 class UnaryOpAST(IAST):
@@ -170,18 +175,24 @@ class UnaryOpAST(IAST):
 
 
 class VoidCheckingOpAST(UnaryOpAST):
-    def check_type(self, te) -> str:
-        return self.expr.check_type()
+    def check_type(self, _) -> str:
+        return StdType.Bool
 
 
 class NegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-        return self.expr.check_type()
+        if self.expr.check_type(te) == StdType.Int:
+            return StdType.Int
+
+        raise Exception('')
 
 
 class BooleanNegationOpAST(UnaryOpAST):
     def check_type(self, te) -> str:
-        return self.expr.check_type()
+        if self.expr.check_type(te) == StdType.Bool:
+            return StdType.Bool
+
+        raise Exception('')
 
 
 BINARY_OPERATIONS = {
