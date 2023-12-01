@@ -106,10 +106,10 @@ class BlockExpressionAST(IAST):
         self.expr_list = expr_list
 
     def check_type(self, te) -> str:
+        clone = te.clone()
         for exp in self.expr_list: 
-            clone = te.clone()
             exp.check_type(clone)
-        return self.expr_list[-1].check_type(te)
+        return self.expr_list[-1].check_type(clone)
 
 
 class VarsInitAST(IAST):
