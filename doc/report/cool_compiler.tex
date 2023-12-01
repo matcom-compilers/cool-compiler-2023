@@ -161,33 +161,41 @@
 	%----------------------------------------------------------------------------------------
 	%	ARTICLE CONTENTS
 	%----------------------------------------------------------------------------------------
+	
+	\section*{Repositorio del proyecto}
+	\begin{center}
+		\url{https://github.com/computer-science-crows/cool-compiler-2023}
+	\end{center}
 
 	\section{Uso del compilador}
 	
+	Para utilizar el compilador, navegue al directorio /src y ejecute el siguiente comando: \textit{python -m coolcmp -h}, lo que mostrará la ayuda con las opciones disponibles. Para compilar el archivo \textit{code.cl}, simplemente ejecute: \textit{python -m coolcmp code.cl}. Este proceso generará un archivo \textit{code.mips}, que puede ser ejecutado en el simulador SPIM mediante el comando: \textit{spim -f code.mips}.
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=10cm]{usage}
+		\caption{Uso del compilador}
+	\end{figure}
+
 	\subsection{M\'odulos}
 	
 	El proyecto está estructurado en varios módulos ubicados en la carpeta /src:
 	
-	\begin{itemize}
-		\item main.py: Proporciona una interfaz para la configuración y ejecución del compilador.
-		\item cool\_compiler.py: El punto de entrada del compilador que coordina la ejecución de las fases del proceso de compilación.
-		\item /lexic\_analysis/lexer.py: Contiene la implementación del analizador léxico, responsable de identificar los tokens en el código fuente. 
-		\item /sintactic\_analysis/parser.py: Implementa el analizador sintáctico, que verifica la estructura gramatical correcta del código.
-		\item /semantic\_analysis/ast\_.py: Define las clases y estructuras de datos que representan el Árbol de Sintaxis Abstracta (AST).
-		\item /semantic\_analysis/semantic.py: Contiene la lógica para el análisis semántico, que evalúa el significado del código.
-		\item /type\_checker/type\_checker.py: Implementa el type checker, encargado de verificar la coherencia de tipos en el programa.
-		\item /cil\_generation/cil\_generator.py: Realiza la generación de código intermedio en representación de bajo nivel.
-		\item /mips\_generation/mips\_generator.py: Se encarga de la generación de código de máquina específico para MIPS.
-		\item /utils/constants.py: Define constantes utilizadas en varias partes del compilador.
-		\item /utils/errors.py: Contiene las clases de errores personalizadas que se utilizan para informar sobre problemas durante el proceso de compilación.
-		\item /utils/environment.py: Implementa la estructura de entorno utilizada en varias fases del compilador.
-	\end{itemize}
-	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=15cm]{structure}
+		\caption{Estructura del proyecto}
+	\end{figure}
+
 	\subsection{Fases}
 	
 	El proceso de compilación consta de varias fases esenciales que transforman el código fuente en COOL en un programa ejecutable. Comienza con el análisis léxico, donde se identifican los componentes básicos del código. Luego, el análisis sintáctico verifica la estructura gramatical correcta. A continuación, el análisis semántico evalúa el significado del código. El chequeo de tipos garantiza la coherencia entre los tipos en el programa. La generación de código intermedio crea una representación más abstracta del programa, seguida de la optimización para mejorar el rendimiento. Finalmente, la generación de código de máquinas traduce el programa a instrucciones específicas del hardware para su ejecución. Cada fase desempeña un papel crucial en la creación de un software funcional y eficiente.
 	
-	\includegraphics[width=15cm]{flow}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=13.5cm]{flow}
+		\caption{Flujo del programa}
+	\end{figure}
 	
 	\subsubsection{An\'alisis L\'exico}
 	
@@ -234,11 +242,6 @@
 	\subsection{Gram\'atica}
 	
 	\section{Problemas técnicos}
-	
-	\section*{Repositorio del proyecto}
-	\begin{center}
-		\url{https://github.com/computer-science-crows/cool-compiler-2023}
-	\end{center}
 	
 	\begin{thebibliography}
 		a
