@@ -102,7 +102,7 @@ Para representar un token se define la clase _Token_ que posee un valor, un tipo
             extra={"type": type, "location":          position,"value": value},
         )
 ```
-La clase _Lexer_ se encarga de la tokenización de la cadena. Se inicializa recibiendo una cadena, la cual convierte a un _CharacterStream_, explicado anteriormente. Posee además un conjunto de keywords que se mapean a tokens y una lista de errores. La tokenización se realiza en el método _lex_ el cual va consumiendo los caracteres de la cadena llamando al método _fetch_token_ quien va realizando la validación de los caracteres y armando los tokens. Si un error es detectado se reporta pero se continua la ejecución.
+La clase _Lexer_ se encarga de la tokenización de la cadena. Se inicializa recibiendo una cadena, la cual convierte a un _CharacterStream_, explicado anteriormente. Posee además un conjunto de keywords que se mapean a tokens y una lista de errores. La tokenización se realiza en el método _lex_ el cual va consumiendo los caracteres de la cadena llamando al método _fetch_token_ quien va realizando la validación de los caracteres y armando los tokens. Si un error es detectado se reporta pero se continua la ejecución. El proceso de tokenización se realiza en $O(|w|)$ donde $|w|$ es la longitud de la cadena.
 
 ```python
  class Lexer:
@@ -122,7 +122,7 @@ La clase _Lexer_ se encarga de la tokenización de la cadena. Se inicializa reci
 
 El proceso de parsing se realiza en _parser.py_. La clase Parser se encarga de realizar esta tarea. Nuestra implementación se inicializa al recibir una lista de tokens.
 
-La definición de los nodos del _AST_(árbol de sintaxis abstracta) se encuentra implementada en _ast.py_. Todo nodo posee un valor, un tipo y una posición e implementan el patrón visitor. Se muestran algunos nodos como ejemplo:
+La definición de los nodos del _AST_(árbol de sintaxis abstracta) se encuentra implementada en _ast.py_. Todo nodo posee un valor, un tipo y una posición e implementan el patrón visitable, con el método _accept_ que permite a un visitor visitar el nodo. Se muestran algunos nodos como ejemplo:
 
 ```python
     class ProgramNode(Node):
@@ -145,7 +145,8 @@ La definición de los nodos del _AST_(árbol de sintaxis abstracta) se encuentra
         self.init = init
 ```
 
-Para parsear se utiliza el método _parse_. En este se origina el árbol de sintaxis abstracta.  El parser construye los distintos nodos en profundidad, o sea , primero los hijos y luego el padre. Por ejemplo, para construir el nodo _Program_, raíz del _AST_ de _COOL_, ya se deben haber construido todos los nodos Class. Cada nodo conoce sus posibles reglas de derivación y como evitar errores de desambiguación entre las producciones a la hora de determinar que producción aplicar. El método _eat_ se encarga de consumir el token y validar que cumpla con los requisitos de la producción en cuestión.
+Para parsear se utiliza el método _parse_. En este se origina el árbol de sintaxis abstracta.  El parser construye los distintos nodos en profundidad, o sea , primero los hijos y luego el padre. Por ejemplo, para construir el nodo _Program_, raíz del _AST_ de _COOL_, ya se deben haber construido todos los nodos Class. Cada nodo conoce sus posibles reglas de derivación y como evitar errores de desambiguación entre las producciones a la hora de determinar que producción aplicar. El método _eat_ se encarga de consumir el token y validar que cumpla con los requisitos de la producción en cuestión. El _parsing_ se realiza en tiempo lineal gracias a que se tiene en cuenta la precedencia de operadores, reportando todos los errores que encuentra.
+Quedaría mejorar descartar _Tokens_, cuando se encuentra un error, hasta un nuevo punto estable, pues al encontrar un error surgen múltiples errores condicionados por el primero.
 
 **Producciones**
 ```
@@ -225,7 +226,7 @@ atributos de tipos que no existen, o que se redefinan atributos de los padres o 
 múltiples atributos con el mismo nombre. Análisis semejantes son hechos con las funciones,
 impidiendo la creación de métodos ya existentes en una misma clase o funciones que son
 sobrescritas por herencia sigan teniendo la misma cantidad de argumentos y tipo de retorno.
-Para el caso de herencia se lanzan errores cuando se hereda de tipos que no existen.
+Para el caso de herencia se lanzan errores cuando se hereda de tipos que no existen. O de los tipos _Int_, _Bool_, _String_ y _Obj_ que no se permite.
 
 ```python
   class TypeBuilder(Visitor):
@@ -265,7 +266,7 @@ desambigua entre todas las variables declaradas.
 El TypeChecker es la herramienta
 fundamental que permite llevar a cabo el polimorfismo en el lenguaje, pues junto con el
 se verifica que un tipo pueda ser sustituido por otro, además que es esencial para determinar
-atributos que se definen en clases padre y se utilizan en una clase hijo, etc.
+atributos que se definen en clases padre y se utilizan en una clase hijo, etc. Además, la importancia del _TypeChecker_ radica en que determina el tipo estático de cada expresión, lo que nos permite después en la generación de código hacer llamados polimórficos en $O(1)$.
 
 ```python
 class TypeChecker(Visitor):
