@@ -189,7 +189,7 @@
 
 	\subsection{Fases}
 	
-	El proceso de compilación consta de varias fases esenciales que transforman el código fuente en COOL en un programa ejecutable. Comienza con el análisis léxico, donde se identifican los componentes básicos del código. Luego, el análisis sintáctico verifica la estructura gramatical correcta. A continuación, el análisis semántico evalúa el significado del código. El chequeo de tipos garantiza la coherencia entre los tipos en el programa. La generación de código intermedio crea una representación más abstracta del programa, seguida de la optimización para mejorar el rendimiento. Finalmente, la generación de código de máquinas traduce el programa a instrucciones específicas del hardware para su ejecución. Cada fase desempeña un papel crucial en la creación de un software funcional y eficiente.
+	El proceso de compilación consta de varias fases esenciales que transforman el código fuente en COOL en un programa ejecutable. Comienza con el análisis léxico, donde se identifican los componentes básicos del código. Luego, el análisis sintáctico verifica la estructura gramatical correcta. A continuación, el análisis semántico evalúa el significado del código. El chequeo de tipos garantiza la coherencia entre los tipos en el programa. La generación de código intermedio crea una representación más abstracta del programa. Finalmente, la generación de código de máquinas traduce el programa a instrucciones específicas del hardware para su ejecución. 
 	
 	\begin{figure}[H]
 		\centering
@@ -237,16 +237,22 @@
 	
 	\subsubsection{Generaci\'on de C\'odigo Intermedio}
 	
+	La \textbf{representación de clases} en el proceso de generación de código MIPS implica la transformación de cada clase en una función de inicialización, denominada ``FuncInit''. Esta función tiene la responsabilidad de crear instancias de la clase correspondiente cuando se llama en código MIPS. Las clases contienen una serie de \textbf{atributos}, entre ellos los atributos reservados como "\_type\_info", que almacena la referencia a la dirección de memoria que contiene los datos del tipo de la instancia, y "\_size\_info", que indica la cantidad de bytes que la instancia ocupará en memoria. Existen atributos específicos para clases particulares, como "\_int\_literal" para la clase "Int", que representa el entero asociado a la instancia, y "\_string\_length", "\_string\_literal" para la clase "String", que almacenan la longitud y el contenido de la cadena, respectivamente. Por último, "\_bool\_literal" en la clase "Bool" contiene un valor booleano (1 para "true" o 0 para "false"). Además de los atributos reservados, las clases pueden tener atributos adicionales declarados por el programador durante la definición de la clase.
+	
+	Un aspecto clave es el almacenamiento de tiempos de descubrimiento (td(C)) y finalización (tf(C)) para cada clase. Estos tiempos son cruciales para la resolución de dispatches, es decir, llamadas a métodos, ya que determinan la ubicación de la implementación del método en la jerarquía de clases. También son fundamentales en expresiones Case, donde los tiempos de descubrimiento y finalización facilitan la resolución de las diversas ramas del caso. 
+	
+	La \textbf{representación de métodos} en el proceso de generación de código MIPS implica la transformación de cada método, denotado como "f", en una "función" (Function). Cuando un método "f" está definido en una clase "C", se registran datos esenciales asociados a esa función, incluyendo los tiempos de descubrimiento (td(C)), finalización (tf(C)), y el nivel (level) de la clase "C" en el árbol de herencia. Estos datos son cruciales para la gestión de dispatches y otras resoluciones durante la ejecución del programa.
+	
+	La función resultante encapsula la lógica y comportamiento del método, y su identificador está compuesto por el nombre de la clase que la contiene seguido por el nombre del método, proporcionando así una forma única de referenciar la función. La información sobre tiempos y niveles se utiliza especialmente en dispatches, donde se requiere una resolución dinámica y eficiente de la llamada a métodos. El nivel indica la distancia desde la raíz del árbol de herencia, lo que facilita la determinación de la clase correcta a la que pertenece el método, mientras que los tiempos de descubrimiento y finalización son fundamentales para garantizar el orden adecuado de ejecución y la coherencia en la resolución de expresiones.
+	
+	La \textbf{asignación de posiciones a variables en el stack} es un paso crítico en el proceso de generación de código MIPS. Cada variable, ya sea una variable de clase (atributo) o una variable local (parámetro formal, variable Let o Case), debe tener una posición predefinida en el stack para garantizar su acceso eficiente durante la ejecución del programa.
+	
+	Este proceso se lleva a cabo mediante la creación y gestión de un entorno, que es una estructura que mantiene un mapeo entre el nombre de cada variable y su posición correspondiente en el stack. El entorno también tiene un padre, que representa el bloque en el que se encuentra actualmente. Al llegar a bloques como Let, CaseBranch, FuncInit o Function, se crea un nuevo entorno. En la definición de una variable, ya sea en el entorno actual o en bloques superiores, se asigna la posición adecuada y se incrementa el contador de posiciones.
+	
+	Durante el proceso, se registran las referencias a las variables, indicando si se refieren a atributos de clase o a variables locales. Cuando se sale de un bloque, el entorno se reinicia al padre correspondiente, y se ajustan las posiciones según el estado previo. Este enfoque garantiza una gestión coherente y eficiente de las variables en el stack, facilitando su acceso y manipulación durante la ejecución del programa.
+	
 	\subsubsection{Generaci\'on de C\'odigo de M\'aquina}
-	
-	\subsection{Gram\'atica}
-	
-	\section{Problemas técnicos}
-	
-	\begin{thebibliography}
-		a
-%		\bibitem{kad} Maymounkov, P., Mazières, D. (2002). \textit{Kademlia: A Peer-to-Peer Information System Based on the XOR Metric.} In: Druschel, P., Kaashoek, F., Rowstron, A. (eds) Peer-to-Peer Systems. IPTPS 2002. Lecture Notes in Computer Science, vol 2429. Springer, Berlin, Heidelberg.
-	\end{thebibliography}
+
 \end{document}
 
 
