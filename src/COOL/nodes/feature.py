@@ -12,7 +12,7 @@ from COOL.nodes.codegen_rules import SET_VAR_IN_DATA_SECTION
 
 
 class Method(Node):
-    def __init__(self, line: int, column: int, id: str, type: str, expr: Node, formals: List[Node]) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str, expr: Node, formals: List[Node]) -> None:
         self.type: str = type
         self.expr: Node = expr
         self.id = id
@@ -37,7 +37,7 @@ class Method(Node):
 
 
 class ExecuteMethod(Node):
-    def __init__(self, line: int, column: int, id: str, exprs: List[Node]) -> None:
+    def __init__(self, line: int, column: dict, id: str, exprs: List[Node]) -> None:
         self.exprs: List[Node] = exprs
         self.expr: Node = None
         self.id = id
@@ -51,7 +51,7 @@ class ExecuteMethod(Node):
 
 
 class Attribute(Node):
-    def __init__(self, line: int, column: int, id: str) -> None:
+    def __init__(self, line: int, column: dict, id: str) -> None:
         self.id = id
         super().__init__(line, column)
 
@@ -62,7 +62,7 @@ class Attribute(Node):
         visitor.visit_attribute(self)
 
 class AttributeDeclaration(Attribute):
-    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
         self.dynamic_type = 'void'
@@ -85,7 +85,7 @@ class AttributeDeclaration(Attribute):
 
 
 class AttributeInicialization(Attribute):
-    def __init__(self, line: int, column: int, id: str, type: str = None, expr: Node = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None, expr: Node = None) -> None:
         self.type = type
         self.expr = expr
         self.id = id
@@ -121,7 +121,7 @@ class AttributeInicialization(Attribute):
 
 
 class Formal(Node):
-    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
         super().__init__(line, column)
