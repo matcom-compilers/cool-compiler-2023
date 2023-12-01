@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple, Optional
 
-from .types import StdType, TypeEnvironment, inherits, normalize
+from .types import StdType, TypeEnvironment, inherits, normalize, union_type
 
 
 class IAST(ABCMeta):
@@ -81,11 +81,11 @@ class ConditionalExpressionAST(IAST):
 
     def check_type(self, te) -> str:
         if self.condition.check_type(te) is not StdType.Bool:
-            raise TypeError()
+            raise Exception('Condition must be Bool type')
         else:
             true = self.then_expr.check_type(te)
             false = self.else_expr.check_type(te)
-            return [true, false]
+            return union_type([true, false])
 
 
 class LoopExpressionAST(IAST):
@@ -95,7 +95,7 @@ class LoopExpressionAST(IAST):
 
     def check_type(self, te) -> str:
         if self.condition.check_type(te) != 'Bool':
-            raise TypeError('Loop condition must be a boolean.')
+            raise Exception('Loop condition must be a boolean.')
         else:
             self.body.check_type(te)
             return StdType.Object
@@ -148,13 +148,16 @@ class TypeMatchingAST(IAST):
 
     def check_type(self, te) -> str:
         cases_type = []
+        
         for case in self.cases:
-            case_type = case[2].check_type()
-            if not cases_type in cases_type:
-                cases_type.append(case_type)
+            clone = te.clone()
+            clone.set_object_type(case[0], case[1])
+            case[2].check_type(clone)
+            if not case[1] in cases_type:
+                cases_type.append(case[1])
             else:
-                raise TypeError(f'Only one case must have a {case_type} type.')
-        return cases_type
+                raise Exception(f'Only one case must have a {case[1]} type.')
+        return union_type(cases_type)
 
 
 class ObjectInitAST(IAST):
