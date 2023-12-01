@@ -337,8 +337,16 @@ class Visitor_Class:
         possible_types = node.possibles_types
         if  possible_types[0] == 'All':
             possible_types = self.basic_types.keys()
-        
-        
+            if not type1 == type2:
+                type1_basic = type1 in self.basic_types.keys()
+                type2_basic = type2 in self.basic_types.keys()
+                if type1_basic and type2_basic:
+                    self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
+                    return None
+                if type1_basic or type2_basic:
+                    self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
+                    return None                
+
         elif not (type1 in possible_types and type2 in possible_types):
             self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
         return node.return_type
