@@ -72,7 +72,7 @@ class CoolParser(Parser):
         column = {}
         for i in p._slice:
             if isinstance(i, Token):
-                column[f'{i.type}_{i.value}'] = i.column
+                column[f'{i.type}_{i.value}_{i.lineno}'] = i.column
         return column
 
     @_('program')
@@ -281,7 +281,7 @@ class CoolParser(Parser):
         return CodeBlock(
             line=p.lineno,
             column=self._get_column_from_production(p),
-            nested_expr=p.nested_expr)
+            exprs=p.nested_expr)
 
     @_('expr ";" nested_expr')
     def nested_expr(self, p: YaccProduction):
