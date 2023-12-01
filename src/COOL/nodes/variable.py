@@ -24,7 +24,7 @@ class Initialization(Node):
         raise NotImplementedError()
 
     def check(self, visitor):
-        raise NotImplementedError()
+        return visitor.visit_initialization(self)
 
 class Declaration(Node):
     def __init__(self, line: int, column: int, id:str, type:str) -> None:
@@ -36,7 +36,7 @@ class Declaration(Node):
         raise NotImplementedError()
 
     def check(self, visitor):
-        raise NotImplementedError()
+        return visitor.visit_declaration(self)
     
 class Assign(Node):
     def __init__(self, line: int, column: int, id: str, expr: Node) -> None:
@@ -47,5 +47,5 @@ class Assign(Node):
     def codegen(self):
         raise NotImplementedError()
 
-    def check(self):
-        raise NotImplementedError()
+    def check(self, visitor):
+        return visitor.visit_assign(self)

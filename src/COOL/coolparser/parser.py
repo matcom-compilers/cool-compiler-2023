@@ -446,9 +446,9 @@ class CoolParser(Parser):
     def expr(self, p: YaccProduction):
         return GetVariable(line=p.lineno, column=0, id=p.ID)
 
-    @_('SELF')
-    def expr(s, p: YaccProduction):
-        return Self(line=p.lineno, column=0)
+    # @_('SELF')
+    # def expr(s, p: YaccProduction):
+    #     return Self(line=p.lineno, column=0)
     
     @_('TRUE')
     def expr(self, p: YaccProduction):

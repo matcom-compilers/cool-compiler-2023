@@ -17,7 +17,7 @@ class CoolLexer(Lexer):
 
     tokens = {
         # Symbols
-        "NUMBER", "STRING", "TYPE", "ID", "SELF",
+        "NUMBER", "STRING", "TYPE", "ID", 
         # Arithmetic Operators
         "PLUS", "MINUS", "TIMES", "DIVIDE", "LESS", "LESSEQUAL", "EQUAL", "NOT", "BITWISE", "ASSIGN", "DARROW",
         # Reserved words
@@ -25,7 +25,7 @@ class CoolLexer(Lexer):
     }
     literals = {"(", ")", "{", "}", ";", ":", ",", ".", "@"}
     keywords = {
-        'class', 'inherits', 'if', 'then', 'else', 'fi', 'while', 'loop', 'pool', 'let', 'in', 'case', 'of', 'esac', 'new', 'isvoid', 'self',
+        'class', 'inherits', 'if', 'then', 'else', 'fi', 'while', 'loop', 'pool', 'let', 'in', 'case', 'of', 'esac', 'new', 'isvoid', 
     }
     special_keywords = {'true', 'false'}
     rename = {
