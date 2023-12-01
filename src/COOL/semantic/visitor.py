@@ -358,6 +358,8 @@ class Visitor_Class:
 
 
     def visit_let(self, node):
+        for i in node.let_list:
+            i.check(self)
         self.temporal_scope = {i.id:i for i in node.let_list}     
         type = node.expr.check(self)        
         self.temporal_scope = {}
@@ -429,3 +431,28 @@ class Visitor_Class:
         #     return None
         
         return type
+
+    def visit_initialization(self, node):
+        type = node.expr.check(self)
+        if not type:
+            return None
+        if (not type in self.all_types.keys()) and (not type in self.basic_types.keys()):
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            return None
+        
+        type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
+        
+        if (not (type == node.type) ) and (not (node.type in type_lineage)):
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f' Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.'))
+            return None
+        
+        return type
+
+    def visit_declaration(self, node):
+        if not node.type in self.all_types.keys() and not node.type in self.basic_types.keys():
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Class {node.type} of let-bound identifier {node.id} is undefined.'))
+            return None
+        return node.type
