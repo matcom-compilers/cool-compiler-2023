@@ -215,7 +215,7 @@ class BinaryOpAST(IAST):
 
 class ArithmeticOpAST(BinaryOpAST):
     def check_type(self, te) -> str:
-        if self.left.check_type() is not StdType.Int or self.right.check_type() is not StdType.Int:
+        if self.left.check_type(te) is not StdType.Int or self.right.check_type(te) is not StdType.Int:
             raise TypeError(
                 'The both arguments must be Int type to be valids.')
         else:
