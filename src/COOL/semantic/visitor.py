@@ -256,8 +256,20 @@ class Visitor_Class:
             
     def visit_method(self, node):
         self.temporal_scope = {i.id:i for i in node.formals}     
-        type = node.expr.check(self)
+        type = node.expr.check(self)        
         self.temporal_scope = {}
+        if not type:
+            return None
+        if  (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            return None
+        
+        type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
+        
+        if (not (type == node.type) ) and (not (node.type in type_lineage)):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
+            return None
+        
         return type
 
     def visit_code_block(self, node):
@@ -322,6 +334,10 @@ class Visitor_Class:
 
 
     def visit_new(self, node):
+        if not node.type in self.basic_types.keys() and not node.type in self.all_types.keys():
+            new_ ='\'new\''
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'{new_} used with undefined class {node.type}.'))
+            return None
         return node.type 
 
     def visit_self(self, node):
@@ -336,21 +352,80 @@ class Visitor_Class:
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:
-            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Attribute {node.id} is not defined in this scope.'))
+            # self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Attribute {node.id} is not defined in this scope.'))
+            self.errors.append(Error.error(node.line,node.column,'NameError',f'Undeclared identifier {node.id}.'))
             return None
 
 
     def visit_let(self, node):
-        pass
+        self.temporal_scope = {i.id:i for i in node.let_list}     
+        type = node.expr.check(self)        
+        self.temporal_scope = {}
+        if not type:
+            return None
+        if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            return None
+        
+        type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
+        
+        if (not (type == node.type) ) and (not (node.type in type_lineage)):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
+            return None
+        
+        return type
 
     def visit_case(self, node):
         pass
 
 
+    def _search_min_common_type(self, type1, type2):
+        lineage1 = type1.lineage
+        lineage2 = type2.lineage
+        for i in reversed(lineage1):
+            for j in reversed(lineage2):
+                if i == j:
+                    return i
+        return 'Object'
+
 
     def visit_conditionals(self, node):
-        pass
+        if_expr = node.if_expr.check(self)
+        then_expr = node.then_expr.check(self)
+        else_expr = node.else_expr.check(self)
+        if not if_expr or not then_expr or not else_expr:
+            return None
+        if not if_expr == 'Bool':
+            #TODO search this error
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Predicate of \'if\' does not have type Bool.'))
+            return None
+        if then_expr == else_expr:
+            return then_expr
+        if then_expr in self.basic_types.keys() or else_expr in self.basic_types.keys():
+            return 'Object'
+        if then_expr in self.all_types.keys() and else_expr in self.all_types.keys():
+            then_expr = self.all_types[then_expr]
+            else_expr = self.all_types[else_expr]
+            return self._search_min_common_type(then_expr,else_expr)
+        return 'Object'
+
+
 
     def visit_loops(self, node):
         pass
 
+    def visit_assign(self, node):
+        type = node.expr.check(self)
+        if not type:
+            return None
+        if (not type in self.all_types.keys() )and (not type in self.basic_types.keys()):
+            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            return None
+        
+        # type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
+        
+        # if (not (type == node.type) ) and (not (node.type in type_lineage)):
+        #     self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
+        #     return None
+        
+        return type
