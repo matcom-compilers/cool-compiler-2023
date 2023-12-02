@@ -1,6 +1,6 @@
-
 class MipsAstNode:
     """Nodo base para todos los nodos del AST de MIPS."""
+
     def __init__(self, comment="") -> None:
         self.comment = comment
 
@@ -12,7 +12,7 @@ class MipsAstNode:
 class ProgramNode(MipsAstNode):
     """Representa un programa completo en MIPS, incluyendo secciones de texto y datos."""
 
-    def __init__(self, text_section, data_section,comment = ""):
+    def __init__(self, text_section, data_section, comment=""):
         self.text_section = text_section
         self.data_section = data_section
         super().__init__(comment)
@@ -21,7 +21,7 @@ class ProgramNode(MipsAstNode):
 class TextNode(MipsAstNode):
     """Representa la sección de texto en un programa MIPS, contiene instrucciones."""
 
-    def __init__(self, instructions,comment = ""):
+    def __init__(self, instructions, comment=""):
         self.instructions = instructions
         super().__init__(comment)
 
@@ -29,7 +29,7 @@ class TextNode(MipsAstNode):
 class DataSectionNode(MipsAstNode):
     """Representa la sección de datos en un programa MIPS."""
 
-    def __init__(self, data, comment = ""):
+    def __init__(self, data, comment=""):
         self.data = data
         super().__init__(comment)
 
@@ -37,7 +37,7 @@ class DataSectionNode(MipsAstNode):
 class DataNode(MipsAstNode):
     """Nodo para un elemento de datos en la sección de datos."""
 
-    def __init__(self, label, storage_type, data, comment = ""):
+    def __init__(self, label, storage_type, data, comment=""):
         self.label = label
         self.storage_type = storage_type
         self.data = data
@@ -45,14 +45,15 @@ class DataNode(MipsAstNode):
 
 
 class RegisterNode(MipsAstNode):
-    def __init__(self, number, comment = ""):
+    def __init__(self, number, comment=""):
         self.number = number
         super().__init__(comment)
+
 
 class LabelNode(MipsAstNode):
     """Representa una etiqueta en MIPS."""
 
-    def __init__(self, label,comment = ""):
+    def __init__(self, label, comment=""):
         self.label = label
         super().__init__(comment)
 
@@ -66,21 +67,22 @@ class InstructionNode(MipsAstNode):
 class LabelInstructionNode(InstructionNode):
     """Representa una etiqueta en MIPS."""
 
-    def __init__(self, label,comment = ""):
+    def __init__(self, label, comment=""):
         self.label = label
         super().__init__(comment)
+
 
 class SyscallNode(InstructionNode):
     """Representa la instrucción 'syscall' en MIPS."""
 
-    def __init__(self, comment = "") -> None:
+    def __init__(self, comment="") -> None:
         super().__init__(comment)
 
 
 class AddNode(InstructionNode):
     """Nodo para la instrucción 'add' en MIPS."""
 
-    def __init__(self, rd, rs, rt, comment = ""):
+    def __init__(self, rd, rs, rt, comment=""):
         self.rd = rd
         self.rs = rs
         self.rt = rt
@@ -90,16 +92,17 @@ class AddNode(InstructionNode):
 class SubNode(InstructionNode):
     """Nodo para la instrucción 'sub' en MIPS."""
 
-    def __init__(self, rd, rs, rt,comment = ""):
+    def __init__(self, rd, rs, rt, comment=""):
         self.rd = rd
         self.rs = rs
         self.rt = rt
         super().__init__(comment)
 
+
 class LoadByteNode(InstructionNode):
     """Nodo para la instrucción 'lb' en MIPS."""
 
-    def __init__(self, rt, address,comment = ""):
+    def __init__(self, rt, address, comment=""):
         self.rt = rt
         self.address = address
         super().__init__(comment)
@@ -108,7 +111,7 @@ class LoadByteNode(InstructionNode):
 class LoadWordNode(InstructionNode):
     """Nodo para la instrucción 'lw' en MIPS."""
 
-    def __init__(self, rt, address, comment = ""):
+    def __init__(self, rt, address, comment=""):
         self.rt = rt
         self.address = address
         super().__init__(comment)
@@ -117,7 +120,7 @@ class LoadWordNode(InstructionNode):
 class LoadImmediateNode(InstructionNode):
     """Nodo para la instrucción 'li' en MIPS."""
 
-    def __init__(self, rt, immediate, comment = ""):
+    def __init__(self, rt, immediate, comment=""):
         self.rt = rt
         self.immediate = immediate
         super().__init__(comment)
@@ -126,7 +129,7 @@ class LoadImmediateNode(InstructionNode):
 class LoadAddressNode(InstructionNode):
     """Nodo para la instrucción 'la' en MIPS."""
 
-    def __init__(self, rt, label, comment = ""):
+    def __init__(self, rt, label, comment=""):
         self.rt = rt
         self.label = label
         super().__init__(comment)
@@ -135,7 +138,7 @@ class LoadAddressNode(InstructionNode):
 class StoreByteNode(InstructionNode):
     """Nodo para la instrucción 'sb' en MIPS."""
 
-    def __init__(self, rt, ramdir, comment = ""):
+    def __init__(self, rt, ramdir, comment=""):
         self.rt = rt
         self.ramdir = ramdir
         super().__init__(comment)
@@ -144,16 +147,16 @@ class StoreByteNode(InstructionNode):
 class StoreWordNode(InstructionNode):
     """Nodo para la instrucción 'sw' en MIPS."""
 
-    def __init__(self, rt, ramdir, comment = ""):
+    def __init__(self, rt, ramdir, comment=""):
         self.rt = rt
         self.ramdir = ramdir
-        super().__init__(comment) 
+        super().__init__(comment)
 
 
 class JumpNode(InstructionNode):
     """Nodo para instrucciones de salto en MIPS."""
 
-    def __init__(self, label: str, comment = ""):
+    def __init__(self, label: str, comment=""):
         self.label = label
         super().__init__(comment)
 
@@ -161,7 +164,7 @@ class JumpNode(InstructionNode):
 class JumpRegisterNode(InstructionNode):
     """Nodo para instrucciones de salto en MIPS."""
 
-    def __init__(self, register: RegisterNode, comment = ""):
+    def __init__(self, register: RegisterNode, comment=""):
         self.rs = register
         super().__init__(comment)
 
@@ -169,7 +172,7 @@ class JumpRegisterNode(InstructionNode):
 class JumpAndLinkNode(InstructionNode):
     """Nodo para la instrucción 'jal' en MIPS."""
 
-    def __init__(self, label: str,comment = ""):
+    def __init__(self, label: str, comment=""):
         self.label = label
         super().__init__(comment)
 
@@ -177,7 +180,7 @@ class JumpAndLinkNode(InstructionNode):
 class JumpRegisterAndLinkNode(InstructionNode):
     """Nodo para la instrucción 'jalr' en MIPS."""
 
-    def __init__(self, register: RegisterNode, comment = ""):
+    def __init__(self, register: RegisterNode, comment=""):
         self.rs = register
         super().__init__(comment)
 
@@ -185,7 +188,7 @@ class JumpRegisterAndLinkNode(InstructionNode):
 class BranchEqualNode(InstructionNode):
     """Nodo para la instrucción 'beq' en MIPS."""
 
-    def __init__(self, rs, rt, offset,comment = ""):
+    def __init__(self, rs, rt, offset, comment=""):
         self.rs = rs
         self.rt = rt
         self.offset = offset
@@ -195,14 +198,14 @@ class BranchEqualNode(InstructionNode):
 class BeqzNode(InstructionNode):
     """Nodo para la instrucción 'beqz' en MIPS."""
 
-    def __init__(self, rs, label,comment = ""):
+    def __init__(self, rs, label, comment=""):
         self.rs = rs
         self.label = label
         super().__init__(comment)
 
 
 class BgtzNode(InstructionNode):
-    def __init__(self, rs, label,comment = ""):
+    def __init__(self, rs, label, comment=""):
         self.rs = rs
         self.label = label
         super().__init__(comment)
@@ -211,7 +214,7 @@ class BgtzNode(InstructionNode):
 class AddiNode(InstructionNode):
     """Nodo para la instrucción 'addi' en MIPS."""
 
-    def __init__(self, rt, rs, immediate,comment = ""):
+    def __init__(self, rt, rs, immediate, comment=""):
         self.rt = rt
         self.rs = rs
         self.immediate = immediate
@@ -221,7 +224,7 @@ class AddiNode(InstructionNode):
 class OriNode(InstructionNode):
     """Nodo para la instrucción 'ori' en MIPS."""
 
-    def __init__(self, rt, rs, immediate,comment = ""):
+    def __init__(self, rt, rs, immediate, comment=""):
         self.rt = rt
         self.rs = rs
         self.immediate = immediate
@@ -231,7 +234,7 @@ class OriNode(InstructionNode):
 class MoveFromHiNode(InstructionNode):
     """Nodo para la instrucción 'mfhi' en MIPS."""
 
-    def __init__(self, rd,comment = ""):
+    def __init__(self, rd, comment=""):
         self.rd = rd
         super().__init__(comment)
 
@@ -239,7 +242,7 @@ class MoveFromHiNode(InstructionNode):
 class MoveFromLoNode(InstructionNode):
     """Nodo para la instrucción 'mflo' en MIPS."""
 
-    def __init__(self, rd,comment = ""):
+    def __init__(self, rd, comment=""):
         self.rd = rd
         super().__init__(comment)
 
@@ -247,7 +250,7 @@ class MoveFromLoNode(InstructionNode):
 class MoveNode(InstructionNode):
     """Nodo para la instrucción 'move' en MIPS."""
 
-    def __init__(self, rd, rs,comment = ""):
+    def __init__(self, rd, rs, comment=""):
         self.rd = rd
         self.rs = rs
         super().__init__(comment)
@@ -261,12 +264,22 @@ class MemoryAddressRegisterNode(MipsAstNode):
         self.index = index
         super().__init__()
 
+
 class MemoryAddressLabelNode(MipsAstNode):
     """Nodo para dirección de memoria"""
+
     def __init__(self, address, index):
         self.address = address
         self.index = index
         super().__init__()
 
 
+class ComparisonNode(InstructionNode):
+    def __init__(self, dest, m1, m2):
+        self.m1 = m1
+        self.m2 = m2
+        self.destination = dest
 
+
+class SetEqNode(ComparisonNode):
+    pass

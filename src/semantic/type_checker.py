@@ -222,7 +222,7 @@ class TypeChecker(Visitor):
         return_type = (
             method.return_type if method.return_type != SelfType() else obj_type
         )
-
+        node.type = return_type.name
         return return_type
 
     def visit__BinaryOperatorNode(self, node: BinaryOperatorNode, scope: Scope):
@@ -422,6 +422,7 @@ class TypeChecker(Visitor):
         return self.context.get_type(node.type)
 
     def visit__IsVoidNode(self, node: IsVoidNode, scope: Scope):
+        node.type = "Bool"
         return self.context.get_type("Bool")
 
     def visit__NotNode(self, node: NotNode, scope: Scope):
@@ -468,12 +469,15 @@ class TypeChecker(Visitor):
             return ErrorType()
 
     def visit__IntegerNode(self, node: IntegerNode, scope: Scope):
+        node.type = self.context.get_type("Int").name
         return self.context.get_type("Int")
 
     def visit__StringNode(self, node: StringNode, scope: Scope):
+        node.type = self.context.get_type("String").name
         return self.context.get_type("String")
 
     def visit__BooleanNode(self, node: BooleanNode, scope: Scope):
+        node.type = self.context.get_type("Bool").name
         return self.context.get_type("Bool")
 
     def visit__MethodCallNode(self, node: MethodCallNode, scope: Scope):
@@ -521,7 +525,7 @@ class TypeChecker(Visitor):
         return_type = (
             method.return_type if method.return_type != SelfType() else obj_type
         )
-
+        node.type = return_type.name
         return return_type
 
     def visit__WhileNode(self, node: WhileNode, scope: Scope):

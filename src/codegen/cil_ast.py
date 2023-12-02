@@ -408,3 +408,12 @@ class RuntimeErrorNode(InstructionNode):
 
     def __str__(self) -> str:
         return f"ERROR {self.msg}"
+
+
+class IsVoidNode(InstructionNode):
+    def __init__(self, dest, value):
+        self.dest = dest
+        self.value = value
+
+    def __str__(self) -> str:
+        return f"{self.dest} = ISVOID {self.value}"

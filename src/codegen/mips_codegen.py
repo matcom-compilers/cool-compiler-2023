@@ -138,3 +138,6 @@ class MipsCodeGenerator(Visitor):
 
     def visit__LoadImmediateNode(self, node: mips.LoadImmediateNode, *args, **kwargs):
         return f"li {node.rt.accept(self)}, {node.immediate}" + "\t# " + node.comment
+
+    def visit__SetEqNode(self, node: mips.SetEqNode, *args, **kwargs):
+        return f"seq {node.destination.accept(self)}, {node.m1.accept(self)}, {node.m2.accept(self)}"

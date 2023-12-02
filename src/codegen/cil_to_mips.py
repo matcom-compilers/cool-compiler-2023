@@ -57,6 +57,9 @@ LENGTH_ATTR_INDEX = 4
 CHARS_ATTR_INDEX = 8
 EMPTY_STR_VALUE = '""'
 
+# VOID Type
+VOID = "VOID"
+
 
 COPY_BYTES = "__COPY_BYTES_PROC"
 
@@ -101,9 +104,7 @@ class CILVisitor(Visitor):
             _ = ty.accept(self, *args, **kwargs)
             self.generate_attr_indexes(ty.name)
 
-        self.data_section["VOID"] = mips.DataNode(
-            mips.LabelNode("VOID"), ".word", ["-1"]
-        )
+        self.data_section[VOID] = mips.DataNode(mips.LabelNode(VOID), ".word", ["-1"])
         self.data_section["EMPTY_STRING"] = mips.DataNode(
             mips.LabelNode("EMPTY_STRING"), ".asciiz", [EMPTY_STR_VALUE]
         )
@@ -1056,6 +1057,23 @@ class CILVisitor(Visitor):
         self.memory_manager.clean()
         return instructions
 
+    def visit__IsVoidNode(self, node: cil.IsVoidNode, *args, **kwargs):
+        self.memory_manager.save()
+
+        r1 = self.memory_manager.get_unused_register()
+        r2 = self.memory_manager.get_unused_register()
+        source_dir = self.search_mem(node.value)
+        dest_dir = self.search_mem(node.dest)
+
+        instructions = [
+            mips.LoadWordNode(r1, mips.MemoryAddressRegisterNode(FP_REG, source_dir)),
+            mips.LoadAddressNode(r2, mips.LabelNode(VOID)),
+            mips.SetEqNode(r1, r1, r2),
+            mips.StoreWordNode(r1, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)),
+        ]
+        self.memory_manager.clean()
+        return instructions
+
     def visit__RuntimeErrorNode(self, node: cil.RuntimeErrorNode, *args, **kwargs):
         # TODO  Print Error
         instructions = []
@@ -1116,7 +1134,7 @@ class CILVisitor(Visitor):
 
         instructions = [
             mips.LabelInstructionNode(COPY_BYTES),
-            mips.MoveNode(A1_REG, S1_REG),
+            mips.MoveNode(A1_REG, S0_REG),
             mips.LabelInstructionNode(f"{COPY_BYTES}__LOOP"),
             mips.BeqzNode(A0_REG, f"{COPY_BYTES}__END"),
             mips.LoadByteNode(r1, mips.MemoryAddressRegisterNode(S1_REG, 0)),

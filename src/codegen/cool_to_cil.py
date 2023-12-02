@@ -4,10 +4,13 @@ from parsing.ast import (
     AttributeNode,
     BlockNode,
     ClassNode,
+    DispatchNode,
     IdentifierNode,
     IntegerNode,
+    IsVoidNode,
     MethodCallNode,
     MethodNode,
+    NewNode,
     ProgramNode,
     StringNode,
 )
@@ -567,6 +570,50 @@ class COOL2CIL(Visitor):
             cil.DynamicCallNode(instance_type, method_index, return_var)
         )
 
+    def visit__DispatchNode(
+        self, node: DispatchNode, context: Context, scope: Scope, return_var
+    ):
+        obj_type = self.current_type.name
+        instance = self.define_internal_local()
+        if node.expr:
+            node.expr.accept(self, context, scope, instance)
+            obj_type = node.expr.type
+
+        else:
+            self.register_instruction(cil.AssignNode(instance, "self"))
+
+        instance_type = None
+        if not node.method_type:
+            instance_type = self.define_internal_local()
+            if obj_type in ["Int", "Bool"]:
+                self.register_instruction(
+                    cil.TypeOfNode(instance, instance_type, True, obj_type)
+                )
+            else:
+                self.register_instruction(cil.TypeOfNode(instance, instance_type))
+
+        args = [instance]
+        for arg in node.args:
+            arg_value = self.define_internal_local()
+            arg.accept(self, context, scope, arg_value)
+            args.append(arg_value)
+
+        for arg in args:
+            self.register_instruction(cil.ArgNode(arg))
+
+        if node.method_type:
+            self.register_instruction(
+                cil.StaticCallNode(
+                    self.to_function_name(node.method, node.method_type), return_var
+                )
+            )
+
+        else:
+            method_index = self.get_method_id(obj_type, node.method)
+            self.register_instruction(
+                cil.DynamicCallNode(instance_type, method_index, return_var)
+            )
+
     def visit__BlockNode(
         self, node: BlockNode, context: Context, scope: Scope, return_var
     ):
@@ -610,3 +657,18 @@ class COOL2CIL(Visitor):
         data_id = self.generate_next_string_id()
         self.data.append(cil.DataNode(data_id, f'"{node._value}"'))
         self.register_instruction(cil.LoadNode(return_var, data_id, node._value))
+
+    def visit__NewNode(self, node: NewNode, context: Context, scope: Scope, return_var):
+        _self = self.define_internal_local()
+        self.register_instruction(cil.AllocateNode(node.type, _self))
+        self.register_instruction(cil.ArgNode(_self))
+        self.register_instruction(
+            cil.StaticCallNode(self.to_function_name("init", node.type), return_var)
+        )
+
+    def visit__IsVoidNode(
+        self, node: IsVoidNode, context: Context, scope: Scope, return_var
+    ):
+        value = self.define_internal_local()
+        node.expr.accept(self, context, scope, value)
+        self.register_instruction(cil.IsVoidNode(return_var, value))
