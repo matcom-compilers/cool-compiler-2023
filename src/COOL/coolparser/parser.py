@@ -70,7 +70,6 @@ class CoolParser(Parser):
 
     def _get_column_from_production(self, p: YaccProduction):
         column = {}
-        return 0
         for i in p._slice:
             if isinstance(i, Token):
                 column[f'{i.type}_{i.value}_{i.lineno}'] = i.column
@@ -79,8 +78,7 @@ class CoolParser(Parser):
                     for j in i.value:
                         column.update(j.column)
                 else:
-                    column.update(i.value.column)
-                
+                    column.update(i.value.column)                
         return column
 
     @_('program')
