@@ -230,8 +230,8 @@ class TypeChecker(Visitor):
         left_type = node.left.accept(self, scope=scope)
         right_type = node.right.accept(self, scope=scope)
 
-        node.left.computed_type = left_type
-        node.right.computed_type = right_type
+        node.left.computed_type = node.left.computed_type
+        node.right.computed_type = node.right.computed_type
 
         operator = node.operator
 

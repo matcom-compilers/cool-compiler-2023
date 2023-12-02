@@ -160,6 +160,21 @@ class DivNode(ArithmeticNode):
         return f"{self.dest} = {self.left} / {self.right};"
 
 
+class EqualNode(ArithmeticNode):
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} == {self.right};"
+
+
+class LessNode(ArithmeticNode):
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} < {self.right};"
+
+
+class LessEqualNode(ArithmeticNode):
+    def __str__(self) -> str:
+        return f"{self.dest} = {self.left} <= {self.right};"
+
+
 class GetAttrNode(InstructionNode):
     def __init__(self, instance, attr, dest, type) -> None:
         super().__init__()

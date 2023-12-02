@@ -1086,6 +1086,44 @@ class CILVisitor(Visitor):
         self.memory_manager.clean()
         return instructions
 
+    def visit__EqualNode(self, node: cil.EqualNode, *args, **kwargs):
+        self.memory_manager.save()
+        instructions = []
+
+        r_left = self.memory_manager.get_unused_register()
+        r_right = self.memory_manager.get_unused_register()
+        r_dest = self.memory_manager.get_unused_register()
+
+        if isinstance(node.left, int):
+            instructions.append(mips.LoadImmediateNode(r_left, node.left))
+        else:
+            left_index = self.search_mem(node.left)
+            instructions.append(
+                mips.LoadWordNode(
+                    r_left, mips.MemoryAddressRegisterNode(FP_REG, left_index)
+                )
+            )
+
+        if isinstance(node.right, int):
+            instructions.append(mips.LoadImmediateNode(r_right, node.right))
+        else:
+            right_index = self.search_mem(node.right)
+            instructions.append(
+                mips.LoadWordNode(
+                    r_right, mips.MemoryAddressRegisterNode(FP_REG, right_index)
+                )
+            )
+
+        instructions.append(mips.SetEqNode(r_dest, r_left, r_right))
+
+        dist_dir = self.search_mem(node.dest)
+        instructions.append(
+            mips.StoreWordNode(r_dest, mips.MemoryAddressRegisterNode(FP_REG, dist_dir))
+        )
+
+        self.memory_manager.clean()
+        return instructions
+
     def visit__RuntimeErrorNode(self, node: cil.RuntimeErrorNode, *args, **kwargs):
         # TODO  Print Error
         instructions = []

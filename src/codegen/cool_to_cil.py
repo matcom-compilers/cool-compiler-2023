@@ -16,6 +16,7 @@ from parsing.ast import (
     MethodCallNode,
     MethodNode,
     NewNode,
+    NotNode,
     ProgramNode,
     StringNode,
     WhileNode,
@@ -767,10 +768,27 @@ class COOL2CIL(Visitor):
             self.register_instruction(cil.StarNode(return_var, left, right))
         elif node.operator == BinaryOperator.DIVIDE:
             self.register_instruction(cil.DivNode(return_var, left, right))
-        # Complete with comparsions
+        elif node.operator == BinaryOperator.EQ:
+            if node.left.computed_type == StringType().name:
+                self.register_instruction(cil.StrEqNode(return_var, left, right))
+            else:
+                self.register_instruction(cil.EqualNode(return_var, left, right))
+
+        else:
+            # Complete with comparsions
+            assert False, f"Not implemented BinOp {node.operator}"
 
     def visit__BooleanNode(
         self, node: BooleanNode, context: Context, scope: Scope, return_var
     ):
-        print(node._value)
         self.register_instruction(cil.AssignNode(return_var, 1 if node._value else 0))
+
+    def visit__NotNode(self, node: NotNode, context: Context, scope: Scope, return_var):
+        value = self.define_internal_local()
+        node.expr.accept(self, context, scope, value)
+        constant = self.define_internal_local()
+        self.register_instruction(
+            cil.StaticCallNode(self.to_function_name("init", "Bool"), constant)
+        )
+        self.register_instruction(cil.AssignNode(constant, 1))
+        self.register_instruction(cil.MinusNode(return_var, constant, value))
