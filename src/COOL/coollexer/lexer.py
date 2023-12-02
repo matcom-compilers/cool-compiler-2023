@@ -179,9 +179,10 @@ class CoolLexer(Lexer):
 
     def find_column(self, text: str, index: int):
         last_cr = text.rfind('\n', 0, index)
+        tabs = text.count('\t', last_cr, index)
         if last_cr < 0:
             last_cr = 0
-        column = (index - last_cr)
+        column = (index - last_cr) + tabs * 3
         return column if column > 0 else 1
     
     def generate_token(self, token: SlyToken, text: str):
