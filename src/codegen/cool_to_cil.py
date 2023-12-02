@@ -126,7 +126,7 @@ class COOL2CIL(Visitor):
         builtin_types = ["Object", "IO", "Int", "Bool", "String"]
         for typex in builtin_types:
             self.current_function = cil.FunctionNode(
-                self.to_function_name("init", typex), [], [], []
+                self.to_function_name("INIT", typex), [], [], []
             )
             self.params.append(cil.ParamNode("self"))
 
@@ -137,11 +137,11 @@ class COOL2CIL(Visitor):
 
     def register_init(self, node: ClassNode):
         self.current_function = self.register_function(
-            self.to_function_name("init", node.name)
+            self.to_function_name("INIT", node.name)
         )
 
         self.params.append(cil.ParamNode("self"))
-        self.current_type.define_method("init", [], [], "Object")
+        self.current_type.define_method("INIT", [], [], "Object")
 
         for attr, (_, typex) in self.attrs[self.current_type.name].items():
             instance = self.define_internal_local()
@@ -407,7 +407,7 @@ class COOL2CIL(Visitor):
         self.current_function = cil.FunctionNode("main", [], [], [])
         self.code.append(self.current_function)
 
-        main_init = self.to_function_name("init", "Main")
+        main_init = self.to_function_name("INIT", "Main")
         main_method_name = self.to_function_name("main", "Main")
 
         # Get instance from constructor
@@ -675,7 +675,7 @@ class COOL2CIL(Visitor):
         self.register_instruction(cil.AllocateNode(node.type, _self))
         self.register_instruction(cil.ArgNode(_self))
         self.register_instruction(
-            cil.StaticCallNode(self.to_function_name("init", node.type), return_var)
+            cil.StaticCallNode(self.to_function_name("INIT", node.type), return_var)
         )
 
     def visit__IsVoidNode(
@@ -793,7 +793,7 @@ class COOL2CIL(Visitor):
         node.expr.accept(self, context, scope, value)
         constant = self.define_internal_local()
         self.register_instruction(
-            cil.StaticCallNode(self.to_function_name("init", "Bool"), constant)
+            cil.StaticCallNode(self.to_function_name("INIT", "Bool"), constant)
         )
         self.register_instruction(cil.AssignNode(constant, 1))
         self.register_instruction(cil.MinusNode(return_var, constant, value))
