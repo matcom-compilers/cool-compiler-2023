@@ -94,7 +94,7 @@ class TypeChecker(Visitor):
                     type="Attribute",
                     value=expr_type,
                 )
-            
+
         scope.define_variable(node.name, attr_type)
 
     def visit__MethodNode(self, node: MethodNode, scope: Scope):
@@ -156,7 +156,6 @@ class TypeChecker(Visitor):
         assert self.current_type
         obj_type: Type = node.expr.accept(self, scope=scope)
         method_name = node.method
-        
 
         if node.method_type:
             if not self.context.type_exists(node.method_type):
@@ -423,7 +422,7 @@ class TypeChecker(Visitor):
         return self.context.get_type(node.type)
 
     def visit__IsVoidNode(self, node: IsVoidNode, scope: Scope):
-        return BoolType()
+        return self.context.get_type("Bool")
 
     def visit__NotNode(self, node: NotNode, scope: Scope):
         expr_type: Type = node.expr.accept(self, scope=scope)
@@ -469,13 +468,13 @@ class TypeChecker(Visitor):
             return ErrorType()
 
     def visit__IntegerNode(self, node: IntegerNode, scope: Scope):
-        return IntType()
+        return self.context.get_type("Int")
 
     def visit__StringNode(self, node: StringNode, scope: Scope):
-        return StringType()
+        return self.context.get_type("String")
 
     def visit__BooleanNode(self, node: BooleanNode, scope: Scope):
-        return BoolType()
+        return self.context.get_type("Bool")
 
     def visit__MethodCallNode(self, node: MethodCallNode, scope: Scope):
         assert self.current_type
@@ -529,7 +528,7 @@ class TypeChecker(Visitor):
         condition_type: Type = node.condition.accept(self, scope)
 
         if condition_type.conforms_to(BoolType()):
-            return ObjectType()
+            return self.context.get_type("Object")
         else:
             self.error(
                 f"TypeError: Loop condition does not have type Bool.",
