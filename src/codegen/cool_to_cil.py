@@ -22,7 +22,6 @@ from parsing.ast import (
 from semantic.context import Context
 from semantic.scope import Scope, VariableInfo
 from semantic.types import VoidType
-from src.codegen.mips_ast import ComparisonNode
 from utils.visitor import Visitor
 
 
