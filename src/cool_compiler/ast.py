@@ -59,6 +59,7 @@ class VarMutationAST(IAST):
         self.value = value
 
     def check_type(self, te) -> str:
+        if inherits(self.value.check_type(te), )
         return self.value.check_type(te)
 
 
