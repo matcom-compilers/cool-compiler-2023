@@ -76,9 +76,10 @@ class MemoryManager:
         self.used = []
         self.saved = []
 
-    def get_unused_register(self):
+    def get_unused_register(self, comment=None):
         possibles = list(set(self.registers).difference(set(self.used)))
         reg = possibles[0]
+
         self.used.append(reg)
         return reg
 
@@ -922,7 +923,7 @@ class CILVisitor(Visitor):
         instructions = []
         self.memory_manager.save()
 
-        reg1 = self.memory_manager.get_unused_register()
+        reg1 = self.memory_manager.get_unused_register(comment="On SubstrNode")
 
         if isinstance(node.n, int):
             instructions.append(mips.LoadImmediateNode(reg1, node.n))
@@ -936,7 +937,7 @@ class CILVisitor(Visitor):
 
         # Reserve memory for new string
         instructions.append(mips.MoveNode(A0_REG, reg1))
-        instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))
+        instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))  # n+1 for ZERO at end
         instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
         instructions.append(mips.SyscallNode())
 
@@ -958,7 +959,7 @@ class CILVisitor(Visitor):
         reg3 = self.memory_manager.get_unused_register()
 
         if isinstance(node.index, int):
-            instructions.append(mips.LoadImmediateNode(reg1, node.index))
+            instructions.append(mips.LoadImmediateNode(reg3, node.index))
         else:
             index_dir = self.search_mem(node.index)
             instructions.append(
@@ -967,7 +968,9 @@ class CILVisitor(Visitor):
                 )
             )
 
-        instructions.append(mips.AddNode(S1_REG, S1_REG, reg3))
+        instructions.append(
+            mips.AddNode(S1_REG, S1_REG, reg3)
+        )  # Start from Start + Index
         instructions.append(mips.MoveNode(A0_REG, reg1))
         instructions.append(mips.MoveNode(S0_REG, V0_REG))
         instructions.append(mips.JumpAndLinkNode(COPY_BYTES))
@@ -978,12 +981,13 @@ class CILVisitor(Visitor):
         # r2 init of bytes
         # r1 length
 
-        dest_offset = self.search_mem(node.dest)
+        # Allocate COOL String
         _size = STRING_SIZE
         instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
         instructions.append(mips.LoadImmediateNode(A0_REG, _size))
         instructions.append(mips.SyscallNode())
 
+        dest_offset = self.search_mem(node.dest)
         instructions.append(
             mips.StoreWordNode(
                 V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_offset)
@@ -992,7 +996,9 @@ class CILVisitor(Visitor):
         r5 = self.memory_manager.get_unused_register()
         instructions.append(mips.LoadAddressNode(r5, mips.LabelNode(STRING_TYPE)))
         instructions.append(
-            mips.StoreWordNode(r5, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            mips.StoreWordNode(
+                r5, mips.MemoryAddressRegisterNode(V0_REG, TYPEINFO_ATTR_INDEX)
+            )
         )
 
         # storing string length
@@ -1454,15 +1460,13 @@ class CILVisitor(Visitor):
         """
         self.memory_manager.save()
 
-        r1 = self.memory_manager.get_unused_register()
-
         instructions = [
             mips.LabelInstructionNode(COPY_BYTES),
             mips.MoveNode(A1_REG, S0_REG),
             mips.LabelInstructionNode(f"{COPY_BYTES}__LOOP"),
             mips.BeqzNode(A0_REG, f"{COPY_BYTES}__END"),
-            mips.LoadByteNode(r1, mips.MemoryAddressRegisterNode(S1_REG, 0)),
-            mips.StoreByteNode(r1, mips.MemoryAddressRegisterNode(S0_REG, 0)),
+            mips.LoadByteNode(S3_REG, mips.MemoryAddressRegisterNode(S1_REG, 0)),
+            mips.StoreByteNode(S3_REG, mips.MemoryAddressRegisterNode(S0_REG, 0)),
             mips.AddiNode(S1_REG, S1_REG, 1),
             mips.AddiNode(S0_REG, S0_REG, 1),
             mips.AddiNode(A0_REG, A0_REG, -1),
@@ -1485,28 +1489,24 @@ class CILVisitor(Visitor):
         label_cmp_end = f"{STR_CMP}__END"
         label_cmp_loop = f"{STR_CMP}__LOOP"
 
-        self.memory_manager.save()
-        r1 = self.memory_manager.get_unused_register()
-        r2 = self.memory_manager.get_unused_register()
-
         # Load strings length
         instructions.append(
             mips.LoadWordNode(
-                r1, mips.MemoryAddressRegisterNode(S1_REG, LENGTH_ATTR_INDEX)
+                S3_REG, mips.MemoryAddressRegisterNode(S1_REG, LENGTH_ATTR_INDEX)
             )
         )
         instructions.append(
             mips.LoadWordNode(
-                r2, mips.MemoryAddressRegisterNode(S2_REG, LENGTH_ATTR_INDEX)
+                S4_REG, mips.MemoryAddressRegisterNode(S2_REG, LENGTH_ATTR_INDEX)
             )
         )
-        instructions.append(mips.SetEqNode(S0_REG, r1, r2))
+        instructions.append(mips.SetEqNode(S0_REG, S3_REG, S4_REG))
         instructions.append(
             mips.BeqzNode(S0_REG, label_cmp_end)
         )  # If Length not equal return 0
 
         index_register = self.memory_manager.get_unused_register()
-        instructions.append(mips.MoveNode(index_register, r1))
+        instructions.append(mips.MoveNode(index_register, S3_REG))
         # Point s1 and s2 to the first char
         instructions.append(
             mips.LoadWordNode(
@@ -1522,21 +1522,25 @@ class CILVisitor(Visitor):
         # Init Compare Loop
         instructions.append(mips.LabelInstructionNode(label_cmp_loop))
 
-        instructions.append(mips.LoadImmediateNode(r1, 0))  # Clear r1
+        instructions.append(mips.LoadImmediateNode(S3_REG, 0))  # Clear r1
         instructions.append(
-            mips.LoadByteNode(r1, mips.MemoryAddressRegisterNode(S1_REG, 0))
+            mips.LoadByteNode(S3_REG, mips.MemoryAddressRegisterNode(S1_REG, 0))
         )  # Load Byte of first string
-        instructions.append(mips.LoadImmediateNode(r2, 0))  # Clear r2
+        instructions.append(mips.LoadImmediateNode(S4_REG, 0))  # Clear r2
         instructions.append(
-            mips.LoadByteNode(r2, mips.MemoryAddressRegisterNode(S2_REG, 0))
+            mips.LoadByteNode(S4_REG, mips.MemoryAddressRegisterNode(S2_REG, 0))
         )  # Load Byte of second string
 
-        instructions.append(mips.SetEqNode(S0_REG, r1, r2))  # Equal chars
+        instructions.append(mips.SetEqNode(S0_REG, S3_REG, S4_REG))  # Equal chars
         instructions.append(
             mips.BeqzNode(S0_REG, label_cmp_end)
         )  # If not equal return 0
-        instructions.append(mips.BeqzNode(r1, label_cmp_end))  # If string 1 ends finish
-        instructions.append(mips.BeqzNode(r2, label_cmp_end))  # If string 2 ends finish
+        instructions.append(
+            mips.BeqzNode(S3_REG, label_cmp_end)
+        )  # If string 1 ends finish
+        instructions.append(
+            mips.BeqzNode(S4_REG, label_cmp_end)
+        )  # If string 2 ends finish
         # Increment
         instructions.append(mips.AddiNode(S1_REG, S1_REG, 1))  # Move to next byte str1
         instructions.append(mips.AddiNode(S2_REG, S2_REG, 1))  # Move to next byte str2
@@ -1545,5 +1549,4 @@ class CILVisitor(Visitor):
         instructions.append(mips.LabelInstructionNode(label_cmp_end))
         instructions.append(mips.JumpRegisterNode(RA_REG))
 
-        self.memory_manager.clean()
         return instructions

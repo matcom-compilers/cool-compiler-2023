@@ -49,6 +49,12 @@ class RegisterNode(MipsAstNode):
         self.number = number
         super().__init__(comment)
 
+    def __str__(self) -> str:
+        return self.number
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class LabelNode(MipsAstNode):
     """Representa una etiqueta en MIPS."""
