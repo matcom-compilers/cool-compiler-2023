@@ -577,7 +577,7 @@ class COOL2CIL(Visitor):
         instance = self.define_internal_local()
         if node.expr:
             node.expr.accept(self, context, scope, instance)
-            obj_type = node.expr.type
+            obj_type = node.expr.computed_type
 
         else:
             self.register_instruction(cil.AssignNode(instance, "self"))

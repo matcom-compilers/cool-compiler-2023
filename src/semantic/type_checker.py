@@ -150,6 +150,7 @@ class TypeChecker(Visitor):
             )
 
         scope.define_variable(node.name, assig_type)
+        node.computed_type = assig_type.name
         return assig_type
 
     def visit__DispatchNode(self, node: DispatchNode, scope: Scope):
@@ -222,15 +223,15 @@ class TypeChecker(Visitor):
         return_type = (
             method.return_type if method.return_type != SelfType() else obj_type
         )
-        node.type = return_type.name
+        node.computed_type = return_type.name
         return return_type
 
     def visit__BinaryOperatorNode(self, node: BinaryOperatorNode, scope: Scope):
         left_type = node.left.accept(self, scope=scope)
         right_type = node.right.accept(self, scope=scope)
 
-        node.left.type = left_type
-        node.right.type = right_type
+        node.left.computed_type = left_type
+        node.right.computed_type = right_type
 
         operator = node.operator
 
@@ -319,12 +320,15 @@ class TypeChecker(Visitor):
         then_type: Type = node.then_expr.accept(self, scope=scope)
         else_type: Type = node.else_expr.accept(self, scope=scope)
 
-        return Type.find_parent_type(then_type, else_type, self.current_type)
+        node_type = Type.find_parent_type(then_type, else_type, self.current_type)
+        node.computed_type = node_type.name
+        return node_type
 
     def visit__BlockNode(self, node: BlockNode, scope: Scope):
         block_type = ErrorType()
         for expr in node.expressions:
             block_type = expr.accept(self, scope=scope)
+        node.computed_type = block_type.name
         return block_type
 
     def visit__LetNode(self, node: LetNode, scope: Scope):
@@ -365,9 +369,11 @@ class TypeChecker(Visitor):
 
             let_scope.define_variable(var_name, var_type)
 
-        return node.body.accept(
+        node_type = node.body.accept(
             self, scope=let_scope
         )  # Evaluate the body expression and return its type
+        node.computed_type = node_type.name
+        return node_type
 
     def visit__CaseNode(self, node: CaseNode, scope: Scope):
         case_expr_type = node.expr.accept(self, scope=scope)
@@ -391,6 +397,7 @@ class TypeChecker(Visitor):
         for c_type in case_types[1:]:
             case_type = Type.find_parent_type(case_type, c_type, self.current_type)
 
+        node.computed_type = case_type.name
         return case_type
 
     def visit__CaseOptionNode(self, node: CaseOptionNode, scope: Scope):
@@ -418,17 +425,18 @@ class TypeChecker(Visitor):
                 value=node.type,
             )
             return ErrorType()
-
+        node.computed_type = node.type
         return self.context.get_type(node.type)
 
     def visit__IsVoidNode(self, node: IsVoidNode, scope: Scope):
-        node.type = "Bool"
+        node.computed_type = "Bool"
         return self.context.get_type("Bool")
 
     def visit__NotNode(self, node: NotNode, scope: Scope):
         expr_type: Type = node.expr.accept(self, scope=scope)
 
         if expr_type == BoolType():
+            node.computed_type = "Bool"
             return expr_type
 
         self.error(
@@ -443,6 +451,7 @@ class TypeChecker(Visitor):
         expr_type: Type = node.expr.accept(self, scope=scope)
 
         if expr_type == IntType():
+            node.computed_type = "Int"
             return expr_type
 
         self.error(
@@ -458,6 +467,7 @@ class TypeChecker(Visitor):
         if scope.is_defined(node.name, self.current_type):
             var_or_attr = scope.find_variable_or_attribute(node.name, self.current_type)
             node.type = var_or_attr.type if var_or_attr else ErrorType()
+            node.computed_type = node.type.name
             return node.type
         else:
             self.error(
@@ -469,15 +479,15 @@ class TypeChecker(Visitor):
             return ErrorType()
 
     def visit__IntegerNode(self, node: IntegerNode, scope: Scope):
-        node.type = self.context.get_type("Int").name
+        node.computed_type = self.context.get_type("Int").name
         return self.context.get_type("Int")
 
     def visit__StringNode(self, node: StringNode, scope: Scope):
-        node.type = self.context.get_type("String").name
+        node.computed_type = self.context.get_type("String").name
         return self.context.get_type("String")
 
     def visit__BooleanNode(self, node: BooleanNode, scope: Scope):
-        node.type = self.context.get_type("Bool").name
+        node.computed_type = self.context.get_type("Bool").name
         return self.context.get_type("Bool")
 
     def visit__MethodCallNode(self, node: MethodCallNode, scope: Scope):
@@ -525,7 +535,7 @@ class TypeChecker(Visitor):
         return_type = (
             method.return_type if method.return_type != SelfType() else obj_type
         )
-        node.type = return_type.name
+        node.computed_type = return_type.name
         return return_type
 
     def visit__WhileNode(self, node: WhileNode, scope: Scope):
