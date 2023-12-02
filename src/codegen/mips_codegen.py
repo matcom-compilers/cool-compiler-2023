@@ -49,6 +49,20 @@ class MipsCodeGenerator(Visitor):
             + node.comment
         )
 
+    def visit__MultNode(self, node: mips.MultNode, *args, **kwargs):
+        return (
+            f"mult {node.rs.accept(self)}, {node.rt.accept(self)}"
+            + "\t# "
+            + node.comment
+        )
+
+    def visit__DivideNode(self, node: mips.DivideNode, *args, **kwargs):
+        return (
+            f"mult {node.rs.accept(self)}, {node.rt.accept(self)}"
+            + "\t# "
+            + node.comment
+        )
+
     # Métodos para instrucciones de carga y almacenamiento
     def visit__LoadWordNode(self, node: mips.LoadWordNode, *args, **kwargs):
         return (
@@ -102,6 +116,12 @@ class MipsCodeGenerator(Visitor):
             + node.comment
         )
 
+    def visit__MoveFromHiNode(self, node: mips.MoveFromHiNode, *args, **kwargs):
+        return f"mfhi {node.rd.accept(self)}" + "\t# " + node.comment
+
+    def visit__MoveFromLoNode(self, node: mips.MoveFromLoNode, *args, **kwargs):
+        return f"mflo {node.rd.accept(self)}" + "\t# " + node.comment
+
     def visit__AddiNode(self, node: mips.AddiNode, *args, **kwargs):
         return (
             f"addi {node.rt.accept(self)}, {node.rs.accept(self)}, {node.immediate}"
@@ -142,8 +162,17 @@ class MipsCodeGenerator(Visitor):
     def visit__SetEqNode(self, node: mips.SetEqNode, *args, **kwargs):
         return f"seq {node.destination.accept(self)}, {node.m1.accept(self)}, {node.m2.accept(self)}"
 
+    def visit__SetOnLessNode(self, node: mips.SetOnLessNode, *args, **kwargs):
+        return f"slt {node.destination.accept(self)}, {node.m1.accept(self)}, {node.m2.accept(self)}"
+
+    def visit__SetOnLessEqNode(self, node: mips.SetOnLessEqNode, *args, **kwargs):
+        return f"sle {node.destination.accept(self)}, {node.m1.accept(self)}, {node.m2.accept(self)}"
+
     def visit__MipsAstNode(self, node: mips.MipsAstNode, *args, **kwargs):
         return f"# {node.comment}"
 
     def visit__BneqzNode(self, node: mips.BneqzNode, *args, **kwargs):
         return f"bnez {node.rs.accept(self)}, {node.label}" + "\t# " + node.comment
+
+    def visit__NotNode(self, node: mips.NotNode, *args, **kwargs):
+        return f"not {node.dest.accept(self)}, {node.source.accept(self)}"

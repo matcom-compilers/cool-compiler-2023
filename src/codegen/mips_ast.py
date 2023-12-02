@@ -99,6 +99,24 @@ class SubNode(InstructionNode):
         super().__init__(comment)
 
 
+class MultNode(InstructionNode):
+    """Nodo para la instrucción 'add' en MIPS."""
+
+    def __init__(self, rs, rt, comment=""):
+        self.rs = rs
+        self.rt = rt
+        super().__init__(comment)
+
+
+class DivideNode(InstructionNode):
+    """Nodo para la instrucción 'add' en MIPS."""
+
+    def __init__(self, rs, rt, comment=""):
+        self.rs = rs
+        self.rt = rt
+        super().__init__(comment)
+
+
 class LoadByteNode(InstructionNode):
     """Nodo para la instrucción 'lb' en MIPS."""
 
@@ -292,3 +310,17 @@ class ComparisonNode(InstructionNode):
 
 class SetEqNode(ComparisonNode):
     pass
+
+
+class SetOnLessNode(ComparisonNode):
+    pass
+
+
+class SetOnLessEqNode(ComparisonNode):
+    pass
+
+
+class NotNode(InstructionNode):
+    def __init__(self, dest, source):
+        self.dest = dest
+        self.source = source
