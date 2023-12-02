@@ -101,7 +101,11 @@ class MipsCodeGenerator(Visitor):
         return f"jalr {node.rs.accept(self)}" + "\t# " + node.comment
 
     def visit__BranchEqualNode(self, node, *args, **kwargs):
-        return f"beq {node.rs}, {node.rt}, {node.offset}" + "\t# " + node.comment
+        return (
+            f"beq {node.rs.accept(self)}, {node.rt.accept(self)}, {node.offset.accept(self)}"
+            + "\t# "
+            + node.comment
+        )
 
     def visit__BeqzNode(self, node: mips.BeqzNode, *args, **kwargs):
         return f"beqz {node.rs.accept(self)}, {node.label}" + "\t# " + node.comment

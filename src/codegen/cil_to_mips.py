@@ -1,5 +1,3 @@
-from cProfile import label
-
 from codegen import cil_ast as cil
 from codegen import mips_ast as mips
 from utils.visitor import Visitor
@@ -26,9 +24,8 @@ S3_REG = mips.RegisterNode("s3")
 S4_REG = mips.RegisterNode("s4")
 
 INSTANCE_METADATA_SIZE = 4
-
 WORD_SIZE = 4
-READ_BUFFER_SIZE = 4000
+
 
 REGISTERS = [mips.RegisterNode(name) for name in REGISTER_NAMES]
 ARG_REGISTERS = [mips.RegisterNode(name) for name in ARG_REGISTERS_NAMES]
@@ -41,9 +38,13 @@ V0_REG = mips.RegisterNode("v0")
 V1_REG = mips.RegisterNode("v1")
 ZERO = mips.RegisterNode("zero")
 
+# System Call codes
 SYSCALL_SBRK = 9
 SYSCALL_PRINT_STRING = 4
 SYSCALL_PRINT_INT = 1
+SYSCALL_READ_INT = 5
+SYSCALL_READ_STRING = 8
+SYSCALL_EXIT = 10
 
 # Type info is stored at index 0
 TYPEINFO_ATTR_INDEX = 0
@@ -58,6 +59,8 @@ LENGTH_ATTR_INDEX = 4
 CHARS_ATTR_INDEX = 8
 EMPTY_STR_LABEL = "EMPTY_STR_LABEL"
 EMPTY_STR_VALUE = '""'
+INPUT_STR_BUFFER = "INPUT_STR_BUFFER"
+READ_BUFFER_SIZE = 1024
 
 # VOID Type
 VOID = "Void"
@@ -111,8 +114,8 @@ class CILVisitor(Visitor):
         self.data_section[EMPTY_STR_LABEL] = mips.DataNode(
             mips.LabelNode(EMPTY_STR_LABEL), ".asciiz", [EMPTY_STR_VALUE]
         )
-        self.data_section["INPUT_STR_BUFFER"] = mips.DataNode(
-            mips.LabelNode("INPUT_STR_BUFFER"),
+        self.data_section[INPUT_STR_BUFFER] = mips.DataNode(
+            mips.LabelNode(INPUT_STR_BUFFER),
             ".space",
             [mips.LabelNode(READ_BUFFER_SIZE)],
         )
@@ -558,32 +561,105 @@ class CILVisitor(Visitor):
         dest_dir = self.search_mem(node.dest)
 
         if node.is_string:
-            sys_code = 8
-
-            instructions.append(mips.LoadImmediateNode(V0_REG, 9))
+            sys_code = SYSCALL_READ_STRING
+            instructions.append(mips.MipsAstNode(comment="Read String"))
+            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_READ_STRING))
             instructions.append(
-                mips.LoadImmediateNode(ARG_REGISTERS[0], READ_BUFFER_SIZE)
+                mips.LoadAddressNode(
+                    A0_REG, mips.LabelNode(INPUT_STR_BUFFER)
+                )  # Buffer where read string will be
+            )
+            instructions.append(
+                mips.LoadImmediateNode(A1_REG, READ_BUFFER_SIZE)  # Buffer size
             )
             instructions.append(mips.SyscallNode())
 
-            instructions.append(mips.MoveNode(ARG_REGISTERS[0], V0_REG))
+            # Calculate the length of read string
+            r1 = self.memory_manager.get_unused_register()
+            r2 = self.memory_manager.get_unused_register()  # Tracks length
+            instructions.append(mips.MoveNode(r1, A0_REG))  # Referencce to Buffer start
             instructions.append(
-                mips.LoadImmediateNode(ARG_REGISTERS[1], READ_BUFFER_SIZE + 1)
+                mips.LoadImmediateNode(r2, 0)
+            )  # Referencce to Buffer start
+
+            loop_index = self.get_loop_count()
+            length_loop_label_start = f"READ_LOOP_{loop_index}_START"
+            length_loop_label_end = f"READ_LOOP_{loop_index}"
+            r3 = self.memory_manager.get_unused_register()  # Tracks Bytes
+            instructions.append(mips.LoadImmediateNode(r3, 0))  # Clear register
+
+            instructions.append(mips.LabelInstructionNode(length_loop_label_start))
+            instructions.append(
+                mips.LoadByteNode(r3, mips.MemoryAddressRegisterNode(A0_REG, 0))
             )
+            instructions.append(
+                mips.BranchEqualNode(ZERO, r3, mips.LabelNode(length_loop_label_end))
+            )
+            instructions.append(mips.AddiNode(r2, r2, 1))
+            instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))
+            instructions.append(mips.JumpNode(length_loop_label_start))
+            instructions.append(mips.LabelInstructionNode(length_loop_label_end))
 
-            instructions.append(mips.LoadImmediateNode(V0_REG, sys_code))  # Read str
-            instructions.append(mips.SyscallNode())
+            # In r1 start of buffer
+            # In r2 length of string + 1 (Zero end)
 
-            # Save readed value
+            ##################################################
+            # Copy bytes from Buffer to Memory
+            ##################################################
+
+            # Allocate Space for str
+            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
+            instructions.append(mips.MoveNode(A0_REG, r2))
+            instructions.append(mips.SyscallNode(comment="String Allocated for READ"))
+
+            instructions.append(
+                mips.MoveNode(r3, V0_REG)
+            )  # Save init of str on heap in r3
+
+            instructions.append(
+                mips.MoveNode(S0_REG, V0_REG)
+            )  # In COPY_BYTES $s0 is dest
+            instructions.append(
+                mips.MoveNode(S1_REG, r1)
+            )  # In COPY_BYTES $s0 is source
+            instructions.append(mips.MoveNode(A0_REG, r2))  # In COPY_BYTES $a0 is size
+            instructions.append(mips.JumpAndLinkNode(COPY_BYTES))  # Call
+
+            # Now we have in [r3, r3+lenth] the read string copy on memory. r3 point to init of str in mem
+            # Time to create a new String instance to point to the value
+            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
+            instructions.append(mips.LoadImmediateNode(A0_REG, STRING_SIZE))
+            instructions.append(mips.SyscallNode(comment="Allocate a String instance"))
+
+            # Save instance in dest
             instructions.append(
                 mips.StoreWordNode(
-                    ARG_REGISTERS[0],
-                    mips.MemoryAddressRegisterNode(FP_REG, dest_dir),
+                    V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)
+                )
+            )
+            # Save String Type
+            instructions.append(mips.LoadAddressNode(r1, mips.LabelNode(STRING_TYPE)))
+            instructions.append(
+                mips.StoreWordNode(r1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            )
+            # Store String Length
+            instructions.append(
+                mips.AddiNode(r2, r2, -1)
+            )  # r2 holds the length of the str with zero termination
+            instructions.append(
+                mips.StoreWordNode(
+                    r2, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
+                )
+            )
+            # Store str ref
+            instructions.append(
+                mips.StoreWordNode(
+                    r3, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
                 )
             )
 
         else:
-            sys_code = 5
+            sys_code = SYSCALL_READ_INT
 
             instructions.append(mips.LoadImmediateNode(V0_REG, sys_code))
             instructions.append(mips.SyscallNode())
