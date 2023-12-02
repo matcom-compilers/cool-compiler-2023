@@ -126,7 +126,12 @@ class Type:
                 raise SemanticError(f'Method "{name}" is not defined in {self.name}.')
 
     def define_method(
-        self, name: str, param_names: list, param_types: list, return_type, location
+        self,
+        name: str,
+        param_names: list,
+        param_types: list,
+        return_type,
+        location=None,
     ):
         if name in (method.name for method in self.methods):
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
@@ -275,3 +280,11 @@ class IOType(Type):
 
     def __eq__(self, other):
         return isinstance(other, IOType)
+
+
+class VoidType(Type):
+    def __init__(self):
+        Type.__init__(self, "Void")
+
+    def __eq__(self, other):
+        return isinstance(other, VoidType)

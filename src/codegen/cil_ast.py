@@ -48,7 +48,7 @@ class TypeNode(Node):
 
 
 class AttributeNode(Node):
-    def __init__(self, name, type):
+    def __init__(self, name, type=None):
         self.name = name
         self.type = type
 
@@ -155,22 +155,24 @@ class DivNode(ArithmeticNode):
 
 
 class GetAttrNode(InstructionNode):
-    def __init__(self, instance, attr, dest) -> None:
+    def __init__(self, instance, attr, dest, type) -> None:
         super().__init__()
         self.instance = instance
         self.attr = attr
         self.dest = dest
+        self.type = type
 
     def __str__(self) -> str:
         return f"{self.dest} = GETATTR {self.instance} {self.attr};"
 
 
 class SetAttrNode(InstructionNode):
-    def __init__(self, instance, attr, source) -> None:
+    def __init__(self, instance, attr, source, type) -> None:
         super().__init__()
         self.instance = instance
         self.attr = attr
         self.source = source
+        self.type = type
 
     def __str__(self) -> str:
         return f"SETATTR {self.instance} {self.attr} {self.source}"
@@ -198,9 +200,11 @@ class ArrayNode(InstructionNode):
 
 
 class TypeOfNode(InstructionNode):
-    def __init__(self, obj, dest):
+    def __init__(self, obj, dest, flag=False, type=None):
         self.obj = obj
         self.dest = dest
+        self.flag = flag
+        self.type = type
 
     def __str__(self) -> str:
         return f"{self.dest} = TYPEOF {self.obj};"
@@ -309,12 +313,13 @@ class ExitNode(InstructionNode):
 
 
 class LoadNode(InstructionNode):
-    def __init__(self, dest, msg):
+    def __init__(self, dest, label, data):
         self.dest = dest
-        self.msg = msg
+        self.label = label
+        self.data = data
 
     def __str__(self) -> str:
-        return f"{self.dest} = LOAD {self.msg};"
+        return f"{self.dest} = LOAD {self.label};"
 
 
 class LengthNode(InstructionNode):
@@ -327,11 +332,10 @@ class LengthNode(InstructionNode):
 
 
 class ConcatNode(InstructionNode):
-    def __init__(self, dest, string1, string2, dest_lenght):
+    def __init__(self, dest, string1, string2):
         self.dest = dest
         self.string1 = string1
         self.string2 = string2
-        self.dest_lenght = dest_lenght
 
     def __str__(self) -> str:
         return f"{self.dest} = CONCAT {self.string1} {self.string2};"
@@ -388,7 +392,28 @@ class ComplementNode(InstructionNode):
         self.dest = dest
 
 
-class UnBoxNode(InstructionNode):
-    def __init__(self, dest, source):
-        self.source = source
+class DefaultValueNode(InstructionNode):
+    def __init__(self, dest, type) -> None:
         self.dest = dest
+        self.type = type
+        super().__init__()
+
+    def __str__(self) -> str:
+        return f"{self.dest} = DEFAULT {self.type}"
+
+
+class RuntimeErrorNode(InstructionNode):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self) -> str:
+        return f"ERROR {self.msg}"
+
+
+class IsVoidNode(InstructionNode):
+    def __init__(self, dest, value):
+        self.dest = dest
+        self.value = value
+
+    def __str__(self) -> str:
+        return f"{self.dest} = ISVOID {self.value}"

@@ -118,7 +118,7 @@ class FormalNode(Node):
 
 class ExpressionNode(Node):
     def __init__(self, location, type: Optional[Type] = None):
-        self.type = type
+        self.computed_type = type
         super().__init__(location)
 
 

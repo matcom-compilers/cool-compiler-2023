@@ -5,7 +5,7 @@ from semantic.types import Type
 
 
 class VariableInfo:
-    def __init__(self, name, vtype):
+    def __init__(self, name, vtype=None):
         self.name = name
         self.type = vtype
 
