@@ -33,8 +33,11 @@ class CoolLexer(Lexer):
         "class": "CLASS", "inherits": "INHERITS", "if": "IF", "then": "THEN", "else": "ELSE", "fi": "FI", "while": "WHILE", "loop": "LOOP", "pool": "POOL", "let": "LET", "in": "IN", "case": "CASE", "of": "OF", "esac": "ESAC", "new": "NEW", "isvoid": "ISVOID",
     }
 
-    # Comments
-    ignore = " \t"
+    # ignore = " \t"
+    ignore_space = " "
+    ignore_tab = r"\t"
+    def ignore_tab(self, t):
+        self.index += 3
     ignore_comment = r'--.*'
     
     ignore_comment_multiline = r'\(\*'
