@@ -8,6 +8,7 @@ from semantic_analysis.ast_ import *
 from utils.constants import *
 from mips_generation.gen_mips import GenMIPS, DataSegment
 
+
 class CoolCompiler:
     def __init__(self, code, tab_size=4):
         self.code = ''
@@ -26,9 +27,12 @@ class CoolCompiler:
         """
         self.native_classes = [
             Class(Type('Object')),
-            Class(Type('Int'), reserved_attrs=[AttrIntLiteral()], can_inherit=False, type_obj=TYPE_INT),
-            Class(Type('String'), reserved_attrs=[AttrStringLength(), AttrStringLiteral()], can_inherit=False, type_obj=TYPE_STRING),
-            Class(Type('Bool'), reserved_attrs=[AttrBoolLiteral()], can_inherit=False, type_obj=TYPE_BOOL),
+            Class(Type('Int'), reserved_attrs=[
+                  AttrIntLiteral()], can_inherit=False, type_obj=TYPE_INT),
+            Class(Type('String'), reserved_attrs=[AttrStringLength(
+            ), AttrStringLiteral()], can_inherit=False, type_obj=TYPE_STRING),
+            Class(Type('Bool'), reserved_attrs=[
+                  AttrBoolLiteral()], can_inherit=False, type_obj=TYPE_BOOL),
             Class(Type('IO'))
         ]
 
@@ -40,15 +44,18 @@ class CoolCompiler:
             ],
             'String': [
                 Method(Id('length'), NodeContainer(), Type('Int')),
-                Method(Id('concat'), NodeContainer([Formal(Id('s'), Type('String'))]), Type('String')),
+                Method(Id('concat'), NodeContainer(
+                    [Formal(Id('s'), Type('String'))]), Type('String')),
                 Method(Id('substr'), NodeContainer([
                     Formal(Id('i'), Type('Int')),
                     Formal(Id('l'), Type('Int'))
                 ]), Type('String'))
             ],
             'IO': [
-                Method(Id('out_string'), NodeContainer([Formal(Id('x'), Type('String'))]), Type('SELF_TYPE')),
-                Method(Id('out_int'), NodeContainer([Formal(Id('x'), Type('Int'))]), Type('SELF_TYPE')),
+                Method(Id('out_string'), NodeContainer(
+                    [Formal(Id('x'), Type('String'))]), Type('SELF_TYPE')),
+                Method(Id('out_int'), NodeContainer(
+                    [Formal(Id('x'), Type('Int'))]), Type('SELF_TYPE')),
                 Method(Id('in_string'), NodeContainer(), Type('String')),
                 Method(Id('in_int'), NodeContainer(), Type('Int'))
             ]
@@ -58,7 +65,8 @@ class CoolCompiler:
             if cls.type.value in methods:
                 cls.feat_list = methods[cls.type.value]
 
-        self.root = self.native_classes[0]  # reference to the root of the inheritance tree
+        # reference to the root of the inheritance tree
+        self.root = self.native_classes[0]
 
     def _lexical_analysis(self):
         lex = Lexer()
@@ -96,7 +104,8 @@ class CoolCompiler:
         cil.visit(self.root)
 
         for lst in cil.cil_code.dict_func.values():
-            lst.sort(key=lambda x: x.level, reverse=True)  # sort by greater level
+            # sort by greater level
+            lst.sort(key=lambda x: x.level, reverse=True)
 
         return cil.cil_code
 
@@ -107,19 +116,12 @@ class CoolCompiler:
         mips.visit(cil_code)
 
         return '\n'.join(map(str, mips.code))
-    
+
     def compile_program(self):
-        print("Starting compilation...!!!!!!!!!!!!!!!!!!!!!!!!")
         lexer = self._lexical_analysis()
-        print("Lexicographic analysis finished")
         ast_root = self._syntactic_analysis(lexer)
-        print("Syntactic analysis finished")
         self._semantic_analysis(ast_root)
-        print("Semantic analysis finished")
         self._run_type_checker()
-        print("Type checker finished")
         cil_code = self._gen_cil_code()
-        print("CIL code generation finished")
         mips_code = self._gen_mips_code(cil_code)
-        print("MIPS code generation finished")
         return mips_code

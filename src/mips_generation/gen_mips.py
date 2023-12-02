@@ -1286,7 +1286,7 @@ class GenMIPS:
         op = Ins('sub', self.aR(), self.tR(0), self.tR(1))
         self._binary_op_int(node, [op])
 
-    def visit_Mult(self, node):
+    def visit_Mul(self, node):
         # do $arg_reg := $t0 * $t1, to send the value to init function
         # note that here only lowest 32 bits are saved
         op = Ins('mul', self.aR(), self.tR(0), self.tR(1))

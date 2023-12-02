@@ -201,26 +201,3 @@ class Lexer(object):
 
     def t_STRING_eof(self, t):
         self.lexer.errors.append(f'({t.lexer.lineno}, {self.find_column(t)}) - LexicographicError: EOF in string constant')
-
-if __name__ == "__main__":
-    import sys
-    cool_lexer = Lexer()
-    cool_lexer.build()
-    lexer = cool_lexer.lexer
-
-
-
-    with open(sys.argv[1]) as f:
-    #with open('./tests/iis5.cl') as f:
-        data = f.read()
-        lexer.input(data)
-
-        for t in lexer:
-            pass
-
-        for error in lexer.errors:
-            print(error)
-
-
-        if lexer.errors:
-            exit(1)
