@@ -2,6 +2,8 @@ from codegen import cil_ast as cil
 from parsing.ast import (
     AssignNode,
     AttributeNode,
+    BinaryOperator,
+    BinaryOperatorNode,
     BlockNode,
     ClassNode,
     DispatchNode,
@@ -9,6 +11,7 @@ from parsing.ast import (
     IfNode,
     IntegerNode,
     IsVoidNode,
+    LetNode,
     MethodCallNode,
     MethodNode,
     NewNode,
@@ -19,6 +22,7 @@ from parsing.ast import (
 from semantic.context import Context
 from semantic.scope import Scope, VariableInfo
 from semantic.types import VoidType
+from src.codegen.mips_ast import ComparisonNode
 from utils.visitor import Visitor
 
 
@@ -729,3 +733,38 @@ class COOL2CIL(Visitor):
         self.register_instruction(cil.LabelNode(end_while_label))
 
         self.register_instruction(cil.DefaultValueNode(return_var, "Void"))
+
+    def visit__LetNode(self, node: LetNode, context: Context, scope: Scope, return_var):
+        for var_name, var_type, init_expr, _ in node.bindings:
+            # Add LOCAL variable
+            idx = self.get_local(var_name)
+            if not any(idx == l.name for l in self.current_function.localvars):
+                self.register_local(var_name)
+
+            # Add Assignment Node
+            if init_expr:
+                init_expr.accept(self, context, scope, idx)
+            else:
+                self.register_instruction(cil.DefaultValueNode(idx, var_type))
+
+        node.body.accept(self, context, scope, return_var)
+
+    # Arithmetic and comparison operators
+    def visit__BinaryOperatorNode(
+        self, node: BinaryOperatorNode, context: Context, scope: Scope, return_var
+    ):
+        left = self.define_internal_local()
+        node.left.accept(self, context, scope, left)
+
+        right = self.define_internal_local()
+        node.right.accept(self, context, scope, right)
+
+        if node.operator == BinaryOperator.PLUS:
+            self.register_instruction(cil.PlusNode(return_var, left, right))
+        elif node.operator == BinaryOperator.MINUS:
+            self.register_instruction(cil.MinusNode(return_var, left, right))
+        elif node.operator == BinaryOperator.TIMES:
+            self.register_instruction(cil.StarNode(return_var, left, right))
+        elif node.operator == BinaryOperator.DIVIDE:
+            self.register_instruction(cil.DivNode(return_var, left, right))
+        # Complete with comparsions
