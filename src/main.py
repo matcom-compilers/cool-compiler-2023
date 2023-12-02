@@ -17,7 +17,7 @@ with open(path) as file:
     content = file.read()
 
 try:
-    cool_compiler = CoolCompiler(content, args.tab_size)
+    cool_compiler = CoolCompiler(content)
 
     mips_code = cool_compiler.compile_program()
 
