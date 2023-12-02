@@ -58,6 +58,12 @@ class MethodNode(Node):
         self.id = id
         self.function_id = function_id
 
+    def __str__(self) -> str:
+        return f"method {self.id} : {self.function_id}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class DataNode(Node):
     def __init__(self, vname, value):
@@ -228,14 +234,14 @@ class GotoNode(InstructionNode):
         return f"GOTO {self.label};"
 
 
-class GotoIfGtNode(InstructionNode):
+class GotoIfNode(InstructionNode):
     def __init__(self, cond, label) -> None:
         super().__init__()
         self.cond = cond
         self.label = label
 
     def __str__(self) -> str:
-        return f"IF {self.cond} > 0 GOTO {self.label};"
+        return f"IF {self.cond} GOTO {self.label};"
 
 
 class GotoIfLtNode(InstructionNode):

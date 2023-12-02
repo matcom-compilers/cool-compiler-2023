@@ -6,6 +6,7 @@ from parsing.ast import (
     ClassNode,
     DispatchNode,
     IdentifierNode,
+    IfNode,
     IntegerNode,
     IsVoidNode,
     MethodCallNode,
@@ -157,8 +158,8 @@ class COOL2CIL(Visitor):
             [],
             [
                 self.cil_predef_method("abort", "Object", self.object_abort),
-                self.cil_predef_method("copy", "Object", self.object_copy),
                 self.cil_predef_method("type_name", "Object", self.object_type_name),
+                self.cil_predef_method("copy", "Object", self.object_copy),
             ],
         )
 
@@ -169,8 +170,8 @@ class COOL2CIL(Visitor):
             [],
             [
                 self.cil_predef_method("abort", "IO", self.object_abort),
-                self.cil_predef_method("copy", "IO", self.object_copy),
                 self.cil_predef_method("type_name", "IO", self.object_type_name),
+                self.cil_predef_method("copy", "IO", self.object_copy),
                 self.cil_predef_method("out_string", "IO", self.register_io_out_string),
                 self.cil_predef_method("out_int", "IO", self.register_io_out_int),
                 self.cil_predef_method("in_string", "IO", self.register_io_in_string),
@@ -185,8 +186,8 @@ class COOL2CIL(Visitor):
             [cil.AttributeNode("length"), cil.AttributeNode("str_ref")],
             [
                 self.cil_predef_method("abort", "String", self.object_abort),
-                self.cil_predef_method("copy", "String", self.object_copy),
                 self.cil_predef_method("type_name", "String", self.object_type_name),
+                self.cil_predef_method("copy", "String", self.object_copy),
                 self.cil_predef_method("length", "String", self.string_length),
                 self.cil_predef_method("concat", "String", self.string_concat),
                 self.cil_predef_method("substr", "String", self.string_substr),
@@ -199,8 +200,8 @@ class COOL2CIL(Visitor):
             [cil.AttributeNode("value")],
             [
                 self.cil_predef_method("abort", "Int", self.object_abort),
-                self.cil_predef_method("copy", "Int", self.object_copy),
                 self.cil_predef_method("type_name", "Int", self.object_type_name),
+                self.cil_predef_method("copy", "Int", self.object_copy),
             ],
         )
 
@@ -454,9 +455,11 @@ class COOL2CIL(Visitor):
 
         type_node.attributes.reverse()
 
+        methods = self.methods[node.name].items()
+        methods = sorted(methods, key=lambda m: m[1][0])
         type_node.methods = [
             cil.MethodNode(method_name, self.to_function_name(method_name, typex))
-            for method_name, (_, typex) in self.methods[node.name].items()
+            for method_name, (_, typex) in methods
         ]
 
         self.register_init(node)
@@ -672,3 +675,24 @@ class COOL2CIL(Visitor):
         value = self.define_internal_local()
         node.expr.accept(self, context, scope, value)
         self.register_instruction(cil.IsVoidNode(return_var, value))
+
+    def visit__IfNode(self, node: IfNode, context: Context, scope: Scope, return_var):
+        # IF condition GOTO label
+        condition_value = self.define_internal_local()
+        node.condition.accept(self, context, scope, condition_value)
+        then_label = "THEN_" + self.next_id()
+        self.register_instruction(cil.GotoIfNode(condition_value, then_label))
+
+        # Else
+        node.else_expr.accept(self, context, scope, return_var)
+
+        # GOTO end_label
+        end_label = "END_IF_" + self.next_id()  # Example: END_IF_120
+        self.register_instruction(cil.GotoNode(end_label))
+
+        # Then label
+        self.register_instruction(cil.LabelNode(then_label))
+        node.then_expr.accept(self, context, scope, return_var)
+
+        # end_label
+        self.register_instruction(cil.LabelNode(end_label))

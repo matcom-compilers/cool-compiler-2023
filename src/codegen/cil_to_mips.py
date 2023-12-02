@@ -931,7 +931,7 @@ class CILVisitor(Visitor):
     def visit__GotoNode(self, node: cil.GotoNode, *args, **kwargs):
         return [mips.JumpNode(node.label)]
 
-    def visit__GotoIfGtNode(self, node: cil.GotoIfGtNode, *args, **kwargs):
+    def visit__GotoIfNode(self, node: cil.GotoIfNode, *args, **kwargs):
         instructions = []
         self.memory_manager.save()
 
@@ -941,7 +941,7 @@ class CILVisitor(Visitor):
         instructions.append(
             mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, cond_dir))
         )
-        instructions.append(mips.BgtzNode(reg1, node.label))
+        instructions.append(mips.BneqzNode(reg1,  node.label))
 
         self.memory_manager.clean()
         return instructions
@@ -1017,7 +1017,7 @@ class CILVisitor(Visitor):
                 )
             )
             reg = self.memory_manager.get_unused_register()
-            instructions.append(mips.LoadAddressNode(reg, STRING_TYPE))
+            instructions.append(mips.LoadAddressNode(reg, mips.LabelNode(STRING_TYPE)))
             instructions.append(
                 mips.StoreWordNode(
                     reg, mips.MemoryAddressRegisterNode(V0_REG, TYPEINFO_ATTR_INDEX)

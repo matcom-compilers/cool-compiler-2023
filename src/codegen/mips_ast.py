@@ -204,6 +204,15 @@ class BeqzNode(InstructionNode):
         super().__init__(comment)
 
 
+class BneqzNode(InstructionNode):
+    """Nodo para la instrucción 'beqz' en MIPS."""
+
+    def __init__(self, rs, label, comment=""):
+        self.rs = rs
+        self.label = label
+        super().__init__(comment)
+
+
 class BgtzNode(InstructionNode):
     def __init__(self, rs, label, comment=""):
         self.rs = rs

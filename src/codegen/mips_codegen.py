@@ -144,3 +144,6 @@ class MipsCodeGenerator(Visitor):
 
     def visit__MipsAstNode(self, node: mips.MipsAstNode, *args, **kwargs):
         return f"# {node.comment}"
+
+    def visit__BneqzNode(self, node: mips.BneqzNode, *args, **kwargs):
+        return f"bnez {node.rs.accept(self)}, {node.label}" + "\t# " + node.comment
