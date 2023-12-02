@@ -9,6 +9,7 @@ from parsing.ast import (
     MethodCallNode,
     MethodNode,
     ProgramNode,
+    StringNode,
 )
 from semantic.context import Context
 from semantic.scope import Scope, VariableInfo
@@ -602,3 +603,10 @@ class COOL2CIL(Visitor):
                 self.current_type.name,
             )
         )
+
+    def visit__StringNode(
+        self, node: StringNode, context: Context, scope: Scope, return_var
+    ):
+        data_id = self.generate_next_string_id()
+        self.data.append(cil.DataNode(data_id, f'"{node._value}"'))
+        self.register_instruction(cil.LoadNode(return_var, data_id, node._value))

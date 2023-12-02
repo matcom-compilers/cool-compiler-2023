@@ -17,6 +17,13 @@ REGISTER_NAMES = [
 ]
 ARG_REGISTERS_NAMES = ["a0", "a1", "a2", "a3"]
 
+# Register used for builtin proc
+S0_REG = mips.RegisterNode("s0")
+S1_REG = mips.RegisterNode("s1")
+S2_REG = mips.RegisterNode("s2")
+S3_REG = mips.RegisterNode("s3")
+S4_REG = mips.RegisterNode("s4")
+
 INSTANCE_METADATA_SIZE = 4
 
 WORD_SIZE = 4
@@ -51,8 +58,7 @@ CHARS_ATTR_INDEX = 8
 EMPTY_STR_VALUE = '""'
 
 
-# For optimize some procedured
-COPY = "copy"
+COPY_BYTES = "__COPY_BYTES_PROC"
 
 
 class MemoryManager:
@@ -109,6 +115,8 @@ class CILVisitor(Visitor):
 
         for data in node.dotdata:
             _ = data.accept(self, *args, **kwargs)
+
+        text_section.extend(self.register_copy_bytes())
 
         for function in node.dotcode:
             instructions = function.accept(self, *args, **kwargs)
@@ -652,62 +660,71 @@ class CILVisitor(Visitor):
     def visit__ConcatNode(self, node: cil.ConcatNode, *args, **kwargs):
         instructions = []
         self.memory_manager.save()
-        left_offset = self.search_mem(node.string1)
-        right_offset = self.search_mem(node.string2)
+        left_index = self.search_mem(node.string1)
+        right_index = self.search_mem(node.string2)
 
-        s1 = self.memory_manager.get_unused_register()
-        s2 = self.memory_manager.get_unused_register()
         r1 = self.memory_manager.get_unused_register()
         r2 = self.memory_manager.get_unused_register()
 
-        # cargar los length
+        # load lenghts
         instructions.append(
-            mips.LoadWordNode(s1, mips.MemoryAddressRegisterNode(FP_REG, left_offset))
+            mips.LoadWordNode(r1, mips.MemoryAddressRegisterNode(FP_REG, left_index))
         )
         instructions.append(
-            mips.LoadWordNode(s1, mips.MemoryAddressRegisterNode(s1, LENGTH_ATTR_INDEX))
+            mips.LoadWordNode(r1, mips.MemoryAddressRegisterNode(r1, LENGTH_ATTR_INDEX))
         )
         instructions.append(
-            mips.LoadWordNode(s2, mips.MemoryAddressRegisterNode(FP_REG, right_offset))
+            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(FP_REG, right_index))
         )
         instructions.append(
-            mips.LoadWordNode(s2, mips.MemoryAddressRegisterNode(s2, LENGTH_ATTR_INDEX))
+            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(r2, LENGTH_ATTR_INDEX))
         )
 
-        reg1 = self.memory_manager.get_unused_register()  # sum of lengths
-        instructions.append(mips.AddNode(reg1, s1, s2))
+        r3 = self.memory_manager.get_unused_register()  # sum of lengths
+        instructions.append(mips.AddNode(r3, r1, r2))
 
-        # crear el nuevo array de bytes
-        instructions.append(mips.MoveNode(A0_REG, reg1))
-        instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))
+        # create buffer
+        instructions.append(mips.MoveNode(A0_REG, r3))  # $a0 = length
+        instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))  # $a0 = length + 1
         instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
-        instructions.append(mips.SyscallNode())
-        instructions.append(mips.MoveNode(r1, V0_REG))  # saving the dest char arr
+        instructions.append(mips.SyscallNode())  # Reserve space for String
 
-        reg2 = self.memory_manager.get_unused_register()
-        instructions.append(mips.MoveNode(reg2, V0_REG))
+        r4 = self.memory_manager.get_unused_register()
+        instructions.append(mips.MoveNode(r4, V0_REG))  # saving the dest char arr
 
-        instructions.append(
-            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(FP_REG, left_offset))
-        )
-        instructions.append(
-            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(r2, CHARS_ATTR_INDEX))
-        )
-        instructions.append(mips.MoveNode(A0_REG, s1))
-        instructions.append(mips.JumpAndLinkNode(COPY))
+        instructions.append(mips.MoveNode(S0_REG, r4))
 
         instructions.append(
-            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(FP_REG, right_offset))
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(FP_REG, left_index)
+            )
         )
         instructions.append(
-            mips.LoadWordNode(r2, mips.MemoryAddressRegisterNode(r2, CHARS_ATTR_INDEX))
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(S1_REG, CHARS_ATTR_INDEX)
+            )
         )
-        instructions.append(mips.MoveNode(A0_REG, s2))
-        instructions.append(mips.JumpAndLinkNode(COPY))
+        instructions.append(mips.MoveNode(A0_REG, r1))
+        instructions.append(mips.JumpAndLinkNode(COPY_BYTES))
 
         instructions.append(
-            mips.StoreByteNode(ZERO, mips.MemoryAddressRegisterNode(REGISTERS[6], 0))
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(FP_REG, right_index)
+            )
         )
+        instructions.append(
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(S1_REG, CHARS_ATTR_INDEX)
+            )
+        )
+        instructions.append(mips.MoveNode(A0_REG, r2))
+        instructions.append(mips.JumpAndLinkNode(COPY_BYTES))
+
+        instructions.append(
+            mips.StoreByteNode(ZERO, mips.MemoryAddressRegisterNode(S0_REG, 0))
+        )
+        # r4 start of bytes
+        # r3 length
 
         dest_offset = self.search_mem(node.dest)
         _size = STRING_SIZE
@@ -720,26 +737,23 @@ class CILVisitor(Visitor):
                 V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_offset)
             )
         )
-        reg3 = self.memory_manager.get_unused_register()
+        r5 = self.memory_manager.get_unused_register()
+        instructions.append(mips.LoadAddressNode(r5, mips.LabelNode(STRING_TYPE)))
         instructions.append(
-            mips.LoadAddressNode(reg3, mips.LabelNode(StringType().name))
-        )
-        instructions.append(
-            mips.StoreWordNode(reg3, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            mips.StoreWordNode(r5, mips.MemoryAddressRegisterNode(V0_REG, 0))
         )
 
         # storing string length
 
         instructions.append(
             mips.StoreWordNode(
-                reg1, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
+                r3, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
             )
         )
-
         # storing string chars ref
         instructions.append(
             mips.StoreWordNode(
-                reg2, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
+                r4, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
             )
         )
 
@@ -750,67 +764,91 @@ class CILVisitor(Visitor):
         instructions = []
         self.memory_manager.save()
 
-        loop = f"LOOP_{self.get_loop_count()}"
-        exit = f"EXIT_{self.get_exit_count()}"
-
         reg1 = self.memory_manager.get_unused_register()
-        reg2 = self.memory_manager.get_unused_register()
-        reg3 = self.memory_manager.get_unused_register()
-        reg4 = self.memory_manager.get_unused_register()
-        reg5 = self.memory_manager.get_unused_register()
 
-        lenght_dir = self.search_mem(node.n)
+        if isinstance(node.n, int):
+            instructions.append(mips.LoadImmediateNode(reg1, node.n))
+        else:
+            length_dir = self.search_mem(node.n)
+            instructions.append(
+                mips.LoadWordNode(
+                    reg1, mips.MemoryAddressRegisterNode(FP_REG, length_dir)
+                )
+            )
+
+        # Reserve memory for new string
+        instructions.append(mips.MoveNode(A0_REG, reg1))
+        instructions.append(mips.AddiNode(A0_REG, A0_REG, 1))
+        instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
+        instructions.append(mips.SyscallNode())
+
+        reg2 = self.memory_manager.get_unused_register()
+        instructions.append(mips.MoveNode(reg2, V0_REG))  # Init of bytes
+
+        source_index = self.search_mem(node.string)
         instructions.append(
-            mips.LoadWordNode(reg3, mips.MemoryAddressRegisterNode(FP_REG, lenght_dir))
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(FP_REG, source_index)
+            )
+        )
+        instructions.append(
+            mips.LoadWordNode(
+                S1_REG, mips.MemoryAddressRegisterNode(S1_REG, CHARS_ATTR_INDEX)
+            )
         )
 
-        instructions.append(mips.MoveNode(reg5, reg3))
-        instructions.append(mips.AddiNode(reg5, reg5, 1))
+        reg3 = self.memory_manager.get_unused_register()
 
-        instructions.append(mips.LoadImmediateNode(V0_REG, 9))
-        instructions.append(mips.MoveNode(ARG_REGISTERS[0], reg5))
+        if isinstance(node.index, int):
+            instructions.append(mips.LoadImmediateNode(reg1, node.index))
+        else:
+            index_dir = self.search_mem(node.index)
+            instructions.append(
+                mips.LoadWordNode(
+                    reg3, mips.MemoryAddressRegisterNode(FP_REG, index_dir)
+                )
+            )
+
+        instructions.append(mips.AddNode(S1_REG, S1_REG, reg3))
+        instructions.append(mips.MoveNode(A0_REG, reg1))
+        instructions.append(mips.MoveNode(S0_REG, V0_REG))
+        instructions.append(mips.JumpAndLinkNode(COPY_BYTES))
+
+        instructions.append(
+            mips.StoreByteNode(ZERO, mips.MemoryAddressRegisterNode(S0_REG, 0))
+        )
+        # r2 init of bytes
+        # r1 length
+
+        dest_offset = self.search_mem(node.dest)
+        _size = STRING_SIZE
+        instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
+        instructions.append(mips.LoadImmediateNode(A0_REG, _size))
         instructions.append(mips.SyscallNode())
 
         instructions.append(
-            mips.LoadAddressNode(reg2, mips.MemoryAddressRegisterNode(V0_REG, 0))
-        )
-
-        dir_index = self.search_mem(node.index)
-        instructions.append(
-            mips.LoadWordNode(reg4, mips.MemoryAddressRegisterNode(FP_REG, dir_index))
-        )
-
-        string_dir = self.search_mem(node.string)
-        instructions.append(
-            mips.LoadWordNode(
-                ARG_REGISTERS[1], mips.MemoryAddressRegisterNode(FP_REG, string_dir)
+            mips.StoreWordNode(
+                V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_offset)
             )
         )
-        instructions.append(mips.AddNode(ARG_REGISTERS[1], ARG_REGISTERS[1], reg4))
-
-        instructions.append(mips.LabelInstructionNode(loop))
+        r5 = self.memory_manager.get_unused_register()
+        instructions.append(mips.LoadAddressNode(r5, mips.LabelNode(STRING_TYPE)))
         instructions.append(
-            mips.LoadByteNode(reg1, mips.MemoryAddressRegisterNode(ARG_REGISTERS[1], 0))
-        )
-        instructions.append(mips.BeqzNode(reg3, exit))
-        instructions.append(
-            mips.StoreByteNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            mips.StoreWordNode(r5, mips.MemoryAddressRegisterNode(V0_REG, 0))
         )
 
-        instructions.append(mips.AddiNode(V0_REG, V0_REG, 1))
-        instructions.append(mips.AddiNode(ARG_REGISTERS[1], ARG_REGISTERS[1], 1))
-        instructions.append(mips.AddiNode(reg3, reg3, -1))
-        instructions.append(mips.JumpNode(loop))
-        instructions.append(mips.LabelInstructionNode(exit))
+        # storing string length
 
-        instructions.append(mips.LoadImmediateNode(reg1, 0))
         instructions.append(
-            mips.StoreByteNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            mips.StoreWordNode(
+                reg1, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
+            )
         )
-
-        dest_dir = self.search_mem(node.dest)
+        # storing string chars ref
         instructions.append(
-            mips.StoreWordNode(reg2, mips.MemoryAddressRegisterNode(FP_REG, dest_dir))
+            mips.StoreWordNode(
+                reg2, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
+            )
         )
 
         self.memory_manager.clean()
@@ -1064,4 +1102,32 @@ class CILVisitor(Visitor):
             )
         )
         instructions.append(mips.AddiNode(SP_REG, SP_REG, WORD_SIZE))
+        return instructions
+
+    def register_copy_bytes(self):
+        """
+        Source in $s0
+        Dest in $s1
+        Length in a0
+        """
+        self.memory_manager.save()
+
+        r1 = self.memory_manager.get_unused_register()
+
+        instructions = [
+            mips.LabelInstructionNode(COPY_BYTES),
+            mips.MoveNode(A1_REG, S1_REG),
+            mips.LabelInstructionNode(f"{COPY_BYTES}__LOOP"),
+            mips.BeqzNode(A0_REG, f"{COPY_BYTES}__END"),
+            mips.LoadByteNode(r1, mips.MemoryAddressRegisterNode(S1_REG, 0)),
+            mips.StoreByteNode(r1, mips.MemoryAddressRegisterNode(S0_REG, 0)),
+            mips.AddiNode(S1_REG, S1_REG, 1),
+            mips.AddiNode(S0_REG, S0_REG, 1),
+            mips.AddiNode(A0_REG, A0_REG, -1),
+            mips.JumpNode(f"{COPY_BYTES}__LOOP"),
+            mips.LabelInstructionNode(f"{COPY_BYTES}__END"),
+            mips.JumpRegisterNode(RA_REG),
+        ]
+
+        self.memory_manager.clean()
         return instructions
