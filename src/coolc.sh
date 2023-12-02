@@ -10,4 +10,4 @@ echo "Copyright (c) 2019: Karlos Alejandro Alfonso Rodríguez, Laura Victoria Ri
 # Llamar al compilador
 # echo "Compiling $INPUT_FILE into $OUTPUT_FILE"
 
-python3 -m coolcmp $INPUT_FILE
+python3 -m main $INPUT_FILE

@@ -1,4 +1,4 @@
-from utils.errors import SemanticError, AttributeError
+from utils.errors import *
 from utils.enviroment import Environment
 from semantic_analysis.ast_ import Class, Attribute, Id, Type, Self_Type
 
@@ -19,6 +19,7 @@ class TypeChecker:
             None
         """
         
+       # raise TypeError(1, 2, 'Karlos')
         self.ast_root = ast_root
         self.class_references = class_references
         self.traversal_counter = 0
@@ -26,6 +27,7 @@ class TypeChecker:
 
         self.current_environment = None
         self.current_class = None
+            
 
     def _initialize_order(self, current_node, env):
         """

@@ -16,9 +16,9 @@ if not path.exists():
 with open(path) as file:
     content = file.read()
 
-cool_compiler = CoolCompiler(content, args.tab_size)
-
 try:
+    cool_compiler = CoolCompiler(content, args.tab_size)
+
     mips_code = cool_compiler.compile_program()
     
     towrite = Path('../tests/codegen') / f'{path.stem}.mips'

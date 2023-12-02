@@ -12,24 +12,33 @@ class Error(Exception):
         self.column = column
         self.message = message
 
+    def __str__(self):
+        return '({},{}) - {}: {}'.format(self.line, self.column, self.__class__.__name__, self.message)
+
+
 class NameError(Error):
     pass
+
 
 class SyntacticError(Error):
     pass
 
+
 class SemanticError(Error):
     pass
+
 
 class AttributeError(Error):
     pass
 
+
 class LexicographicError(Error):
     def __init__(self, message):
         self.msg = message
-    
+
     def __str__(self) -> str:
         return self.msg
+
 
 class TypeError(Error):
     pass
