@@ -941,7 +941,7 @@ class CILVisitor(Visitor):
         instructions.append(
             mips.LoadWordNode(reg1, mips.MemoryAddressRegisterNode(FP_REG, cond_dir))
         )
-        instructions.append(mips.BneqzNode(reg1,  node.label))
+        instructions.append(mips.BneqzNode(reg1, node.label))
 
         self.memory_manager.clean()
         return instructions
@@ -1037,7 +1037,7 @@ class CILVisitor(Visitor):
                 )
             )
 
-        elif node.type != "Void":
+        elif node.type != VOID:
             _size = (len(self.types[node.type].attributes) + 1) * 4
             instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
             instructions.append(mips.LoadImmediateNode(ARG_REGISTERS[0], _size))
@@ -1051,17 +1051,13 @@ class CILVisitor(Visitor):
 
             reg2 = self.memory_manager.get_unused_register()
 
-            instructions.append(
-                mips.LoadAddressNode(reg2, mips.LabelNode(node.type.name))
-            )
+            instructions.append(mips.LoadAddressNode(reg2, mips.LabelNode(node.type)))
             instructions.append(
                 mips.StoreWordNode(reg2, mips.MemoryAddressRegisterNode(V0_REG, 0))
             )
 
         else:
-            instructions.append(
-                mips.LoadAddressNode(reg, mips.LabelNode(node.type.name))
-            )
+            instructions.append(mips.LoadAddressNode(reg, mips.LabelNode(node.type)))
             instructions.append(
                 mips.StoreWordNode(
                     reg, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)

@@ -14,6 +14,7 @@ from parsing.ast import (
     NewNode,
     ProgramNode,
     StringNode,
+    WhileNode,
 )
 from semantic.context import Context
 from semantic.scope import Scope, VariableInfo
@@ -486,6 +487,7 @@ class COOL2CIL(Visitor):
 
         else:  # Assign default value
             default_var = self.define_internal_local()
+
             self.register_instruction(cil.DefaultValueNode(default_var, node.attr_type))
             self.register_instruction(cil.ReturnNode(default_var))
 
@@ -696,3 +698,34 @@ class COOL2CIL(Visitor):
 
         # end_label
         self.register_instruction(cil.LabelNode(end_label))
+
+    def visit__WhileNode(
+        self, node: WhileNode, context: Context, scope: Scope, return_var
+    ):
+        # While label
+        while_label = "WHILE_" + self.next_id()
+        self.register_instruction(cil.LabelNode(while_label))
+
+        # Condition
+        c = self.define_internal_local()
+        node.condition.accept(self, context, scope, c)
+
+        # If condition GOTO body_label
+        body_label = "BODY_" + self.next_id()
+        self.register_instruction(cil.GotoIfNode(c, body_label))
+
+        # GOTO end_while label
+        end_while_label = "END_WHILE_" + self.next_id()
+        self.register_instruction(cil.GotoNode(end_while_label))
+
+        # Body
+        self.register_instruction(cil.LabelNode(body_label))
+        node.body.accept(self, context, scope, return_var)
+
+        # GOTO while label
+        self.register_instruction(cil.GotoNode(while_label))
+
+        # End while label
+        self.register_instruction(cil.LabelNode(end_while_label))
+
+        self.register_instruction(cil.DefaultValueNode(return_var, "Void"))
