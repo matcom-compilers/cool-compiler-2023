@@ -6,6 +6,7 @@ from parsing.ast import (
     BinaryOperatorNode,
     BlockNode,
     BooleanNode,
+    CaseNode,
     ClassNode,
     DispatchNode,
     IdentifierNode,
@@ -17,6 +18,7 @@ from parsing.ast import (
     MethodNode,
     NewNode,
     NotNode,
+    PrimeNode,
     ProgramNode,
     StringNode,
     WhileNode,
@@ -773,7 +775,10 @@ class COOL2CIL(Visitor):
                 self.register_instruction(cil.StrEqNode(return_var, left, right))
             else:
                 self.register_instruction(cil.EqualNode(return_var, left, right))
-
+        elif node.operator == BinaryOperator.LT:
+            self.register_instruction(cil.LessNode(return_var, left, right))
+        elif node.operator == BinaryOperator.LE:
+            self.register_instruction(cil.LessEqualNode(return_var, left, right))
         else:
             # Complete with comparsions
             assert False, f"Not implemented BinOp {node.operator}"
@@ -792,3 +797,77 @@ class COOL2CIL(Visitor):
         )
         self.register_instruction(cil.AssignNode(constant, 1))
         self.register_instruction(cil.MinusNode(return_var, constant, value))
+
+    def visit__PrimeNode(
+        self, node: PrimeNode, context: Context, scope: Scope, return_var
+    ):
+        value = self.define_internal_local()
+        node.expr.accept(self, context, scope, value)
+        self.register_instruction(cil.NegNode(return_var, value))
+
+    def visit__CaseNode(
+        self, node: CaseNode, context: Context, scope: Scope, return_var
+    ):
+        def get_children(static_type):
+            children = []
+            for t in context.types.values():
+                if t.conforms_to(static_type) and t.name != "SELF_TYPE":
+                    children.append(t)
+
+            return children
+
+        def get_least_type(expr_dynamic_type):
+            case_item_types = [case_item.type for case_item in node.cases]
+            solve = expr_dynamic_type
+            while solve is not None:
+                if solve.name in case_item_types:
+                    return solve.name
+                solve = solve.parent
+
+            return None
+
+        def get_asserted_branch(least_type: str):
+            for case_item in node.cases:
+                if case_item.type == least_type:
+                    return case_item
+            return None
+
+        expr_value = self.define_internal_local()
+        node.expr.accept(self, context, scope, expr_value)
+
+        expr_type = context.get_type(node.expr.computed_type)
+        possible_dynamic_types = get_children(expr_type)
+
+        branch_labels = []
+        for t in possible_dynamic_types:
+            dynamic_type = self.define_internal_local()
+            self.register_instruction(cil.TypeOfNode(expr_value, dynamic_type))
+
+            label = "BRANCH" + self.next_id()
+            equals = self.define_internal_local()
+            self.register_instruction(cil.CompareTypes(equals, dynamic_type, t.name))
+            self.register_instruction(cil.GotoIfNode(equals, label))
+
+            least_type = get_least_type(t)
+            asserted_branch = get_asserted_branch(least_type)
+            branch_labels.append((asserted_branch, label))
+
+        self.data.append(
+            cil.DataNode("runtime_error", '"No branch can be selected for evaluation"')
+        )
+        error = "runtime_error"
+        self.register_instruction(cil.RuntimeErrorNode(error))
+
+        end_case_label = "END_CASE_" + self.next_id()
+        for branch, label in branch_labels:
+            if not branch:
+                continue
+            self.register_instruction(cil.LabelNode(label))
+            new_local = self.register_local(branch.name)
+            self.register_instruction(cil.AssignNode(new_local, expr_value))
+
+            branch.expr.accept(self, context, scope, return_var)
+
+            self.register_instruction(cil.GotoNode(end_case_label))
+
+        self.register_instruction(cil.LabelNode(end_case_label))

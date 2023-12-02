@@ -438,3 +438,19 @@ class IsVoidNode(InstructionNode):
 
     def __str__(self) -> str:
         return f"{self.dest} = ISVOID {self.value}"
+
+
+class NegNode(InstructionNode):
+    def __init__(self, dest, value):
+        self.dest = dest
+        self.value = value
+
+    def __str__(self) -> str:
+        return f"{self.dest} = ~ {self.value}"
+
+
+class CompareTypes(InstructionNode):
+    def __init__(self, dest, typeof, typex: str):
+        self.dest = dest
+        self.typeof = typeof
+        self.type = typex
