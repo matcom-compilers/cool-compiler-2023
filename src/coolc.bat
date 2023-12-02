@@ -5,7 +5,7 @@ set INPUT_FILE=%1
 set OUTPUT_FILE=%~n1mips
 
 REM Si su compilador no lo hace ya, aquí puede imprimir la información de contacto
-echo Cool-Compiler-2020: v1.0
+echo Cool-Compiler-2023: v1.0
 echo Copyright (c) 2019: Karlos Alejandro Alfonso Rodríguez, Laura Victoria Riera Pérez, Kevin Talavera Díaz
 
 REM Llamar al compilador
