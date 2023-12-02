@@ -1,0 +1,1516 @@
+# Data Segment
+	.data
+_st_abort:
+	.word	1
+	.word	14
+	.word	Object.abort
+_st_type_name:
+	.word	1
+	.word	14
+	.word	Object.type_name
+_st_copy:
+	.word	1
+	.word	14
+	.word	Object.copy
+_st_length:
+	.word	4
+	.word	5
+	.word	String.length
+_st_concat:
+	.word	4
+	.word	5
+	.word	String.concat
+_st_substr:
+	.word	4
+	.word	5
+	.word	String.substr
+_st_out_string:
+	.word	8
+	.word	13
+	.word	IO.out_string
+_st_out_int:
+	.word	8
+	.word	13
+	.word	IO.out_int
+_st_in_string:
+	.word	8
+	.word	13
+	.word	IO.in_string
+_st_in_int:
+	.word	8
+	.word	13
+	.word	IO.in_int
+_st_init:
+	.word	9
+	.word	10
+	.word	Complex.init
+_st_print:
+	.word	9
+	.word	10
+	.word	Complex.print
+_st_reflect_0:
+	.word	9
+	.word	10
+	.word	Complex.reflect_0
+_st_reflect_X:
+	.word	9
+	.word	10
+	.word	Complex.reflect_X
+_st_reflect_Y:
+	.word	9
+	.word	10
+	.word	Complex.reflect_Y
+_st_main:
+	.word	11
+	.word	12
+	.word	Main.main
+Object:
+	.word	1
+	.word	14
+	.word	Object_Init
+	.word	0
+	.word	_str_literal_1
+	.word	2
+Int:
+	.word	2
+	.word	3
+	.word	Int_Init
+	.word	1
+	.word	_str_literal_2
+	.word	3
+String:
+	.word	4
+	.word	5
+	.word	String_Init
+	.word	3
+	.word	_str_literal_3
+	.word	4
+Bool:
+	.word	6
+	.word	7
+	.word	Bool_Init
+	.word	2
+	.word	_str_literal_4
+	.word	3
+IO:
+	.word	8
+	.word	13
+	.word	IO_Init
+	.word	0
+	.word	_str_literal_5
+	.word	2
+Complex:
+	.word	9
+	.word	10
+	.word	Complex_Init
+	.word	0
+	.word	_str_literal_6
+	.word	4
+Main:
+	.word	11
+	.word	12
+	.word	Main_Init
+	.word	0
+	.word	_str_literal_9
+	.word	2
+_str_literal_0:
+	.word	String
+	.word	16
+	.word	_int_literal_0
+	.byte	0, 0, 0, 0
+_str_literal_1:
+	.word	String
+	.word	20
+	.word	_int_literal_1
+	.byte	79, 98, 106, 101, 99, 116, 0, 0
+_str_literal_2:
+	.word	String
+	.word	16
+	.word	_int_literal_2
+	.byte	73, 110, 116, 0
+_str_literal_3:
+	.word	String
+	.word	20
+	.word	_int_literal_1
+	.byte	83, 116, 114, 105, 110, 103, 0, 0
+_str_literal_4:
+	.word	String
+	.word	20
+	.word	_int_literal_3
+	.byte	66, 111, 111, 108, 0, 0, 0, 0
+_str_literal_5:
+	.word	String
+	.word	16
+	.word	_int_literal_4
+	.byte	73, 79, 0, 0
+_str_literal_6:
+	.word	String
+	.word	20
+	.word	_int_literal_5
+	.byte	67, 111, 109, 112, 108, 101, 120, 0
+_str_literal_7:
+	.word	String
+	.word	16
+	.word	_int_literal_6
+	.byte	43, 0, 0, 0
+_str_literal_8:
+	.word	String
+	.word	16
+	.word	_int_literal_6
+	.byte	73, 0, 0, 0
+_str_literal_9:
+	.word	String
+	.word	20
+	.word	_int_literal_3
+	.byte	77, 97, 105, 110, 0, 0, 0, 0
+_str_literal_10:
+	.word	String
+	.word	16
+	.word	_int_literal_2
+	.byte	61, 41, 10, 0
+_str_literal_11:
+	.word	String
+	.word	16
+	.word	_int_literal_2
+	.byte	61, 40, 10, 0
+_int_literal_0:
+	.word	Int
+	.word	12
+	.word	0
+_int_literal_1:
+	.word	Int
+	.word	12
+	.word	6
+_int_literal_2:
+	.word	Int
+	.word	12
+	.word	3
+_int_literal_3:
+	.word	Int
+	.word	12
+	.word	4
+_int_literal_4:
+	.word	Int
+	.word	12
+	.word	2
+_int_literal_5:
+	.word	Int
+	.word	12
+	.word	7
+_int_literal_6:
+	.word	Int
+	.word	12
+	.word	1
+_err_dispatch_void:
+	.asciiz	"Dispatch on void"
+_err_case_void:
+	.asciiz	"Case on void"
+_err_case_no_branch:
+	.asciiz	"Case without a matching branch"
+_err_div_by_0:
+	.asciiz	"Division by zero"
+_err_substr_too_long_index:
+	.asciiz	"Too long index passed to substr method"
+_err_substr_too_long_length:
+	.asciiz	"Too long length passed to substr method"
+_err_substr_neg_index:
+	.asciiz	"Negative index passed to substr method"
+_err_substr_neg_length:
+	.asciiz	"Negative length passed to substr method"
+_err_heap_overflow:
+	.asciiz	"Heap overflow"
+_bool_true:
+	.word	Bool
+	.word	12
+	.word	1
+_bool_false:
+	.word	Bool
+	.word	12
+	.word	0
+_static_abort:
+	.asciiz	"Abort called from class"
+_static_space:
+	.asciiz	" "
+_static_endl:
+	.asciiz	"\n"
+# Text Segment
+	.text
+main:
+# On <FunctionCall 'main'>
+# On <New Main>
+	la $t0, Main_Init
+	jalr $t0
+# Ended <New Main>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_main
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'main'>
+# ..................................................
+	jal _exit
+_exit:
+	li $v0, 10
+	syscall
+_print_error_exit:
+	li $v0, 4
+	syscall
+	la $a0, _static_endl
+	li $v0, 4
+	syscall
+	li $a0, 1
+	li $v0, 17
+	syscall
+_reserve_memory:
+	li $v0, 9
+	syscall
+	jr $ra
+_runtime_dispatch:
+	move $t1, $t0
+	move $t0, $a3
+	subu $t0, $t0, 12
+_loop_0:
+	addu $t0, $t0, 12
+	lw $t3, 0($t0)
+	lw $t4, 4($t0)
+	bgt $t3, $t1, _loop_0
+	bgt $t1, $t4, _loop_0
+_end_loop_0:
+	lw $v1, 8($t0)
+	jr $ra
+_eq_function:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	beqz $t0, _branch_not_primitive_type
+	beqz $t1, _branch_not_primitive_type
+	lw $t8, 0($t0)
+	lw $t8, 12($t8)
+	beq $t8, 0, _branch_not_primitive_type
+	beq $t8, 1, _branch_int_type
+	beq $t8, 2, _branch_bool_type
+	beq $t8, 3, _branch_string_type
+_branch_not_primitive_type:
+	li $a3, 1
+	beq $t0, $t1, _branch_label_0
+	li $a3, 0
+_branch_label_0:
+	b _branch_end_eq
+_branch_int_type:
+	lw $t0, 8($t0)
+	lw $t1, 8($t1)
+	li $a3, 1
+	beq $t0, $t1, _branch_label_1
+	li $a3, 0
+_branch_label_1:
+	b _branch_end_eq
+_branch_bool_type:
+	li $a3, 1
+	beq $t0, $t1, _branch_label_2
+	li $a3, 0
+_branch_label_2:
+	b _branch_end_eq
+# On String equality function
+_branch_string_type:
+	la $t2, 12($t0)
+	la $t3, 12($t1)
+_loop_1:
+	lb $t0, ($t2)
+	lb $t1, ($t3)
+	beqz $t0, _end_loop_2
+	beqz $t1, _end_loop_2
+	li $a3, 1
+	beq $t0, $t1, _branch_label_3
+	li $a3, 0
+_branch_label_3:
+	beqz $a3, _end_loop_2
+	addu $t2, $t2, 1
+	addu $t3, $t3, 1
+	b _loop_1
+_end_loop_2:
+	li $a3, 1
+	beq $t0, $t1, _branch_label_4
+	li $a3, 0
+_branch_label_4:
+# Ended String equality function
+_branch_end_eq:
+	jal Bool_Init
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# On <CILCode>
+# On <FuncInit 'Object'>
+Object_Init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	li $a0, 8
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, Object
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	li $t0, 8
+	sw $t0, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'Object'>
+# ..................................................
+# On <FuncInit 'Int'>
+Int_Init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	li $a0, 12
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, Int
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	li $t0, 12
+	sw $t0, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_int_literal'>>
+	sw $a3, 8($t9)
+# Ended <AttrDecl <Reference '_int_literal'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'Int'>
+# ..................................................
+# On <FuncInit 'String'>
+String_Init:
+	lw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	move $t7, $t6
+	add $t6, $t6, 12
+	move $a0, $t6
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, String
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	sw $t6, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_string_length'>>
+	move $t0, $fp
+	li $a3, 0
+_loop_3:
+	lb $t1, ($t0)
+	beqz $t1, _end_loop_4
+	subu $t0, $t0, 1
+	add $a3, $a3, 1
+	b _loop_3
+_end_loop_4:
+	jal Int_Init
+	sw $v1, 8($t9)
+# Ended <AttrDecl <Reference '_string_length'>>
+# ..................................................
+# On <AttrDecl <Reference '_string_literal'>>
+	move $t0, $fp
+	la $t2, 12($t9)
+_loop_5:
+	beqz $t7, _end_loop_6
+	sub $t7, $t7, 1
+	lb $t1, ($t0)
+	sb $t1, ($t2)
+	subu $t0, $t0, 1
+	addu $t2, $t2, 1
+	b _loop_5
+_end_loop_6:
+# Ended <AttrDecl <Reference '_string_literal'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'String'>
+# ..................................................
+# On <FuncInit 'Bool'>
+Bool_Init:
+	la $v1, _bool_false
+	beqz $a3, _bool_end
+	la $v1, _bool_true
+_bool_end:
+	jr $ra
+# Ended <FuncInit 'Bool'>
+# ..................................................
+# On <FuncInit 'IO'>
+IO_Init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	li $a0, 8
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, IO
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	li $t0, 8
+	sw $t0, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'IO'>
+# ..................................................
+# On <FuncInit 'Complex'>
+Complex_Init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	li $a0, 16
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, Complex
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	li $t0, 16
+	sw $t0, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+# On <AttrDecl <Reference 'x'>>
+# On <Int: '0'>
+	la $v1, _int_literal_0
+# Ended <Int: '0'>
+# ..................................................
+	sw $v1, 8($t9)
+# Ended <AttrDecl <Reference 'x'>>
+# ..................................................
+# On <AttrDecl <Reference 'y'>>
+# On <Int: '0'>
+	la $v1, _int_literal_0
+# Ended <Int: '0'>
+# ..................................................
+	sw $v1, 12($t9)
+# Ended <AttrDecl <Reference 'y'>>
+# ..................................................
+# On <AttrDecl <Reference 'x'>>
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+# On <Int: '0'>
+	la $v1, _int_literal_0
+# Ended <Int: '0'>
+# ..................................................
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	sw $v1, 8($t9)
+# Ended <AttrDecl <Reference 'x'>>
+# ..................................................
+# On <AttrDecl <Reference 'y'>>
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+# On <Int: '0'>
+	la $v1, _int_literal_0
+# Ended <Int: '0'>
+# ..................................................
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	sw $v1, 12($t9)
+# Ended <AttrDecl <Reference 'y'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'Complex'>
+# ..................................................
+# On <FuncInit 'Main'>
+Main_Init:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	li $a0, 8
+	jal _reserve_memory
+	move $t9, $v0
+# On <AttrDecl <Reference '_type_info'>>
+	la $t0, Main
+	sw $t0, 0($t9)
+# Ended <AttrDecl <Reference '_type_info'>>
+# ..................................................
+# On <AttrDecl <Reference '_size_info'>>
+	li $t0, 8
+	sw $t0, 4($t9)
+# Ended <AttrDecl <Reference '_size_info'>>
+# ..................................................
+	move $v1, $t9
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <FuncInit 'Main'>
+# ..................................................
+# On <Function 'abort'>
+Object.abort:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	la $a0, _static_abort
+	li $v0, 4
+	syscall
+	la $a0, _static_space
+	li $v0, 4
+	syscall
+	lw $t0, 0($t9)
+	lw $t0, 16($t0)
+	la $a0, 12($t0)
+	li $v0, 4
+	syscall
+	la $a0, _static_endl
+	li $v0, 4
+	syscall
+	jal _exit
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'abort'>
+# ..................................................
+# On <Function 'type_name'>
+Object.type_name:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $t0, 0($t9)
+	lw $v1, 16($t0)
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'type_name'>
+# ..................................................
+# On <Function 'copy'>
+Object.copy:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $t0, 0($t9)
+	lw $t4, 12($t0)
+	bne $t4, 2, _branch_label_5
+	move $v1, $t9
+	b _branch_label_6
+_branch_label_5:
+	lw $t0, 20($t0)
+	lw $a0, 4($t9)
+	jal _reserve_memory
+	bne $t4, 3, _branch_label_7
+# On String copy
+	lw $t0, 0($t9)
+	sw $t0, 0($v0)
+	lw $t0, 4($t9)
+	sw $t0, 4($v0)
+	lw $t0, 8($t9)
+	sw $t0, 8($v0)
+	lw $t2, 4($t9)
+	sub $t2, $t2, 12
+	la $t0, 12($t9)
+	la $t1, 12($v0)
+_loop_9:
+	beqz $t2, _end_loop_10
+	sub $t2, $t2, 1
+	lb $t3, ($t0)
+	sb $t3, ($t1)
+	addu $t0, $t0, 1
+	addu $t1, $t1, 1
+	b _loop_9
+_end_loop_10:
+# Ended String copy
+	b _end_loop_8
+_branch_label_7:
+	la $t1, ($t9)
+	la $t2, ($v0)
+_loop_7:
+	lw $t3, ($t1)
+	sw $t3, ($t2)
+	addu $t1, $t1, 4
+	addu $t2, $t2, 4
+	sub $t0, $t0, 1
+	beqz $t0, _end_loop_8
+	b _loop_7
+_end_loop_8:
+	move $v1, $v0
+_branch_label_6:
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'copy'>
+# ..................................................
+# On <Function 'length'>
+String.length:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $v1, 8($t9)
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'length'>
+# ..................................................
+# On <Function 'concat'>
+String.concat:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 4
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $t3, 0($fp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	subu $fp, $sp, 1
+	li $t0, 0
+	la $t1, 12($t9)
+# Iterating over self string
+_loop_11:
+	lb $t2, ($t1)
+	beqz $t2, _end_loop_12
+	subu $sp, $sp, 1
+	sb $t2, 0($sp)
+	add $t0, $t0, 1
+	addu $t1, $t1, 1
+	b _loop_11
+_end_loop_12:
+# Ended iterating over self string
+	la $t1, 12($t3)
+# Iterating over formal string
+_loop_13:
+	lb $t2, ($t1)
+	beqz $t2, _end_loop_14
+	subu $sp, $sp, 1
+	sb $t2, 0($sp)
+	add $t0, $t0, 1
+	addu $t1, $t1, 1
+	b _loop_13
+_end_loop_14:
+# Ended iterating over formal string
+	and $t1, $t0, 3
+	li $t2, 4
+	sub $t1, $t2, $t1
+_loop_15:
+	beqz $t1, _end_loop_16
+	subu $sp, $sp, 1
+	sb $zero, 0($sp)
+	add $t0, $t0, 1
+	sub $t1, $t1, 1
+	b _loop_15
+_end_loop_16:
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	jal String_Init
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, $t0
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'concat'>
+# ..................................................
+# On <Function 'substr'>
+String.substr:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 8
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $t1, 0($fp)
+	lw $t1, 8($t1)
+	lw $t2, -4($fp)
+	lw $t2, 8($t2)
+	la $a0, _err_substr_neg_index
+	bltz $t1, _print_error_exit
+	la $a0, _err_substr_neg_length
+	bltz $t2, _print_error_exit
+	lw $t3, 8($t9)
+	lw $t3, 8($t3)
+	la $a0, _err_substr_too_long_index
+	bgt $t1, $t3, _print_error_exit
+	add $t4, $t1, $t2
+	la $a0, _err_substr_too_long_length
+	bgt $t4, $t3, _print_error_exit
+	la $t3, 12($t9)
+	addu $t3, $t3, $t1
+	addu $t4, $t3, $t2
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	subu $fp, $sp, 1
+	li $t0, 0
+_loop_17:
+	beq $t3, $t4, _end_loop_18
+	lb $t5, ($t3)
+	subu $sp, $sp, 1
+	sb $t5, 0($sp)
+	add $t0, $t0, 1
+	addu $t3, $t3, 1
+	b _loop_17
+_end_loop_18:
+	and $t1, $t0, 3
+	li $t2, 4
+	sub $t1, $t2, $t1
+_loop_19:
+	beqz $t1, _end_loop_20
+	subu $sp, $sp, 1
+	sb $zero, 0($sp)
+	add $t0, $t0, 1
+	sub $t1, $t1, 1
+	b _loop_19
+_end_loop_20:
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	jal String_Init
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, $t0
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 8
+	jr $ra
+# Ended <Function 'substr'>
+# ..................................................
+# On <Function 'out_string'>
+IO.out_string:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 4
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $a0, 0($fp)
+	la $a0, 12($a0)
+	li $v0, 4
+	syscall
+	move $v1, $t9
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'out_string'>
+# ..................................................
+# On <Function 'out_int'>
+IO.out_int:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 4
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	lw $a0, 0($fp)
+	lw $a0, 8($a0)
+	li $v0, 1
+	syscall
+	move $v1, $t9
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'out_int'>
+# ..................................................
+# On <Function 'in_string'>
+IO.in_string:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	subu $fp, $sp, 1
+	li $t0, 0
+_loop_21:
+	li $v0, 12
+	syscall
+	beq $v0, 0xa, _end_loop_22
+	subu $sp, $sp, 1
+	sb $v0, 0($sp)
+	add $t0, $t0, 1
+	b _loop_21
+_end_loop_22:
+	and $t1, $t0, 3
+	li $t2, 4
+	sub $t1, $t2, $t1
+_loop_23:
+	beqz $t1, _end_loop_24
+	subu $sp, $sp, 1
+	sb $zero, 0($sp)
+	add $t0, $t0, 1
+	sub $t1, $t1, 1
+	b _loop_23
+_end_loop_24:
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	jal String_Init
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, $t0
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'in_string'>
+# ..................................................
+# On <Function 'in_int'>
+IO.in_int:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	li $v0, 5
+	syscall
+	move $a3, $v0
+	jal Int_Init
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'in_int'>
+# ..................................................
+# On <Function 'init'>
+Complex.init:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 8
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <Block(3)>
+# On <Eq>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'a'>
+	lw $v1, 0($fp)
+# Ended <Reference 'a'>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Eq>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'b'>
+	lw $v1, -4($fp)
+# Ended <Reference 'b'>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+# Ended <Block(3)>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 8
+	jr $ra
+# Ended <Function 'init'>
+# ..................................................
+# On <Function 'print'>
+Complex.print:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <If>
+# On <Eq>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Int: '0'>
+	la $v1, _int_literal_0
+# Ended <Int: '0'>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+	la $t0, _bool_false
+	beq $t0, $v1, _branch_label_8
+# On <FunctionCall 'out_int'>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_int
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_int'>
+# ..................................................
+	b _branch_label_9
+_branch_label_8:
+# On <FunctionCall 'out_string'>
+# On <String: 'I'>
+	la $v1, _str_literal_8
+# Ended <String: 'I'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <FunctionCall 'out_int'>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <FunctionCall 'out_string'>
+# On <String: '+'>
+	la $v1, _str_literal_7
+# Ended <String: '+'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <FunctionCall 'out_int'>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_int
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_int'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_string
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_string'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_int
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_int'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_string
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_string'>
+# ..................................................
+_branch_label_9:
+# Ended <If>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'print'>
+# ..................................................
+# On <Function 'reflect_0'>
+Complex.reflect_0:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <Block(3)>
+# On <Eq>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <IntComp>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	lw $a3, 8($v1)
+	neg $a3, $a3
+	jal Int_Init
+# Ended <IntComp>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Eq>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <IntComp>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	lw $a3, 8($v1)
+	neg $a3, $a3
+	jal Int_Init
+# Ended <IntComp>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+# Ended <Block(3)>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'reflect_0'>
+# ..................................................
+# On <Function 'reflect_X'>
+Complex.reflect_X:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <Block(2)>
+# On <Eq>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <IntComp>
+# On <Reference 'y'>
+	lw $v1, 12($t9)
+# Ended <Reference 'y'>
+# ..................................................
+	lw $a3, 8($v1)
+	neg $a3, $a3
+	jal Int_Init
+# Ended <IntComp>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+# Ended <Block(2)>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'reflect_X'>
+# ..................................................
+# On <Function 'reflect_Y'>
+Complex.reflect_Y:
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 0
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <Block(2)>
+# On <Eq>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <IntComp>
+# On <Reference 'x'>
+	lw $v1, 8($t9)
+# Ended <Reference 'x'>
+# ..................................................
+	lw $a3, 8($v1)
+	neg $a3, $a3
+	jal Int_Init
+# Ended <IntComp>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+# Ended <Block(2)>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'reflect_Y'>
+# ..................................................
+# On <Function 'main'>
+Main.main:
+	subu $sp, $sp, 4
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	addu $fp, $sp, 4
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+# On <Let>
+# On <Binding>
+# On <FunctionCall 'init'>
+# On <Int: '1'>
+	la $v1, _int_literal_6
+# Ended <Int: '1'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Int: '1'>
+	la $v1, _int_literal_6
+# Ended <Int: '1'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <New Complex>
+	la $t0, Complex_Init
+	jalr $t0
+# Ended <New Complex>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_init
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'init'>
+# ..................................................
+	la $t0, 0($fp)
+	sw $v1, ($t0)
+# Ended <Binding>
+# ..................................................
+# On <If>
+# On <Eq>
+# On <FunctionCall 'reflect_Y'>
+# On <FunctionCall 'reflect_X'>
+# On <Reference 'c'>
+	lw $v1, 0($fp)
+# Ended <Reference 'c'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_reflect_X
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'reflect_X'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_reflect_Y
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'reflect_Y'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <FunctionCall 'reflect_0'>
+# On <Reference 'c'>
+	lw $v1, 0($fp)
+# Ended <Reference 'c'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_reflect_0
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'reflect_0'>
+# ..................................................
+	lw $t0, 0($sp)
+	addu $sp, $sp, 4
+	move $t1, $v1
+	jal _eq_function
+# Ended <Eq>
+# ..................................................
+	la $t0, _bool_false
+	beq $t0, $v1, _branch_label_10
+# On <FunctionCall 'out_string'>
+# On <String: '=)\n'>
+	la $v1, _str_literal_10
+# Ended <String: '=)\n'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_string
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_string'>
+# ..................................................
+	b _branch_label_11
+_branch_label_10:
+# On <FunctionCall 'out_string'>
+# On <String: '=(\n'>
+	la $v1, _str_literal_11
+# Ended <String: '=(\n'>
+# ..................................................
+	subu $sp, $sp, 4
+	sw $v1, 0($sp)
+# On <Reference 'self'>
+	move $v1, $t9
+# Ended <Reference 'self'>
+# ..................................................
+	la $a0, _err_dispatch_void
+	beqz $v1, _print_error_exit
+	move $t8, $t9
+	move $t9, $v1
+	lw $t0, 0($t9)
+	lw $t0, 0($t0)
+	la $a3, _st_out_string
+	jal _runtime_dispatch
+	jalr $v1
+# Ended <FunctionCall 'out_string'>
+# ..................................................
+_branch_label_11:
+# Ended <If>
+# ..................................................
+# Ended <Let>
+# ..................................................
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	lw $t9, 0($sp)
+	addu $sp, $sp, 4
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	addu $sp, $sp, 4
+	jr $ra
+# Ended <Function 'main'>
+# ..................................................
+# Ended <CILCode>
+# ..................................................

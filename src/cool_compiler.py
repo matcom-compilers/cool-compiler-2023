@@ -5,6 +5,8 @@ from cil_generation.cil_generator import CILCodeGenerator
 from semantic_analysis.semantic import SemanticChecker
 from utils.errors import *
 from semantic_analysis.ast_ import *
+from utils.constants import *
+from mips_generation.gen_mips import GenMIPS, DataSegment
 
 class CoolCompiler:
     def __init__(self, code, tab_size=4):
@@ -17,15 +19,6 @@ class CoolCompiler:
                 self.code += c
 
         self._inject_native_classes()
-
-    def compile_program(self):
-        lexer = self.lexical_analysis()
-        ast_root = self.syntactic_analysis(lexer)
-        self.semantic_analysis(ast_root)
-        self.run_type_checker()
-        cil_code = self.gen_cil_code()
-        mips_code = self.gen_mips_code(cil_code)
-        return mips_code
 
     def _inject_native_classes(self):
         """
@@ -63,7 +56,7 @@ class CoolCompiler:
 
         for cls in self.native_classes:
             if cls.type.value in methods:
-                cls.feature_list = methods[cls.type.value]
+                cls.feat_list = methods[cls.type.value]
 
         self.root = self.native_classes[0]  # reference to the root of the inheritance tree
 
@@ -91,8 +84,8 @@ class CoolCompiler:
     def _semantic_analysis(self, ast_root):
         semantics = SemanticChecker(ast_root)
 
-        self.cls_refs = semantics.build_inheritance_tree(self.native_classes)
-        semantics.check_cycles()
+        self.cls_refs = semantics.build_class_hierarchy(self.native_classes)
+        semantics.check_inheritance()
 
     def _run_type_checker(self):
         chk = TypeChecker(self.root, self.cls_refs)
@@ -108,4 +101,25 @@ class CoolCompiler:
         return cil.cil_code
 
     def _gen_mips_code(self, cil_code):
-        pass
+        data = DataSegment(cil_code)
+
+        mips = GenMIPS(data.code, cil_code)
+        mips.visit(cil_code)
+
+        return '\n'.join(map(str, mips.code))
+    
+    def compile_program(self):
+        print("Starting compilation...!!!!!!!!!!!!!!!!!!!!!!!!")
+        lexer = self._lexical_analysis()
+        print("Lexicographic analysis finished")
+        ast_root = self._syntactic_analysis(lexer)
+        print("Syntactic analysis finished")
+        self._semantic_analysis(ast_root)
+        print("Semantic analysis finished")
+        self._run_type_checker()
+        print("Type checker finished")
+        cil_code = self._gen_cil_code()
+        print("CIL code generation finished")
+        mips_code = self._gen_mips_code(cil_code)
+        print("MIPS code generation finished")
+        return mips_code

@@ -36,7 +36,7 @@ class Lexer(object):
         'INT', 'STRING', 'BOOL',
 
         #operators
-        'PLUS', 'STAR', 'DIV', 'MINUS', 'LESS', 'LESS_EQ', 'EQ', 'INT_COMP', 'ASSIGN',
+        'PLUS', 'MUL', 'DIV', 'MINUS', 'LESS', 'LESS_EQ', 'EQ', 'INT_COMP', 'ASSIGN',
 
         #literals
         'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'COLON', 'SEMICOLON', 'DOT', 'COMMA', 'CAST',
@@ -46,7 +46,7 @@ class Lexer(object):
     
     # Simple rules
     t_PLUS = r'\+'
-    t_STAR = r'\*'
+    t_MUL = r'\*'
     t_DIV = r'\/'
     t_MINUS = r'\-'
     t_LESS = r'\<'

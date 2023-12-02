@@ -291,7 +291,7 @@ class Parser:
     def p_expr_binary_mul(self, p):
         "expr : expr MUL expr"
 
-        p[0] = Star(p[1], p[3])
+        p[0] = Mul(p[1], p[3])
         p[0].set_tracker(p.lineno(2), self.find_column(p.lexpos(2)))
 
     def p_expr_binary_div(self, p):

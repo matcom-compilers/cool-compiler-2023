@@ -202,7 +202,7 @@ class Plus(BinaryOp):
 class Minus(BinaryOp):
     pass
 
-class Star(BinaryOp):
+class Mul(BinaryOp):
     pass
 
 class Div(BinaryOp):
