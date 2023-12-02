@@ -12,6 +12,7 @@ from .types import (
     SemanticError,
     StringType,
     Type,
+    VoidType,
 )
 
 log = LoggerUtility().get_logger()
@@ -27,6 +28,7 @@ def define_builtin_types(context: Context):
     string_type = context.types["String"] = StringType()
     bool_type = context.types["Bool"] = BoolType()
     self_type = context.types["SELF_TYPE"] = SelfType()
+    void_type = context.types["Void"] = VoidType()  # Define void type in context
 
     object_type.define_method("abort", [], [], object_type, (0, 0))
     object_type.define_method("type_name", [], [], string_type, (0, 0))
@@ -48,6 +50,8 @@ def define_builtin_types(context: Context):
     io_type.define_method("out_int", ["x"], [int_type], self_type, (0, 0))
     io_type.define_method("in_string", [], [], string_type, (0, 0))
     io_type.define_method("in_int", [], [], int_type, (0, 0))
+
+    void_type.set_parent(object_type)
 
 
 class TypeCollector(Visitor):

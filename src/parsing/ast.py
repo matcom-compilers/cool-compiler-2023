@@ -216,7 +216,7 @@ class LetNode(ExpressionNode):
 
 
 class CaseNode(ExpressionNode):
-    def __init__(self, expr, cases: List["CaseOptionNode"], location):
+    def __init__(self, expr: ExpressionNode, cases: List["CaseOptionNode"], location):
         super().__init__(location)
         self.expr = expr
         self.cases = cases

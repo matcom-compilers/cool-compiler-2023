@@ -249,7 +249,7 @@ class TypeChecker(Visitor):
                     value=f"{left_type.name} {operator} {right_type.name}",
                 )
                 return ErrorType()
-            return IntType()
+            return self.context.get_type(IntType().name)
 
         elif operator in [
             BinaryOperator.EQ,
@@ -268,7 +268,7 @@ class TypeChecker(Visitor):
                     value=f"{left_type.name} {operator} {right_type.name}",
                 )
                 return ErrorType()
-            return BoolType()
+            return self.context.get_type(BoolType().name)
 
         elif operator in [
             BinaryOperator.LT,
@@ -282,7 +282,7 @@ class TypeChecker(Visitor):
                     value=f"{left_type.name} {operator} {right_type.name}",
                 )
                 return ErrorType()
-            return BoolType()
+            return self.context.get_type(BoolType().name)
 
         elif operator in ["and", "or"]:
             if left_type != BoolType() or right_type != BoolType():
@@ -293,7 +293,7 @@ class TypeChecker(Visitor):
                     value=f"{left_type.name} {operator} {right_type.name}",
                 )
                 return ErrorType()
-            return BoolType()
+            return self.context.get_type(BoolType().name)
 
         else:
             self.error(
@@ -540,9 +540,12 @@ class TypeChecker(Visitor):
 
     def visit__WhileNode(self, node: WhileNode, scope: Scope):
         condition_type: Type = node.condition.accept(self, scope)
+        node.body.accept(self, scope)
 
         if condition_type.conforms_to(BoolType()):
-            return self.context.get_type("Object")
+            while_type = self.context.get_type("Void")
+            node.computed_type = while_type.name
+            return while_type  # While always return VOID
         else:
             self.error(
                 f"TypeError: Loop condition does not have type Bool.",
