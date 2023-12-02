@@ -11,5 +11,5 @@ echo Copyright (c) 2019: Karlos Alejandro Alfonso Rodríguez, Laura Victoria Rie
 REM Llamar al compilador
 REM echo Compiling %INPUT_FILE% into %OUTPUT_FILE%
 
-REM check python3 -m coolcmp -h for help
-python -m coolcmp %INPUT_FILE%
+REM check python3 -m main -h for help
+python -m main %INPUT_FILE%
