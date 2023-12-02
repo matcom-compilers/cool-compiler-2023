@@ -289,7 +289,7 @@ class COOL2CIL(Visitor):
         ret_vinfo = self.define_internal_local()
 
         self.register_instruction(
-            cil.SubstringNode(ret_vinfo, "self", idx_arg.name, length_arg.name)
+            cil.SubstringNode(ret_vinfo, "self", length_arg.name, idx_arg.name)
         )
         self.register_instruction(cil.ReturnNode(ret_vinfo))
 

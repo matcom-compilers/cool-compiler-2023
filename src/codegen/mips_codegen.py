@@ -141,3 +141,6 @@ class MipsCodeGenerator(Visitor):
 
     def visit__SetEqNode(self, node: mips.SetEqNode, *args, **kwargs):
         return f"seq {node.destination.accept(self)}, {node.m1.accept(self)}, {node.m2.accept(self)}"
+
+    def visit__MipsAstNode(self, node: mips.MipsAstNode, *args, **kwargs):
+        return f"# {node.comment}"

@@ -1,6 +1,5 @@
 from codegen import cil_ast as cil
 from codegen import mips_ast as mips
-from semantic.types import BoolType, IntType, StringType
 from utils.visitor import Visitor
 
 REGISTER_NAMES = [
@@ -58,7 +57,7 @@ CHARS_ATTR_INDEX = 8
 EMPTY_STR_VALUE = '""'
 
 # VOID Type
-VOID = "VOID"
+VOID = "Void"
 
 
 COPY_BYTES = "__COPY_BYTES_PROC"
@@ -1005,24 +1004,39 @@ class CILVisitor(Visitor):
                 )
             )
 
-        elif node.type == StringType().name:
-            # _size = STRING_SIZE
-            # instructions.append(mips(LoadInmediate, v0, SYSCALL_SBRK))
-            # instructions.append(mips(LoadInmediate, a0, _size))
-            # instructions.append(mips(SyscallNode))
+        elif node.type == STRING_TYPE:
+            _size = STRING_SIZE
+            instructions.append(mips.MipsAstNode(comment="Allocate Empty String"))
+            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
+            instructions.append(mips.LoadImmediateNode(A0_REG, _size))
+            instructions.append(mips.SyscallNode())
 
-            # instructions.append(mips(StoreWordNode, v0, dest_dir, fp))
-            # reg = self.memo.get_unused_reg()
-            # instructions.append(mips(LoadAddress, reg, STRING))
-            # instructions.append(mips(StoreWordNode, reg, 0, v0))
+            instructions.append(
+                mips.StoreWordNode(
+                    V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)
+                )
+            )
+            reg = self.memory_manager.get_unused_register()
+            instructions.append(mips.LoadAddressNode(reg, STRING_TYPE))
+            instructions.append(
+                mips.StoreWordNode(
+                    reg, mips.MemoryAddressRegisterNode(V0_REG, TYPEINFO_ATTR_INDEX)
+                )
+            )
 
-            # instructions.append(mips(LoadInmediate, reg, 0))
-            # instructions.append(()
-            #     mips.StoreWordNode, reg, LENGTH_ATTR_OFFSET, v0
-            # )  # pq en vo esta el allocate
-            # instructions.append(mips(LoadAddress, reg, EMPTY_STRING))
-            # instructions.append(mips(StoreWordNode, reg, CHARS_ATTR_OFFSET, v0))
-            pass  # TODO: Complete String
+            instructions.append(mips.LoadImmediateNode(reg, 0))
+            instructions.append(
+                mips.StoreWordNode(
+                    reg, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
+                )
+            )
+            instructions.append(mips.LoadAddressNode(reg, EMPTY_STR_VALUE))
+            instructions.append(
+                mips.StoreWordNode(
+                    reg, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
+                )
+            )
+
         elif node.type != "Void":
             _size = (len(self.types[node.type].attributes) + 1) * 4
             instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
