@@ -5,6 +5,7 @@ from parsing.ast import (
     BinaryOperator,
     BinaryOperatorNode,
     BlockNode,
+    BooleanNode,
     ClassNode,
     DispatchNode,
     IdentifierNode,
@@ -21,7 +22,7 @@ from parsing.ast import (
 )
 from semantic.context import Context
 from semantic.scope import Scope, VariableInfo
-from semantic.types import VoidType
+from semantic.types import StringType, VoidType
 from utils.visitor import Visitor
 
 
@@ -215,8 +216,8 @@ class COOL2CIL(Visitor):
             [cil.AttributeNode("value")],
             [
                 self.cil_predef_method("abort", "Bool", self.object_abort),
-                self.cil_predef_method("copy", "Bool", self.object_copy),
                 self.cil_predef_method("type_name", "Bool", self.object_type_name),
+                self.cil_predef_method("copy", "Bool", self.object_copy),
             ],
         )
 
@@ -767,3 +768,9 @@ class COOL2CIL(Visitor):
         elif node.operator == BinaryOperator.DIVIDE:
             self.register_instruction(cil.DivNode(return_var, left, right))
         # Complete with comparsions
+
+    def visit__BooleanNode(
+        self, node: BooleanNode, context: Context, scope: Scope, return_var
+    ):
+        print(node._value)
+        self.register_instruction(cil.AssignNode(return_var, 1 if node._value else 0))

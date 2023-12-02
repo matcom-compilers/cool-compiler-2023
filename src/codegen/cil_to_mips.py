@@ -1,3 +1,5 @@
+from cProfile import label
+
 from codegen import cil_ast as cil
 from codegen import mips_ast as mips
 from utils.visitor import Visitor
@@ -54,6 +56,7 @@ STRING_SIZE = 12  # tipo lenght ref
 # str attributes offsets
 LENGTH_ATTR_INDEX = 4
 CHARS_ATTR_INDEX = 8
+EMPTY_STR_LABEL = "EMPTY_STR_LABEL"
 EMPTY_STR_VALUE = '""'
 
 # VOID Type
@@ -104,8 +107,8 @@ class CILVisitor(Visitor):
             self.generate_attr_indexes(ty.name)
 
         self.data_section[VOID] = mips.DataNode(mips.LabelNode(VOID), ".word", ["-1"])
-        self.data_section["EMPTY_STRING"] = mips.DataNode(
-            mips.LabelNode("EMPTY_STRING"), ".asciiz", [EMPTY_STR_VALUE]
+        self.data_section[EMPTY_STR_LABEL] = mips.DataNode(
+            mips.LabelNode(EMPTY_STR_LABEL), ".asciiz", [EMPTY_STR_VALUE]
         )
         self.data_section["INPUT_STR_BUFFER"] = mips.DataNode(
             mips.LabelNode("INPUT_STR_BUFFER"),
@@ -358,7 +361,7 @@ class CILVisitor(Visitor):
         self.memory_manager.save()
         instructions = []
 
-        if node.flag:  # Object type is on node
+        if node.flag:  # Object type is not on address. Used for Bool and Int unboxed
             reg1 = self.memory_manager.get_unused_register()
             instructions.append(
                 mips.LoadAddressNode(
@@ -451,7 +454,7 @@ class CILVisitor(Visitor):
         # Allocate String
         instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
         instructions.append(mips.LoadImmediateNode(ARG_REGISTERS[0], _size))
-        instructions.append(mips.SyscallNode())
+        instructions.append(mips.SyscallNode(comment="String Allocated for LOAD"))
 
         # Point dest to allocated string
         dest_dir = self.search_mem(node.dest)
@@ -465,11 +468,19 @@ class CILVisitor(Visitor):
 
         # Copy String Type address to allocated instance
         instructions.append(
-            mips.StoreWordNode(reg1, mips.MemoryAddressRegisterNode(V0_REG, 0))
+            mips.StoreWordNode(
+                reg1,
+                mips.MemoryAddressRegisterNode(V0_REG, 0),
+                comment="Allocate String type on reserved memory",
+            )
         )
 
         # Store String Length
-        instructions.append(mips.LoadImmediateNode(reg1, len(node.data)))
+        instructions.append(
+            mips.LoadImmediateNode(
+                reg1, len(node.data), comment=f"Set string length to {len(node.data)}"
+            )
+        )
         instructions.append(
             mips.StoreWordNode(
                 reg1, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
@@ -477,10 +488,18 @@ class CILVisitor(Visitor):
         )
 
         # Store str ref
-        instructions.append(mips.LoadAddressNode(reg1, mips.LabelNode(node.label)))
+        instructions.append(
+            mips.LoadAddressNode(
+                reg1,
+                mips.LabelNode(node.label),
+                comment=f"String chars point to {node.label}",
+            )
+        )
         instructions.append(
             mips.StoreWordNode(
-                reg1, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
+                reg1,
+                mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX),
+                comment=f"String should points to value: {node.data}",
             )
         )
 
@@ -1030,34 +1049,17 @@ class CILVisitor(Visitor):
                     reg, mips.MemoryAddressRegisterNode(V0_REG, LENGTH_ATTR_INDEX)
                 )
             )
-            instructions.append(mips.LoadAddressNode(reg, EMPTY_STR_VALUE))
+            instructions.append(
+                mips.LoadAddressNode(reg, mips.LabelNode(EMPTY_STR_LABEL))
+            )
             instructions.append(
                 mips.StoreWordNode(
                     reg, mips.MemoryAddressRegisterNode(V0_REG, CHARS_ATTR_INDEX)
                 )
             )
 
-        elif node.type != VOID:
-            _size = (len(self.types[node.type].attributes) + 1) * 4
-            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_SBRK))
-            instructions.append(mips.LoadImmediateNode(ARG_REGISTERS[0], _size))
-            instructions.append(mips.SyscallNode())
-
-            instructions.append(
-                mips.StoreWordNode(
-                    V0_REG, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)
-                )
-            )
-
-            reg2 = self.memory_manager.get_unused_register()
-
-            instructions.append(mips.LoadAddressNode(reg2, mips.LabelNode(node.type)))
-            instructions.append(
-                mips.StoreWordNode(reg2, mips.MemoryAddressRegisterNode(V0_REG, 0))
-            )
-
         else:
-            instructions.append(mips.LoadAddressNode(reg, mips.LabelNode(node.type)))
+            instructions.append(mips.LoadAddressNode(reg, mips.LabelNode(VOID)))
             instructions.append(
                 mips.StoreWordNode(
                     reg, mips.MemoryAddressRegisterNode(FP_REG, dest_dir)
