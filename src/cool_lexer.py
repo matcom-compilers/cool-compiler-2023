@@ -85,7 +85,7 @@ class CoolLexer:
         return t
 
     def t_MINUS(self, t):
-        r'\-'
+        r'-'
         self.compute_column(t)
         return t
 
@@ -99,7 +99,7 @@ class CoolLexer:
         self.compute_column(t)
         return t
 
-    def t_NOT(self, t):
+    def t_COMPL(self, t):
         r"\~"
         self.compute_column(t)
         return t    
@@ -149,17 +149,17 @@ class CoolLexer:
 
     # Comments #
 
-    def t_one_line_comment(self, t):
+    def t_comment_(self, t):
         r'--.*($|\n)'
         self.compute_column(t)
         t.lexer.lineno += 1
         t.lexer.linestart = t.lexer.lexpos
     
-    def t_multi_line_comment(self, t):
+    def t_comment(self, t):
         r'\(\*'
         self.compute_column(t)
         t.lexer.level = 1
-        t.lexer.begin('comments')
+        t.lexer.begin('comment')
 
     def t_comments_open(self, t):
         r'\(\*'
@@ -173,29 +173,31 @@ class CoolLexer:
         if t.lexer.level == 0:
             t.lexer.begin('INITIAL')
 
+    # t_comments_ignore = '  \t\f\r\t\v'
+
     
-    def t_comments_error(self, t):
+    def t_comment_error(self, t):
         t.lexer.skip(1)
 
-    def t_comments_eof(self, t):
-        self.compute_column(t)
-        if t.lexer.level > 0:
-            self.eof_comment = True
+    # def t_comments_eof(self, t):
+    #     self.compute_column(t)
+    #     if t.lexer.level > 0:
+    #         self.eof_comment = True
             
-    def t_comments_error(self, t):
-        t.lexer.skip(1)
+    # def t_comments_error(self, t):
+    #     t.lexer.skip(1)
 
-    def t_comments_eof(self, t):
-        self.compute_column(t)
-        if t.lexer.level > 0:
-            self.errors.append(LexicographicError(message=
-                'EOF in comment', line=t.lineno, column=t.column))
+    # def t_comments_eof(self, t):
+    #     self.compute_column(t)
+    #     if t.lexer.level > 0:
+    #         self.errors.append(LexicographicError(message=
+    #             'EOF in comment', line=t.lineno, column=t.column))
 
     ## 
 
     # Strings #
 
-    def t_strings(self, t):
+    def t_string(self, t):
         r'\''
         t.lexer.string_start = t.lexer.lexpos
         t.lexer.string = ''
@@ -224,10 +226,7 @@ class CoolLexer:
 
         t.lexer.linestart = t.lexer.lexpos
 
-        if not t.lexer.backslash:
-            self.errors.append(LexicographicError(message=
-                'Undeterminated string constant', line=t.lineno, column=t.column))
-            t.lexer.begin('INITIAL')
+        t.lexer.begin('INITIAL')
 
     def t_strings_nill(self, t):
         r'\0'
@@ -235,34 +234,37 @@ class CoolLexer:
         self.errors.append(LexicographicError(message=
             'Null caracter in string', line=t.lineno, column=t.column))
 
-    def t_strings_consume(self, t):
-        r'[^\n]'
+    # def t_strings_consume(self, t):
+    #     r'[^\n]'
 
-        if t.lexer.backslash:
-            if t.value == 'b':
-                t.lexer.string += '\b'
-            elif t.value == 't':
-                t.lexer.string += '\t'
-            elif t.value == 'f':
-                t.lexer.string += '\f'
-            elif t.value == 'n':
-                t.lexer.string += '\n'
-            elif t.value == '\\':
-                t.lexer.string += '\\'
-            else:
-                t.lexer.string += t.value
+    #     if t.lexer.backslash:
+    #         if t.value == 'b':
+    #             t.lexer.string += '\b'
+    #         elif t.value == 't':
+    #             t.lexer.string += '\t'
+    #         elif t.value == 'f':
+    #             t.lexer.string += '\f'
+    #         elif t.value == 'n':
+    #             t.lexer.string += '\n'
+    #         elif t.value == '\\':
+    #             t.lexer.string += '\\'
+    #         else:
+    #             t.lexer.string += t.value
 
-            t.lexer.backslash = False
-        else:
-            if t.value != '\\':
-                t.lexer.string += t.value
-            else:
-                t.lexer.backslash = True
+    #         t.lexer.backslash = False
+    #     else:
+    #         if t.value != '\\':
+    #             t.lexer.string += t.value
+    #         else:
+    #             t.lexer.backslash = True
 
-    def t_strings_eof(self, t):
-        self.compute_column(t)
-        self.errors.append(LexicographicError(message=
-            'EOF in string constant', line=t.lineno, column=t.column))
+    def t_string_error(self, t):
+        pass
+
+    # def t_strings_eof(self, t):
+    #     self.compute_column(t)
+    #     self.errors.append(LexicographicError(message=
+    #         'EOF in string constant', line=t.lineno, column=t.column))
 
     ##
 
@@ -276,3 +278,12 @@ class CoolLexer:
         self.errors.append(LexicographicError(message=
             f'ERROR \'{t.value[0]}\'', line=t.lineno, column=t.column))
         t.lexer.skip(1)
+
+    def run(self, text):
+        _tokens = self.tokenize(text)
+        if self.errors:
+            for error in self.errors:
+                print(error)
+            raise Exception()
+
+        return _tokens

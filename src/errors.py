@@ -3,7 +3,7 @@ class Error(Exception):
         self.line = line
         self.col = column
         self.type = type_
-        self.msg = message
+        self.message = message
 
 
 class CompilerError(Error):
