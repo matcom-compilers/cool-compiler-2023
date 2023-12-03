@@ -586,15 +586,9 @@ class CILVisitor(Visitor):
             length_loop_label_start = f"READ_LOOP_{loop_index}_START"
             length_loop_label_end = f"READ_LOOP_{loop_index}_END"
             r3 = self.memory_manager.get_unused_register()  # Tracks Bytes
-            space_reg = (
-                self.memory_manager.get_unused_register()
-            )  # Temp store space characters
             new_line_reg = (
                 self.memory_manager.get_unused_register()
             )  # Temp store new line characters
-            instructions.append(
-                mips.LoadImmediateNode(space_reg, 32)
-            )  # 32 is space in ascii
             instructions.append(
                 mips.LoadImmediateNode(new_line_reg, 10)
             )  # 10 is new line in ascii
@@ -610,11 +604,6 @@ class CILVisitor(Visitor):
             instructions.append(
                 mips.BranchEqualNode(
                     new_line_reg, r3, mips.LabelNode(length_loop_label_end)
-                )
-            )
-            instructions.append(
-                mips.BranchEqualNode(
-                    space_reg, r3, mips.LabelNode(length_loop_label_end)
                 )
             )
             instructions.append(mips.AddiNode(r2, r2, 1))
