@@ -606,7 +606,7 @@ class Parser:
         """
         location = ast.Location(*self.current_token.position)
         self.eat(TokenType.TILDE)
-        expr = self.parse_expression()
+        expr = self.parse_expression(operation="TILDE")
         return ast.PrimeNode(expr, location)
 
     def parse_not(self):
