@@ -45,6 +45,7 @@ tokens = [
     'ID',
     'TYPE',
     'STRING',
+    'COMMENT_LINE'
 ]
 
 tokens = tokens + list(keywords.values())

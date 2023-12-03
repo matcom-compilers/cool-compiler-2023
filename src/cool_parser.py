@@ -39,7 +39,7 @@ class CoolParser:
     def p_class_list(self, p):
         '''
         class_list : class SEMICOLON class_list
-                      | class SEMICOLON 
+                   | class SEMICOLON 
         '''
         if len(p) == 3:
             p[0] = [p[1]]
@@ -51,21 +51,20 @@ class CoolParser:
     def p_class(self, p):
         '''
         class : CLASS TYPE LBRACE feature_list RBRACE
-                 | CLASS TYPE INHERITS TYPE LBRACE feature_list RBRACE
+              | CLASS TYPE INHERITS TYPE LBRACE feature_list RBRACE
         '''
         if len(p) == 8:
             p[0] = ClassNode(id_=p[2], parent=p[6], features=p[4])
         else:
-            p[0] = ClassNode(id_=p[2], features=p[4])
+            p[0] = ClassNode(id_=p[2], features=p[4], parent=None)
         
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_feature_list(self, p):
         '''
         feature_list : attributte SEMICOLON feature_list
-                        | method SEMICOLON feature_list
-                        | empty
+                     | method SEMICOLON feature_list
+                     | empty
         '''
         if len(p) == 4:
             p[0] = [p[1]] + p[3] 
@@ -84,25 +83,14 @@ class CoolParser:
         else:
             p[0] = AttributeNode(id_=p[1], type_=p[3], expression=p[5])
 
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
 
     def p_method(self, p):
         '''
-        method : ID LPAREN params RPAREN COLON TYPE LBRACE expression RBRACE
+        method : ID LPAREN param_list RPAREN COLON TYPE LBRACE expression RBRACE
+               | ID LPAREN empty RPAREN COLON TYPE LBRACE expression RBRACE
         '''
         p[0] = MethodNode(id_=p[1], params=p[3], return_type=p[6], body=p[8])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
-
-
-    def p_params(self, p):
-        '''
-        params : param_list
-               | param_list_empty
-        '''
-        
-        p[0] = p[1]
-
 
     def p_param_list(self, p):
         '''
@@ -115,20 +103,11 @@ class CoolParser:
         else:
             p[0] = [p[1]] + p[3]
 
-    
-    def p_param_list_empty(self, p):
-        '''
-        param_list_empty : empty
-        '''
-        p[0] = []
-
-
     def p_param(self, p):
         '''
         param : ID COLON TYPE
         '''
         p[0] = ParamNode(id_=p[1], type_= p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_list(self, p):
@@ -139,7 +118,7 @@ class CoolParser:
         if len(p) == 4:
             p[0] = [p[1]] + p[3]
 
-        elif len(p) == 3:
+        else:
             p[0] = [p[1]]
 
 
@@ -148,7 +127,6 @@ class CoolParser:
         expression : ID ASSIGN expression
         '''
         p[0] = AssignmentNode(id_=p[1], expression=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
     
     def p_expression_conditional(self, p):
@@ -156,7 +134,6 @@ class CoolParser:
         expression : IF expression THEN expression ELSE expression FI
         '''
         p[0] = ConditionalNode(if_expression=p[2], then_expression=p[4], else_expression=p[6])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_loop(self, p):
@@ -164,7 +141,6 @@ class CoolParser:
         expression : WHILE expression LOOP expression POOL
         '''
         p[0] = LoopNode(while_expression=p[2], loop_expression=p[4])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_block(self, p):
@@ -172,7 +148,6 @@ class CoolParser:
         expression : LBRACE expression_list RBRACE
         '''
         p[0] = BlockNode(expressions_list=p[2])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_let(self, p):
@@ -192,7 +167,7 @@ class CoolParser:
             p[0] = [p[1]] + p[3]
 
         else:
-            p[0] = p[1]
+            p[0] = [p[1]]
 
 
     def p_let_var(self, p):
@@ -206,7 +181,6 @@ class CoolParser:
         else:
             p[0] = LetVariableNode(id_=p[1], type_=p[3])
 
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_case(self, p):
@@ -214,7 +188,6 @@ class CoolParser:
         expression : CASE expression OF list_case_branch ESAC
         '''
         p[0] = CaseNode(case_expression=p[2], case_branches=p[4])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_list_case_branch(self, p):
@@ -234,7 +207,6 @@ class CoolParser:
         case_branch : ID COLON TYPE ARROW expression SEMICOLON
         '''
         p[0] = CaseBranchNode(id_=p[1], type_=p[3], expression=p[5])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_dispatch(self, p):
@@ -252,7 +224,6 @@ class CoolParser:
         else:
             p[0] = DispatchNode(id_=p[1], expression=None, arguments=p[3], type_=None)
 
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_arguments_list(self, p):
@@ -281,28 +252,20 @@ class CoolParser:
         else:
             p[0] = DispatchNode(id_=p[1], expression=None, arguments=[], type_=None)
 
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
-    def p_expression_atom(self, p):
-        '''
-        expression : atom
-        '''
-        p[0] = p[1]
 
     def p_expression_new(self, p):
         '''
-        atom : NEW TYPE
+        expression : NEW TYPE
         '''
         p[0] = NewNode(var=p[2])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_is_void(self, p):
         '''
-        atom : ISVOID expression
+        expression : ISVOID expression
         '''
         p[0] = IsVoidNode(expression=p[2])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_not(self, p):
@@ -310,7 +273,6 @@ class CoolParser:
         expression : NOT expression
         '''    
         p[0] = NotNode(expression=p[2])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_complement(self, p):
@@ -318,7 +280,6 @@ class CoolParser:
         expression : COMPL expression
         '''
         p[0] = ComplementNode(expression=p[2])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_plus(self, p):
@@ -326,7 +287,6 @@ class CoolParser:
         expression : expression PLUS expression
         '''
         p[0] = AdditionNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
 
     def p_expression_minus(self, p):
@@ -334,13 +294,11 @@ class CoolParser:
         expression : expression MINUS expression
         '''
         p[0] = SubtractionNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
 
     def p_expression_div(self, p):
         '''expression : expression DIV expression'''
         p[0] = DivisionNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_star(self, p):
@@ -348,7 +306,6 @@ class CoolParser:
         expression : expression STAR expression
         '''
         p[0] = MultiplicationNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
 
     def p_expression_less(self, p):
@@ -356,7 +313,6 @@ class CoolParser:
         expression : expression LESS expression
         '''
         p[0] = LessNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_lesseq(self, p):
@@ -364,7 +320,6 @@ class CoolParser:
         expression : expression LESSEQ expression
         '''
         p[0] = LessEqualNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_equals(self, p):
@@ -372,7 +327,6 @@ class CoolParser:
         expression : expression EQUAL expression
         '''
         p[0] = EqualNode(left=p[1], right=p[3])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
 
     def p_expression_parentheses(self, p):
@@ -383,55 +337,43 @@ class CoolParser:
 
     def p_expression_string(self, p):
         '''
-        atom : STRING
+        expression : STRING
         '''
         p[0] = StringNode(p[1])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_variable(self, p):
         '''
-        atom : ID 
+        expression : ID 
         '''
         p[0] = VarNode(p[1])
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
 
 
     def p_expression_true(self, p):
         '''
-        atom : TRUE
+        expression : TRUE
         '''
         p[0] = BooleanNode(True)
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
         
     def p_expression_false(self, p):
         '''
-        atom : FALSE
+        expression : FALSE
         '''
         p[0] = BooleanNode(False)
-        # p[0].set_position(p.slice[1].line, p.slice[1].col)
         
         
     def p_expression_int(self, p):
         '''
-        atom : INT
+        expression : INT
         '''
         p[0] = IntNode(p[1])
-        
 
     def p_empty(self, p):
         '''
         empty :
         '''
         p[0] = []
-
-
-    # def p_error(self, t):
-    #     if t is None:
-    #         self.errors.append(SyntacticError(message='EOF', line=0, column=0))
-    #     else:
-    #         self.errors.append(SyntacticError(message=t.value, line=t.lineno, column=t.col))
 
     
     def p_error(self, p):

@@ -24,7 +24,7 @@ class DeclarationNode(Node):
 
 
 class ClassNode(DeclarationNode):
-    def __init__(self, id_, features, parent):
+    def __init__(self, id_, features, parent:None):
         Node.__init__(self)
         self.id = id_
         self.features = features
@@ -113,7 +113,7 @@ class BlockNode(ExpressionNode):
 
 
 class LetVariableNode(ExpressionNode):
-    def __init__(self, id_, type_, expression: ExpressionNode):
+    def __init__(self, id_, type_, expression: ExpressionNode=None):
         Node.__init__(self)
         self.id = id_
         self.type = type_

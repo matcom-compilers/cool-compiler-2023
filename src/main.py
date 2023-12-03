@@ -11,7 +11,12 @@ def main(_input, _output):
 
     # Lexer
     lexer = CoolLexer()
-    tokens = lexer.run(text)
+    tokens = lexer.tokenize(text)
+    # i = 0
+    # for t in tokens:
+    #     if i == 20: break
+    #     print(t)
+    #     i +=1
     # print(lexer.errors)
 
     # Parser
@@ -24,7 +29,8 @@ def main(_input, _output):
 
 
 if __name__ == "__main__":
-    in_path = 'tests/codegen/arith.cl'
+    # in_path = 'tests/codegen/arith.cl'
+    in_path = 'tests/codegen/book_list.cl'
     out_path = 'src/codeMips.mips'
     _input = sys.argv[1] if len(sys.argv) > 1 else in_path
     _output = sys.argv[2] if len(sys.argv) > 2 else out_path

@@ -1,289 +1,230 @@
-from ply import lex
-from sympy import true
+from sqlalchemy import column
 from errors import LexicographicError
+from ply import lex
 from utils import tokens, keywords, literals
 
-
 class CoolLexer:
-    def __init__(self):
-        self.keywords = keywords
-        self.tokens = tokens
-        self.literals = literals
-
-        self.states = (('comment', 'exclusive'), ('string', 'exclusive'))
-
+    def __init__(self) -> None:
         self.errors = []
+        
+        self.tokens = tokens
+        self.states = (('comment', 'exclusive'), ('string', 'exclusive'))
 
         self.lexer = lex.lex(module=self)
         self.lexer.col = 1
-        self.lexer.lineno = 1
-        self.lexer.linestart = 0
-
-
-    def compute_column(self, t):
-        t.column = t.lexpos - t.lexer.linestart + 1
-
 
     def tokenize(self, data):
-        self._lexer.input(data)
+        self.lexer.input(data)
         while True:
-            token = self._lexer.token()
-            if not token:
+            tok = self.lexer.token()
+            if not tok:
                 break
-            yield token
+            yield tok
 
-    # #
-    
-    def t_AT(self, t):
-        r'@'
-        self.compute_column(t)
-        return t
-
-    def t_COLON(self, t):
-        r':'
-        self.compute_column(t)
-        return t
-    
-    def t_SEMICOLON(self, t):
-        r';'
-        self.compute_column(t)
-        return t
-
-    def t_COMMA(self, t):
-        r','
-        self.compute_column(t)
-        return t
-
-    def t_DOT(self, t):
-        r'\.'
-        self.compute_column(t)
-        return t
-
-    def t_LPAREN(self, t):
-        r'\('
-        self.compute_column(t)
-        return t
-
-    def t_RPAREN(self, t):
-        r'\)'
-        self.compute_column(t)
-        return t
-    
-    def t_LBRACE(self, t):
-        r'\{'
-        self.compute_column(t)
-        return t
-
-    def t_RBRACE(self, t):
-        r'\}'
-        self.compute_column(t)
-        return t
-        
-    def t_PLUS(self, t):
-        r'\+'
-        self.compute_column(t)
-        return t
-
-    def t_MINUS(self, t):
-        r'-'
-        self.compute_column(t)
-        return t
-
-    def t_STAR(self, t):
-        r'\*'
-        self.compute_column(t)
-        return t
-
-    def t_DIV(self, t):
-        r'/'
-        self.compute_column(t)
-        return t
-
-    def t_COMPL(self, t):
-        r"\~"
-        self.compute_column(t)
-        return t    
-    
-    def t_EQUAL(self, t):
-        r'='
-        self.compute_column(t)
-        return t
-
-    def t_LESS(self, t):
-        r'<'
-        self.compute_column(t)
-        return t
+    def pos(self, token):
+        token.col = token.lexer.col
+        token.line = token.lexer.lineno
+        token.lexer.col += len(token.value)
 
     def t_LESSEQ(self, t):
         r'\<='
-        self.compute_column(t)
+        self.pos(t)
         return t
 
     def t_ASSIGN(self, t):
         r'\<-'
-        self.compute_column(t)
+        self.pos(t)
         return t
-    
+
     def t_ARROW(self, t):
         r'\=>'
-        self.compute_column(t)
+        self.pos(t)
         return t
-    
+
     def t_TYPE(self, t):
         r'[A-Z][a-zA-Z_0-9]*'
-        t.type = self.keywords.get(t.value.lower(), 'TYPE')
-        self.compute_column(t)
+        self.pos(t)
+        t.type = keywords.get( t.value.lower(), 'TYPE')
         return t
-    
+
     def t_ID(self, t):
         r'[a-z][a-zA-Z_0-9]*'
-        t.type = self.keywords.get(t.value.lower(), 'ID')
-        self.compute_column(t)
+        self.pos(t)
+        t.type = keywords.get(t.value.lower(), 'ID')
         return t
-    
+
     def t_INT(self, t):
         r'\d+'
+        self.pos(t)
         t.value = int(t.value)
-        self.compute_column(t)
         return t
 
-    # Comments #
-
-    def t_comment_(self, t):
-        r'--.*($|\n)'
-        self.compute_column(t)
-        t.lexer.lineno += 1
-        t.lexer.linestart = t.lexer.lexpos
-    
-    def t_comment(self, t):
-        r'\(\*'
-        self.compute_column(t)
-        t.lexer.level = 1
-        t.lexer.begin('comment')
-
-    def t_comments_open(self, t):
-        r'\(\*'
-        self.compute_column(t)
-        t.lexer.level += 1
-
-    def t_comments_close(self, t):
-        r'\*\)'
-        self.compute_column(t)
-        t.lexer.level -= 1
-        if t.lexer.level == 0:
-            t.lexer.begin('INITIAL')
-
-    # t_comments_ignore = '  \t\f\r\t\v'
-
-    
-    def t_comment_error(self, t):
-        t.lexer.skip(1)
-
-    # def t_comments_eof(self, t):
-    #     self.compute_column(t)
-    #     if t.lexer.level > 0:
-    #         self.eof_comment = True
-            
-    # def t_comments_error(self, t):
-    #     t.lexer.skip(1)
-
-    # def t_comments_eof(self, t):
-    #     self.compute_column(t)
-    #     if t.lexer.level > 0:
-    #         self.errors.append(LexicographicError(message=
-    #             'EOF in comment', line=t.lineno, column=t.column))
-
-    ## 
-
-    # Strings #
+    def t_ignore_COMMENT_LINE(self, t):
+        r'(--.*(\n | $))'
 
     def t_string(self, t):
-        r'\''
-        t.lexer.string_start = t.lexer.lexpos
-        t.lexer.string = ''
-        t.lexer.backslash = False
+        r'"'
         t.lexer.begin('string')
 
     def t_string_end(self, t):
         r'(?<!\\)"'
-        self.compute_column(t)
-
-        if t.lexer.backslash:
-            t.lexer.string += '\''
-            t.lexer.backslash = False
-        else:
-            t.value = t.lexer.string
-            t.type = 'STRING'
-            t.lexer.begin('INITIAL')
-        
-            return t
-        
-    
-    def t_strings_newline(self, t):
-        r'\n'
-        t.lexer.lineno += 1
-        self.compute_column(t)
-
-        t.lexer.linestart = t.lexer.lexpos
-
         t.lexer.begin('INITIAL')
+        t.type = 'STRING'
+        for index, char in enumerate(t.value):
+            if char == '\0':
+                null_col = t.col + index
+                null_line = t.line
+                self.errors.append(
+                    LexicographicError(line=null_line, column=null_col, message='NULL CHARACTER')
+                )
+        t.value = t.value[1:-1]
+        return t
 
-    def t_strings_nill(self, t):
-        r'\0'
-        self.compute_column(t)
-        self.errors.append(LexicographicError(message=
-            'Null caracter in string', line=t.lineno, column=t.column))
+    def t_string_space(self, t):
+        r'\s'
 
-    # def t_strings_consume(self, t):
-    #     r'[^\n]'
+    def t_string_pass(self, t):
+        r'.'
 
-    #     if t.lexer.backslash:
-    #         if t.value == 'b':
-    #             t.lexer.string += '\b'
-    #         elif t.value == 't':
-    #             t.lexer.string += '\t'
-    #         elif t.value == 'f':
-    #             t.lexer.string += '\f'
-    #         elif t.value == 'n':
-    #             t.lexer.string += '\n'
-    #         elif t.value == '\\':
-    #             t.lexer.string += '\\'
-    #         else:
-    #             t.lexer.string += t.value
+    def t_comment(self, t):
+        r'\(\*'
+        t.lexer.comm_start = t.lexer.lexpos - 2
+        t.lexer.level = 1
+        t.lexer.begin('comment')
 
-    #         t.lexer.backslash = False
-    #     else:
-    #         if t.value != '\\':
-    #             t.lexer.string += t.value
-    #         else:
-    #             t.lexer.backslash = True
+    def t_comment_lcomment(self, t):
+        r'\(\*'
+        t.lexer.level += 1
 
-    def t_string_error(self, t):
-        pass
+    def t_comment_rcomment(self, t):
+        r'\*\)'
+        t.lexer.level -= 1
+        if t.lexer.level == 0:
+            t.value = t.lexer.lexdata[t.lexer.comm_start : t.lexer.lexpos]
+            t.type = 'COMMENT_LINE'
+            t.lexer.lineno += t.value.count('\n')
+            t.lexer.begin('INITIAL')
 
-    # def t_strings_eof(self, t):
-    #     self.compute_column(t)
-    #     self.errors.append(LexicographicError(message=
-    #         'EOF in string constant', line=t.lineno, column=t.column))
-
-    ##
+    def t_comment_pass(self, t):
+        r'.|\n'
+        self._end_comment = False
+        if t.value == '\n':
+            t.lexer.lineno += 1
+            t.lexer.col = 1
+        else:
+            t.lexer.col += len(t.value)
 
     def t_newline(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
-        t.lexer.linestart = t.lexer.lexpos
+        t.lexer.col = 1
 
-    def t_error(self, t):
-        self.compute_column(t)
-        self.errors.append(LexicographicError(message=
-            f'ERROR \'{t.value[0]}\'', line=t.lineno, column=t.column))
+    def t_WHITESPACE(self, t):
+        r'\s'
+        if t.value == '\t':
+            t.lexer.col += 4
+        else:
+            t.lexer.col += len(t.value)
+
+    def t_PLUS(self, t):
+        r'\+'
+        t.type = 'PLUS'
+        self.pos(t)
+        return t
+
+    def t_MINUS(self, t):
+        r'-'
+        t.type = 'MINUS'
+        self.pos(t)
+        return t
+
+    def t_STAR(self, t):
+        r'\*'
+        t.type = 'STAR'
+        self.pos(t)
+        return t
+
+    def t_DIV(self, t):
+        r'/'
+        t.type = 'DIV'
+        self.pos(t)
+        return t
+
+    def t_COMPL(self, t):
+        r'~'
+        t.type = 'COMPL'
+        self.pos(t)
+        return t
+
+    def t_EQUAL(self, t):
+        r'='
+        t.type = 'EQUAL'
+        self.pos(t)
+        return t
+
+    def t_LESS(self, t):
+        r'<'
+        t.type = 'LESS'
+        self.pos(t)
+        return t
+
+    def t_COLON(self, t):
+        r':'
+        t.type = 'COLON'
+        self.pos(t)
+        return t
+
+    def t_LBRACE(self, t):
+        r'\{'
+        t.type = 'LBRACE'
+        self.pos(t)
+        return t
+
+    def t_RBRACE(self, t):
+        r'\}'
+        t.type = 'RBRACE'
+        self.pos(t)
+        return t
+
+    def t_AT(self, t):
+        r'@'
+        t.type = 'AT'
+        self.pos(t)
+        return t
+
+    def t_COMMA(self, t):
+        r','
+        t.type = 'COMMA'
+        self.pos(t)
+        return t
+
+    def t_DOT(self, t):
+        r'\.'
+        t.type = 'DOT'
+        self.pos(t)
+        return t
+
+    def t_LPAREN(self, t):
+        r'\('
+        t.type = 'LPAREN'
+        self.pos(t)
+        return t
+
+    def t_RPAREN(self, t):
+        r'\)'
+        t.type = 'RPAREN'
+        self.pos(t)
+        return t
+
+    def t_SEMICOLON(self, t):
+        r';'
+        t.type = 'SEMICOLON'
+        self.pos(t)
+        return t
+
+    def t_ANY_error(self, t):
+        self.pos(t)
+        line = t.lineno
+        col = t.col
+        self.errors.append(LexicographicError(line=line, column=col, message=t.value[0]))
         t.lexer.skip(1)
-
-    def run(self, text):
-        _tokens = self.tokenize(text)
-        if self.errors:
-            for error in self.errors:
-                print(error)
-            raise Exception()
-
-        return _tokens
