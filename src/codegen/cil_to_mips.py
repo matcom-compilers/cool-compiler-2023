@@ -660,9 +660,7 @@ class CILVisitor(Visitor):
             )
 
         else:
-            sys_code = SYSCALL_READ_INT
-
-            instructions.append(mips.LoadImmediateNode(V0_REG, sys_code))
+            instructions.append(mips.LoadImmediateNode(V0_REG, SYSCALL_READ_INT))
             instructions.append(mips.SyscallNode())
             instructions.append(
                 mips.StoreWordNode(
@@ -802,13 +800,13 @@ class CILVisitor(Visitor):
             mips.LoadWordNode(reg2, mips.MemoryAddressRegisterNode(FP_REG, left_dir))
         )
 
-        instructions.append(mips.DivideNode(reg1, reg2))
+        instructions.append(mips.DivideNode(reg2, reg1))
 
         dest_dir = self.search_mem(node.dest)
-        instructions.append(mips.MoveFromLoNode(reg1))
+        instructions.append(mips.MoveFromLoNode(reg2))
         instructions.append(
             mips.StoreWordNode(
-                reg1,
+                reg2,
                 mips.MemoryAddressRegisterNode(FP_REG, dest_dir),
             )
         )

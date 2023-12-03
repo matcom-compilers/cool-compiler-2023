@@ -58,7 +58,7 @@ class MipsCodeGenerator(Visitor):
 
     def visit__DivideNode(self, node: mips.DivideNode, *args, **kwargs):
         return (
-            f"mult {node.rs.accept(self)}, {node.rt.accept(self)}"
+            f"div {node.rs.accept(self)}, {node.rt.accept(self)}"
             + "\t# "
             + node.comment
         )
