@@ -1,0 +1,11 @@
+"This is \
+ok and \
+super ok"
+
+"this sting \
+does not \
+end
+
+"This is
+not Ok \
+and very bad"
