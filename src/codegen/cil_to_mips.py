@@ -1415,12 +1415,16 @@ class CILVisitor(Visitor):
         return instructions
 
     def visit__RuntimeErrorNode(self, node: cil.RuntimeErrorNode, *args, **kwargs):
-        # TODO  Print Error
-        instructions = []
-        instructions.append(
-            mips.LoadImmediateNode(V0_REG, 10, comment="Store syscall for exit")
-        )  # exit syscall
-        instructions.append(mips.SyscallNode(comment="Exit"))
+        instructions = [
+            mips.LoadAddressNode(A0_REG, mips.LabelNode(node.msg)),
+            mips.LoadImmediateNode(V0_REG, SYSCALL_PRINT_STRING),
+            mips.SyscallNode(),
+            mips.LoadImmediateNode(
+                V0_REG, SYSCALL_EXIT, comment="Store syscall for exit"
+            ),
+            mips.SyscallNode(comment="Exit"),
+        ]
+
         return instructions
 
     def get_loop_count(self):
