@@ -212,7 +212,7 @@ class TypeChecker(Visitor):
             if arg_type == SelfType():
                 arg_type = self.current_type
 
-            if not param_type.conforms_to(arg_type):
+            if not arg_type.conforms_to(param_type):
                 self.error(
                     f"TypeError: Type mismatch in argument of method '{method_name}'. Expected type '{param_type.name}', found type '{arg_type.name}'",
                     location=node.location,
@@ -524,9 +524,9 @@ class TypeChecker(Visitor):
             if arg_type == SelfType():
                 arg_type = self.current_type
 
-            if not param_type.conforms_to(arg_type):
+            if not arg_type.conforms_to(param_type):
                 self.error(
-                    f"TypeError: Type mismatch in argument of method '{method_name}'. Expected type '{param_type.name}', found type '{arg_type.name}'",
+                    f"TypeError: Type mismatch in argument of method '{method_name}' (MethodCall). Expected type '{param_type.name}', found type '{arg_type.name}'",
                     location=node.location,
                     type="Dispatch",
                     value=f"{method_name}",
