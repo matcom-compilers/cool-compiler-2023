@@ -523,6 +523,4 @@ No se implemento manejo de memoria.
   correspondiente a los argumentos pasados.
   
   El objeto cadena posee dos atributos: la longitud de la cadena y una referencia a los caracteres. Para mantener las cadenas(string) como tipos por valor se crea un objeto que tiene una copia referenciando al carácter vacío("). Para copiar de una cadena a otra se hace un llamado al sistema para reservar memoria para del tamaño de la cadena(no del objeto cadena), es decir, la cantidad de caracteres de la cadena. A la memoria reservada se copia caracter a caracter de una posición a la otra y se crea una nueva instancia de cadena que apunta a ese espacio en memoria creado. Para comparar dos cadenas, no se comparan las referencias, se toman las referencias que apuntan a los caracteres de ambas cadenas y se comparan los caracteres byte a byte. Para entrar se usa un buffer, que es una dirección en memoria reservada para las entradas, se recorre el buffer hasta el encontrar caracter de salto de línea o el de fin de cadena, de esta forma conocemos la longitud de la cadena y se realiza el mismo que para copiar una cadena.
-  Mucho nodos son importantes entre ellos los que corresponden a la entrada y salida, a
-  las operaciones sobre cadenas, y operaciones lógicas y aritméticas, estos llevan más
-  trabajo con la lógica de MIPS que no consideramos necesario de abordar.
+  
