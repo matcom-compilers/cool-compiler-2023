@@ -169,20 +169,20 @@ El parser también está equipado para manejar errores sintácticos. Mediante el
 
 En resumen, el módulo de análisis sintáctico de IceBox es un componente que transforma una secuencia lineal de tokens en una estructura de árbol que refleja la jerarquía y la estructura del código fuente COOL. Este proceso no solo implica seguir las reglas gramaticales del lenguaje, sino también manejar la complejidad de las distintas construcciones sintácticas y proporcionar una base sólida para el análisis semántico y la generación de código.
 
-### Análisis Semántico en el Compilador IceBox para COOL
+### Análisis Semántico
 
 El análisis semántico es una fase crítica en la compilación del lenguaje COOL, donde se verifica la correcta aplicación de las reglas semánticas del lenguaje. Esta fase asegura que el programa no solo esté sintácticamente correcto, sino que también sea lógicamente coherente.
 
 #### Estructura y Procedimiento
 
-1. **Preparación**: Antes de comenzar el análisis, se prepara un contexto (`Context`) que actúa como un diccionario de todos los tipos (clases) definidos en el programa. Este contexto se enriquece con tipos incorporados como `Object`, `Int`, `String`, `Bool`, etc.
+1. **Preparación**: Antes de comenzar el análisis, se prepara un contexto (`Context`) que actúa como un diccionario de todos los tipos (clases) definidos en el programa. Este contexto se enriquece con tipos incorporados como `Object`, `Int`, `String`, `Bool`, `IO`.
 
-2. **Recorridos por el AST**: Se realizan tres recorridos principales sobre el AST (Árbol de Sintaxis Abstracta), obtenido tras el análisis sintáctico:
+2. **Recorridos por el AST**: Se realizan tres recorridos principales sobre el AST, obtenido tras el análisis sintáctico:
    - **Recolección de Tipos**: Utilizando `TypeCollector`, se recolectan todos los tipos definidos en el programa, incluidas las clases definidas por el usuario. Cada tipo se almacena en el contexto.
    - **Construcción de Tipos**: El `TypeBuilder` procesa cada tipo recolectado, definiendo sus atributos y métodos. Aquí se realizan comprobaciones como la no redefinición de atributos heredados y la coherencia en la definición y sobreescritura de métodos.
-   - **Chequeo de Tipos**: Por último, `TypeChecker` realiza la verificación de tipos en todas las expresiones y estructuras del programa. Se asegura que las operaciones, asignaciones y llamadas a métodos sean coherentes con los tipos de los elementos involucrados.
+   - **Chequeo de Tipos**: Por último, `TypeChecker` realiza la verificación de tipos en todas las expresiones y estructuras del programa. Se asegura que las operaciones, asignaciones y llamadas a métodos sean coherentes con los tipos de los elementos involucrados. Además computa y almacena el tipo estático de cada expresión.
 
-### Detalle del Análisis Semántico en el Compilador IceBox: TypeCollector, TypeBuilder y TypeChecker
+### Detalle del Análisis Semántico: TypeCollector, TypeBuilder y TypeChecker
 
 #### 1. TypeCollector
 
@@ -198,7 +198,7 @@ El `TypeCollector` es responsable de la primera fase de análisis semántico, do
 
 El `TypeBuilder` construye la estructura interna de cada tipo identificado por el `TypeCollector`, definiendo atributos y métodos, y asegurando la correcta aplicación de las reglas de herencia.
 
-- **Funcionamiento**: Recorre cada `Type` recolectado, definiendo sus atributos y métodos. Gestiona las relaciones de herencia y asegura la coherencia en la definición de tipos.
+- **Funcionamiento**: Recorre el AST hasta los `ClassNode`, por cada `Type` recolectado, definine sus atributos y métodos. Gestiona las relaciones de herencia y asegura la coherencia en la definición de tipos.
 - **Manejo de Errores**:
   - Herencia de Tipos No Definidos: Reporta errores si una clase hereda de una clase no definida o inexistente.
   - Herencia de Tipos Reservados: Reporta errores si una clase intenta heredar de tipos reservados como `Int`, `Bool`, `String` o `SELF_TYPE`.
@@ -216,8 +216,6 @@ El `TypeChecker` es la última fase del análisis semántico, donde se verifica 
   - Llamadas a Métodos Incorrectas: Reporta errores si se llama a un método que no existe en el tipo dado o si los tipos de los argumentos no son compatibles.
   - Uso Incorrecto en Estructuras de Control: Reporta errores si las expresiones en estructuras de control como `if` o `while` no son de tipo `Bool`.
   - Uso Incorrecto de `self`: Reporta errores si se utiliza incorrectamente la palabra reservada `self` en el programa.
-
-#### Conclusión
 
 Estas tres fases del análisis semántico - TypeCollector, TypeBuilder y TypeChecker - forman una secuencia lógica y rigurosa para asegurar la correcta aplicación de las reglas semánticas del lenguaje COOL. Cada fase tiene su responsabilidad específica y un conjunto de errores que maneja, garantizando así que el programa resultante no solo sea sintácticamente correcto sino también semánticamente coherente, listo para la generación de código.
 
@@ -238,7 +236,7 @@ La generación de código en CIL implica convertir las estructuras complejas y l
 
 ### Traducción de COOL a CIL en IceBox
 
-El proceso de traducir COOL a CIL (Class Intermediate Language) en IceBox implica varios pasos detallados y funciones específicas. Aquí se detalla cada parte de este proceso:
+El proceso de traducir COOL a CIL implica varios pasos detallados y funciones específicas. Aquí se detalla cada parte de este proceso:
 
 #### Configuración Inicial y Funciones Auxiliares
 
@@ -264,7 +262,7 @@ El proceso de traducir COOL a CIL (Class Intermediate Language) en IceBox implic
 - **Control de Flujo (`visit__IfNode` y `visit__WhileNode`)**: Se traducen estructuras de control como `if` y `while` a sus equivalentes en CIL, utilizando etiquetas y saltos condicionales.
 - **Let (`visit__LetNode`)**: Se maneja la declaración de variables locales con posibles inicializaciones.
 - **Operadores Binarios (`visit__BinaryOperatorNode`)**: Se convierten operaciones binarias (como suma, resta, comparaciones) a instrucciones CIL.
-- **Booleanos, Enteros y Cadenas (`visit__BooleanNode`, `visit__IntegerNode`, `visit__StringNode`)**: Se cargan valores literales directamente en CIL.
+- **Booleanos, Enteros y Cadenas (`visit__BooleanNode`, `visit__IntegerNode`, `visit__StringNode`)**: Se cargan valores literales directamente en CIL. Las cadenas se añaden a la sección DATA.
 - **Negación y Complemento (`visit__NotNode`, `visit__PrimeNode`)**: Se manejan operaciones unarias como la negación y el complemento.
 - **Case (`visit__CaseNode`)**: Se implementa la lógica para la expresión `case`, manejando la selección dinámica de ramas en tiempo de ejecución.
 
@@ -277,7 +275,7 @@ Este proceso detallado asegura una traducción precisa y eficiente del código C
 
 ### De CIL a MIPS
 
-El proceso de conversión de CIL a MIPS representa una etapa fundamental en la compilación de lenguajes de programación como COOL. Esta fase consiste en traducir el Abstract Syntax Tree (AST) de CIL a un AST de MIPS, un lenguaje de bajo nivel más cercano al hardware. El objetivo es generar un código que pueda ser ejecutado por un emulador de SPIM, una versión del procesador MIPS.
+Esta fase consiste en traducir el Abstract Syntax Tree (AST) de CIL a un AST de MIPS, un lenguaje de bajo nivel más cercano al hardware. El objetivo es generar un código que pueda ser ejecutado por un emulador de SPIM, una versión del procesador MIPS.
 
 #### Estructura y Representación en Memoria
 
@@ -333,10 +331,6 @@ El TypeOf es una operación crucial que determina el tipo dinámico de un objeto
 
 El manejo del input, especialmente para cadenas, implica leer datos del buffer de entrada y almacenarlos en una ubicación de memoria asignada dinámicamente. Esta operación asegura que las entradas del usuario se manejen de manera eficiente y segura.
 
-#### Manejo del Tipo Void y los Tipos VOID
-
-En CIL, el tipo `Void` representa una ausencia de valor. En MIPS, se maneja asignando una dirección de memoria especial que simboliza `Void`. Esto es crucial para operaciones condicionales y el manejo de métodos que no devuelven un valor.
-
 #### Stack y Frame Pointer
 
 En MIPS, el stack es una estructura de datos tipo LIFO (Last In, First Out) utilizada para almacenar información temporal durante la ejecución de un programa. El stack pointer (`SP_REG`) apunta a la parte superior del stack. El frame pointer (`FP_REG`), por otro lado, se usa para mantener un punto de referencia constante al inicio de un frame de función, facilitando el acceso a variables locales y argumentos.
@@ -385,7 +379,7 @@ Este proceso asegura que cada función tenga su propio espacio de trabajo en el 
 
 ##### 3. Traducción de Instrucciones Específicas
 
-- **Asignaciones, Operaciones Aritméticas, y Control de Flujo**: Instrucciones como `AssignNode`, `PlusNode`, `MinusNode`, `GotoNode`, etc., son traducidas a sus equivalentes en MIPS. Esto incluye manejo de operaciones aritméticas y de control de flujo.
+- **Asignaciones, Operaciones Aritméticas, y Control de Flujo**: Instrucciones como `AssignNode`, `PlusNode`, `MinusNode`, `GotoNode`, etc., son traducidas a un conjunto de instrucciones equivalentes en MIPS. Esto incluye manejo de operaciones aritméticas y de control de flujo.
 - **Manejo de Cadenas y Entrada/Salida**: Procesos para operaciones con cadenas (`LoadNode`, `ConcatNode`, `SubstringNode`) y E/S (`PrintNode`, `ReadNode`) que implican interacciones más complejas con la memoria y llamadas al sistema.
 
 ##### 4. Procedimientos Especiales
