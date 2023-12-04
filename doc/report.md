@@ -3,7 +3,7 @@
 - Darío Fragas González C411
 - Abraham González Rivero C412
 
-### 1. Detalles técnicos
+## 1. Detalles técnicos
 
 A continuación se describe como compilar un código dado en COOL a MIPS. Ejecute:
 
@@ -63,117 +63,45 @@ Estructura y organización de los directorios del proyecto a partir de la carpet
 ├── Readme.md
 ```
 
-### 2. Arquitectura del Compilador
+## 2. Arquitectura del Compilador:
 
-El desarrollo del proyecto se dividió en 3 módulos principales: codegen, parsing y semantic.
+IceBox Compiler, diseñado para traducir código escrito en COOL (Classroom Object-Oriented Language) a MIPS (Microprocessor without Interlocked Pipeline Stages), se estructura en tres módulos fundamentales: parsing, semantic y codegen. Cada uno de estos módulos encapsula una fase crítica en el proceso de compilación, abordando desafíos únicos inherentes a la traducción y optimización del código fuente.
 
-#### Análisis lexicográfico
+### Análisis Lexicográfico
 
-**Análisis léxico**
-Este proceso se realiza en _lex.py_.
-Proceso que comienza con el análisis de código de cool que se desea compilar, su función
-principal es convertir la cadena de caracteres en una cadena de token. Los token son la
-primera abstracción que se le aplica al código, estos son subcadenas que son
-lexicográficamente significativas y según este significado se les asigna un tipo (literal,
-keyword, type, identificador, number, string, etc).
+El análisis léxico, implementado en `lex.py`, juega un papel crucial en el proceso de compilación del lenguaje COOL. Esta etapa transforma una secuencia lineal de caracteres en una secuencia de tokens, que son las unidades fundamentales de significado en el lenguaje. Los tokens pueden ser literales, palabras clave, identificadores, números, cadenas, entre otros.
 
-El lexer se auxilia de la clase _CharacterStream_ para manipular la cadena:
+##### La Clase `CharacterStream`
 
-```python
-class CharacterStream:
-    def __init__(self, source_code: str):(...)
+Esta clase es esencial en el proceso de tokenización, ya que permite una manipulación detallada y eficiente de la cadena de caracteres del código fuente. Con métodos como `next_char()` y `peek_char()`, ofrece la capacidad de avanzar en la cadena y observar el siguiente carácter sin consumirlo, respectivamente. El método `get_position()` devuelve la posición actual en la cadena (línea y columna), lo cual es crucial para la generación de mensajes de error significativos y precisos. La función `reset()` reinicia el estado interno del objeto para un nuevo análisis, lo que es especialmente útil en múltiples pasadas o reanálisis del código fuente.
 
-    def next_char(self) -> Optional[str]:(...)
+##### Clasificación de Tokens
 
-    def peek_char(self) -> Optional[str]:(...)
+La enumeración `TokenType` define los tipos de tokens que el lexer puede identificar. Esto incluye identificadores de objetos, constantes enteras, constantes de cadena, diferentes símbolos y operadores (punto, coma, dos puntos, etc.), así como tokens especiales como comentarios de una línea y de múltiples líneas, y el fin de archivo (EOF).
 
-    def get_position(self)-> CharPosition:(...)
+La clase `Token` representa un token individual con tres propiedades críticas: tipo, valor y posición. Esto permite no solo identificar la naturaleza del token, sino también su valor específico y su ubicación en el código fuente, elementos esenciales para el análisis y la depuración.
 
-    def reset(self):(...)
-```
+##### Implementación del Lexer
 
-Esta clase ofrece herramientas para manipular la cadena como: obtener el próximo carácter de la cadena, obtener la posición,línea y columna, en que se encuentra el carácter, étc.
+El `Lexer` es el motor principal de esta fase. Se inicializa con una instancia de `CharacterStream`, y se encarga de procesar esta secuencia de caracteres para producir tokens. El método `fetch_token()` es responsable de la lógica de tokenización: identifica el tipo de token basado en el carácter actual y, en algunos casos, en el siguiente carácter (lookahead).
 
-En la clase _TokenType_ se definen todos los tipos de token que pudieran encontrarse en la cadena:
+El lexer maneja diferentes categorías de tokens:
 
-```python
-class TokenType(Enum):
-    OBJECTID = "OBJECTID"
-    INT_CONST = "INT_CONST"
-    STRING_CONST = "STRING_CONST"
-    DOT = "DOT"
-    COMMA = "COMMA"
-    COLON = "COLON"
-    SEMICOLON = "SEMICOLON"
-    AT = "AT"
-    (...)
-    EOF = "EOF"
-```
+- Identificadores y palabras clave: detecta secuencias de caracteres alfabéticos, diferenciando las palabras clave de los identificadores.
+- Números: captura secuencias numéricas.
+- Cadenas: maneja cadenas entre comillas, incluyendo el escape de caracteres especiales.
+- Comentarios: identifica y omite comentarios de una línea y de múltiples líneas.
+- Operadores y puntuación: reconoce símbolos y operadores específicos del lenguaje COOL.
 
-Para representar un token se define la clase _Token_ que posee un valor, un tipo y la posición en que se encuentra el token.
+Durante el proceso de tokenización, el lexer también lleva un registro de errores, como cadenas sin cerrar, caracteres nulos en cadenas o EOF inesperado en comentarios. Esto es crucial para proporcionar retroalimentación detallada y útil durante la depuración y la corrección de errores en el código fuente.
 
-```python
- def __init__(self, type, value, position):
-        self.type = type
-        self.value = value
-        self.position = position
-        log.debug(
-            f"Created Token:",
-            extra={"type": type, "location":          position,"value": value},
-        )
-```
+Finalmente, el método `lex()` coordina el proceso de tokenización, llamando repetidamente a `fetch_token()` hasta que se alcanza el final de la cadena de entrada, y devolviendo una lista de tokens junto con cualquier error encontrado.
 
-La clase _Lexer_ se encarga de la tokenización de la cadena. Se inicializa recibiendo una cadena, la cual convierte a un _CharacterStream_, explicado anteriormente. Posee además un conjunto de keywords que se mapean a tokens y una lista de errores. La tokenización se realiza en el método _lex_ el cual va consumiendo los caracteres de la cadena llamando al método _fetch_token_ quien va realizando la validación de los caracteres y armando los tokens. Si un error es detectado se reporta pero se continua la ejecución. El proceso de tokenización se realiza en $O(|w|)$ donde $|w|$ es la longitud de la cadena.
+En resumen, el módulo de análisis léxico de IceBox es un sistema refinado y robusto, diseñado para descomponer eficientemente el código fuente en COOL en tokens significativos, preparándolos para las etapas subsiguientes de análisis sintáctico y semántico. La implementación refleja una consideración cuidadosa de los aspectos prácticos y teóricos del análisis léxico, asegurando precisión, eficiencia y una sólida base para el proceso de compilación.
 
-```python
- class Lexer:
-    def __init__(self, stream):
-      (...)
+### Análisis Sintáctico:
 
-    def error(self, message, position: Optional[CharPosition] = None):
-      (...)
-
-    def fetch_token(self):
-      (...)
-
-    def lex(self):
-      (...)
-```
-
-**Análisis sintáctico**
-
-El proceso de parsing se realiza en _parser.py_. La clase Parser se encarga de realizar esta tarea. Nuestra implementación se inicializa al recibir una lista de tokens.
-
-La definición de los nodos del _AST_(árbol de sintaxis abstracta) se encuentra implementada en _ast.py_. Todo nodo posee un valor, un tipo y una posición e implementan el patrón visitable, con el método _accept_ que permite a un visitor visitar el nodo. Se muestran algunos nodos como ejemplo:
-
-```python
-    class ProgramNode(Node):
-    def __init__(self, classes, location):
-        self.classes: List[ClassNode] = classes
-        super().__init__(location)
-
-    def __str__(self) -> str:
-        return "\n".join(str(c) for c in self.classes)
-
-    class FeatureNode(Node):
-    def __init__(self, location):
-        super().__init__(location)
-
-    class AttributeNode(FeatureNode):
-    def __init__(self, name, attr_type, init: "ExpressionNode", location):
-        super().__init__(location)
-        self.name = name
-        self.attr_type = attr_type
-        self.init = init
-```
-
-Para parsear se utiliza el método _parse_. En este se origina el árbol de sintaxis abstracta. El parser construye los distintos nodos en profundidad, o sea , primero los hijos y luego el padre. Por ejemplo, para construir el nodo _Program_, raíz del _AST_ de _COOL_, ya se deben haber construido todos los nodos Class. Un programa de _COOL_
-consiste en una serie de definiciones de clases. Cada
-clase a su vez posee un conjunto de atributos y de funciones. Las expresiones que pueden formar
-parte de
-dichas funciones son el corazón del lenguaje.
-Cada nodo conoce sus posibles reglas de derivación y como evitar errores de desambiguación entre las producciones a la hora de determinar que producción aplicar. El método _eat_ se encarga de consumir el token y validar que cumpla con los requisitos de la producción en cuestión. El _parsing_ se realiza en tiempo lineal gracias a que se tiene en cuenta la precedencia de operadores, reportando todos los errores que encuentra.
-Quedaría mejorar descartar _Tokens_, cuando se encuentra un error, hasta un nuevo punto estable, pues al encontrar un error surgen múltiples errores condicionados por el primero.
+El análisis sintáctico, llevado a cabo en `parser.py`, es un proceso crítico que transforma la secuencia de tokens generada por el análisis léxico en un Árbol de Sintaxis Abstracta (AST). Este proceso es fundamental en la compilación ya que establece la estructura jerárquica del programa, permitiendo su posterior análisis y optimización.
 
 **Producciones**
 
@@ -213,314 +141,257 @@ expr ::=ID <- expr
             |false
 ```
 
-**Análisis semántico**
+#### Creación y Estructura del AST
 
-El análisis semántico se realiza en el módulo _semantic_.En esta fase es donde se revisa que se cumplan todos los predicados semánticos que caracterizan
-al lenguaje _COOL_ y por tanto se revisa la consistencia y uso correcto de los tipos declarados.
-Para el chequeo semántico son necesarios tres recorridos sobre el _AST_ obtenido del proceso de _parsing_
-. La primera para recolectar los tipos para el contexto, la segunda para definir los
-atributos y métodos de cada tipo y la tercera para realizar el chequeo de tipos. Utilizando el
-patrón _Visitor_ es como realizamos los pertinentes recorridos por el _AST_.
+El AST, definido en `ast.py`, es una representación jerárquica del código fuente, donde cada nodo representa una construcción del lenguaje (como clases, métodos, expresiones). Estos nodos son diseñados para ser visitables (patrón Visitor), permitiendo operaciones posteriores sobre ellos. Por ejemplo, `ProgramNode` representa la raíz del AST y contiene una lista de `ClassNode`, cada uno representando una clase en COOL.
 
-La clase TypeCollector definida en \_type_collector.py_se verán solo las declaraciones de clases, para guardar todos los tipos definidos en el lenguaje.
+Cada nodo del AST almacena información crucial como su tipo, valor y posición en el código fuente. Esta información es vital para el análisis semántico y la generación de código.
 
-Para ellos nos apoyaremos de un contexto, clase _Context_ definida en _context.py_ y que funciona parecido a un diccionario, en el
-cual se guardaran los tipos de las clases a medida que las vamos visitando.
+#### Proceso de Parsing
 
-```python
-    class TypeCollector(Visitor):
-    def __init__(self) -> None:
-        self.context = None
-        self.errors = []
+El proceso de parsing inicia con la creación de una instancia de `Parser`, que toma como entrada la lista de tokens generada en la fase léxica. El parser procesa los tokens siguiendo las reglas gramaticales del lenguaje COOL y construye el AST correspondiente.
 
-    def error(self, message, location, type, value):
-      (...)
+- El método `parse()` coordina el proceso de parsing, invocando diferentes métodos para manejar las distintas construcciones del lenguaje.
+- `program()` y `parse_class()` manejan la creación de nodos para el programa completo y para cada clase, respectivamente.
+- `parse_feature()` se encarga de analizar las características de las clases, como atributos y métodos.
+- `parse_method()` y `parse_attribute()` son métodos específicos para analizar métodos y atributos dentro de las clases.
+- `parse_formals()` y `parse_formal()` manejan los argumentos formales de los métodos.
 
+El parser utiliza el método `eat()` para consumir tokens de la secuencia y avanzar en el análisis, asegurándose de que los tokens consumidos sigan la gramática del lenguaje.
 
-    def visit__ProgramNode(self, node: ProgramNode):
-      (...)
+#### Manejo de Expresiones
 
-    def visit__ClassNode(self, node: ClassNode):
-      (...)
+La complejidad del análisis sintáctico aumenta considerablemente al manejar expresiones. El método `parse_expression()` es un componente esencial en este proceso, encargándose de analizar expresiones aritméticas, lógicas, condicionales, bucles y asignaciones. Este método, junto con otros como `parse_if()`, `parse_while()`, `parse_let()`, `parse_case()`, entre otros, gestiona la complejidad inherente a las expresiones en COOL, construyendo la estructura jerárquica correspondiente en el AST.
 
-```
+#### Gestión de Errores
 
-Luego de realizar el recorrido y haber encontrado todos los tipos, se procede a ejecutar una
-segunda pasada por el _AST_. De esta tarea, se encarga el _TypeBuilder_ definido en _type_builder.py_. _TypeBuilder_ pasará por cada tipo encontrado para construirlo
-junto con sus atributos y métodos. A este visitor se le pasa el contexto generado por el _TypeCollector_.py
-. En este punto la tarea principal es la de visitar los atributos y métodos de los
-tipos y agregárselos, sin antes haber realizado algunas comprobaciones, como que no se definan
-atributos de tipos que no existen, o que se redefinan atributos de los padres o que existan
-múltiples atributos con el mismo nombre. Análisis semejantes son hechos con las funciones,
-impidiendo la creación de métodos ya existentes en una misma clase o funciones que son
-sobrescritas por herencia sigan teniendo la misma cantidad de argumentos y tipo de retorno.
-Para el caso de herencia se lanzan errores cuando se hereda de tipos que no existen. O de los tipos _Int_, _Bool_, _String_ y _Obj_ que no se permite.
+El parser también está equipado para manejar errores sintácticos. Mediante el registro y notificación de errores, proporciona retroalimentación útil para la depuración y corrección del código fuente. Esto es crucial para guiar a los desarrolladores en la resolución de problemas en sus programas.
 
-```python
-  class TypeBuilder(Visitor):
-    def __init__(self, context: Context, errors=None):
-      (...)
+En resumen, el módulo de análisis sintáctico de IceBox es un componente que transforma una secuencia lineal de tokens en una estructura de árbol que refleja la jerarquía y la estructura del código fuente COOL. Este proceso no solo implica seguir las reglas gramaticales del lenguaje, sino también manejar la complejidad de las distintas construcciones sintácticas y proporcionar una base sólida para el análisis semántico y la generación de código.
 
+### Análisis Semántico en el Compilador IceBox para COOL
 
-    def error(self, message, location, type, value):
-      (...)
+El análisis semántico es una fase crítica en la compilación del lenguaje COOL, donde se verifica la correcta aplicación de las reglas semánticas del lenguaje. Esta fase asegura que el programa no solo esté sintácticamente correcto, sino que también sea lógicamente coherente.
 
-    def visit__ProgramNode(self, node: ProgramNode):
-      (...)
+#### Estructura y Procedimiento
 
-    def visit__ClassNode(self, node: ClassNode):
-      (...)
+1. **Preparación**: Antes de comenzar el análisis, se prepara un contexto (`Context`) que actúa como un diccionario de todos los tipos (clases) definidos en el programa. Este contexto se enriquece con tipos incorporados como `Object`, `Int`, `String`, `Bool`, etc.
 
-    def visit__AttributeNode(self, node: AttributeNode):
-      (...)
+2. **Recorridos por el AST**: Se realizan tres recorridos principales sobre el AST (Árbol de Sintaxis Abstracta), obtenido tras el análisis sintáctico:
+   - **Recolección de Tipos**: Utilizando `TypeCollector`, se recolectan todos los tipos definidos en el programa, incluidas las clases definidas por el usuario. Cada tipo se almacena en el contexto.
+   - **Construcción de Tipos**: El `TypeBuilder` procesa cada tipo recolectado, definiendo sus atributos y métodos. Aquí se realizan comprobaciones como la no redefinición de atributos heredados y la coherencia en la definición y sobreescritura de métodos.
+   - **Chequeo de Tipos**: Por último, `TypeChecker` realiza la verificación de tipos en todas las expresiones y estructuras del programa. Se asegura que las operaciones, asignaciones y llamadas a métodos sean coherentes con los tipos de los elementos involucrados.
 
+### Detalle del Análisis Semántico en el Compilador IceBox: TypeCollector, TypeBuilder y TypeChecker
 
-    def visit__MethodNode(self, node: MethodNode):
-      (...)
-```
+#### 1. TypeCollector
 
-Finalmente en el último recorrido del _AST_ ,_TypeChecker_, definido en _type_checker.py_ ,se encarga de chequear todos los
-nodos del _AST_ cerciorándose de que cumplan con las reglas definidas para ellos además de computar los tipos de todas las expresiones. Por ejemplo en
-esta fase es donde resolvemos conflictos de realizar operaciones binarias sobre tipos que no lo
-permiten (ejemplo sumar dos _strings_ ). Otro de los análisis es que para trabajar con una variable
-en una clase, esta ha de estar definida, ya sea como atributo o como una variable dentro de un
-let, etc. Es por ello que es de vital importancia en este recorrido el uso de un _scope_, definido en _scope.py_ , este concepto
-permite conocer las variables que tenemos visibles en los diferentes niveles. Esto es de vital
-importancia pues cuando tratamos funciones que reciben argumentos con nombres iguales a
-atributos de clase, queremos tratar con el argumento, y no con los atributos de la clase. Es por
-ellos que cada clase define su propio y este es pasado a sus hijos, pero las expresiones
-como el case y let, que puede definir nuevas variables, reciben su propio _scope_, con lo que se
-desambigua entre todas las variables declaradas.
-El TypeChecker es la herramienta
-fundamental que permite llevar a cabo el polimorfismo en el lenguaje, pues junto con el
-se verifica que un tipo pueda ser sustituido por otro, además que es esencial para determinar
-atributos que se definen en clases padre y se utilizan en una clase hijo, etc. Además, la importancia del _TypeChecker_ radica en que determina el tipo estático de cada expresión, lo que nos permite después en la generación de código hacer llamados polimórficos en $O(1)$.
+El `TypeCollector` es responsable de la primera fase de análisis semántico, donde se recolectan y registran todos los tipos (clases) definidos en el programa COOL.
 
-```python
-class TypeChecker(Visitor):
-    def __init__(self, context: Context, errors=None):
+- **Funcionamiento**: Visita cada `ClassNode` en el AST y agrega su correspondiente `Type` al `Context`.
+- **Manejo de Errores**:
+  - Redefinición de Tipos: Reporta errores si una clase se define más de una vez.
+  - Tipos Reservados: Reporta errores si se definen clases con nombres reservados del lenguaje (como `Object`, `Int`).
+  - Clase Principal Faltante: Verifica y reporta si falta la clase principal `Main`, que es obligatoria en COOL.
 
+#### 2. TypeBuilder
 
-    def error(self, message, location, type, value):
+El `TypeBuilder` construye la estructura interna de cada tipo identificado por el `TypeCollector`, definiendo atributos y métodos, y asegurando la correcta aplicación de las reglas de herencia.
 
+- **Funcionamiento**: Recorre cada `Type` recolectado, definiendo sus atributos y métodos. Gestiona las relaciones de herencia y asegura la coherencia en la definición de tipos.
+- **Manejo de Errores**:
+  - Herencia de Tipos No Definidos: Reporta errores si una clase hereda de una clase no definida o inexistente.
+  - Herencia de Tipos Reservados: Reporta errores si una clase intenta heredar de tipos reservados como `Int`, `Bool`, `String` o `SELF_TYPE`.
+  - Redefinición de Atributos: Reporta errores si se intenta redefinir un atributo heredado.
+  - Conflicto en Redefinición de Métodos: Reporta errores si un método redefinido no coincide en el tipo o número de argumentos con su definición original en la clase padre.
 
-    def visit__ProgramNode(self, node: ProgramNode, scope=None):
+#### 3. TypeChecker
 
+El `TypeChecker` es la última fase del análisis semántico, donde se verifica que cada expresión, asignación, llamada a método y estructura de control en el AST utilice los tipos correctamente según las reglas del lenguaje COOL.
 
-    def visit__ClassNode(self, node: ClassNode, scope: Scope):
+- **Funcionamiento**: Visita cada nodo del AST y valida el uso correcto de tipos. Esto incluye la conformidad de los tipos en operaciones binarias, la verificación de tipos en asignaciones y llamadas a métodos, y el uso correcto de tipos en estructuras de control.
+- **Manejo de Errores**:
+  - Uso Incorrecto de Tipos en Expresiones: Reporta errores si se realizan operaciones entre tipos incompatibles (por ejemplo, sumar un `Int` y un `String`).
+  - Asignaciones de Tipo Incorrecto: Reporta errores si el tipo del valor asignado no se conforma con el tipo de la variable.
+  - Llamadas a Métodos Incorrectas: Reporta errores si se llama a un método que no existe en el tipo dado o si los tipos de los argumentos no son compatibles.
+  - Uso Incorrecto en Estructuras de Control: Reporta errores si las expresiones en estructuras de control como `if` o `while` no son de tipo `Bool`.
+  - Uso Incorrecto de `self`: Reporta errores si se utiliza incorrectamente la palabra reservada `self` en el programa.
 
+#### Conclusión
 
-    def visit__AttributeNode(self, node: AttributeNode, scope: Scope):
-
-
-
-    def visit__MethodNode(self, node: MethodNode, scope: Scope):
-
-
-    def visit__AssignNode(self, node: AssignNode, scope: Scope):
-
-
-    def visit__DispatchNode(self, node: DispatchNode, scope: Scope):
-
-
-    def visit__BinaryOperatorNode(self, node: BinaryOperatorNode, scope: Scope):
-
-
-    def visit__UnaryOperatorNode(self, node, scope):
-
-
-    def visit__IfNode(self, node: IfNode, scope: Scope):
-
-
-    def visit__BlockNode(self, node: BlockNode, scope: Scope):
-
-
-    def visit__LetNode(self, node: LetNode, scope: Scope):
-
-
-    def visit__CaseNode(self, node: CaseNode, scope: Scope):
-
-
-    def visit__CaseOptionNode(self, node: CaseOptionNode, scope: Scope):
-
-
-    def visit__NewNode(self, node: NewNode, scope: Scope):
-
-
-    def visit__IsVoidNode(self, node: IsVoidNode, scope: Scope):
-
-
-    def visit__NotNode(self, node: NotNode, scope: Scope):
-
-
-    def visit__PrimeNode(self, node: PrimeNode, scope: Scope):
-
-
-    def visit__IdentifierNode(self, node: IdentifierNode, scope: Scope):
-
-
-    def visit__IntegerNode(self, node: IntegerNode, scope: Scope):
-
-    def visit__StringNode(self, node: StringNode, scope: Scope):
-
-
-    def visit__BooleanNode(self, node: BooleanNode, scope: Scope):
-
-
-    def visit__MethodCallNode(self, node: MethodCallNode, scope: Scope):
-
-
-    def visit__WhileNode(self, node: WhileNode, scope: Scope):
-```
+Estas tres fases del análisis semántico - TypeCollector, TypeBuilder y TypeChecker - forman una secuencia lógica y rigurosa para asegurar la correcta aplicación de las reglas semánticas del lenguaje COOL. Cada fase tiene su responsabilidad específica y un conjunto de errores que maneja, garantizando así que el programa resultante no solo sea sintácticamente correcto sino también semánticamente coherente, listo para la generación de código.
 
 ### Generación de código
 
-El paso de _COOL_ a _Mips_ es demasiado complejo, por ello se dividió el proceso de generación de código en dos etapas, se lleva del AST de COOL
-a una representación intermedia y de esta representación intermedia a MIPS.
-Se usa el lenguaje CIL (Class Intermediate Language) provisto en conferencia con algunos adaptaciones extra como CompareType que se usa para comparar tipos y se hace alguna anotaciones a algunos nodos que permiten hacer unboxing para los tipos _Bool_ y _Int_.
+En el proceso de compilación, uno de los pasos más críticos y complejos es la generación de código. Es aquí donde el lenguaje de alto nivel, como COOL, se transforma en un conjunto de instrucciones que una máquina puede entender y ejecutar. Sin embargo, saltar directamente a un lenguaje de máquina específico o código objeto puede ser extraordinariamente desafiante y poco práctico. Aquí es donde entra en juego el concepto de un Lenguaje Intermedio (IR, por sus siglas en inglés).
 
-#### Paso de Cool a CIL:
+El IR actúa como un puente entre el alto nivel de abstracción del lenguaje fuente y el bajo nivel del código de máquina. Este nivel intermedio simplifica el proceso de traducción al descomponerlo en dos etapas más manejables: primero, de COOL a IR, y luego, del IR al código de máquina. Este enfoque tiene múltiples ventajas:
 
-Para la generación de código intermedio nos auxiliamos del lenguaje de máquina _CIL_, que cuenta con capacidades orientadas a objetos y nos va a permitir generar código _MIPS_ de manera más sencilla.
-El _AST_ de _CIL_ se obtiene a partir de un recorrido por el _AST_ de _COOL_, para el cual nos apoyamos nuevamente en el patrón visitor. El objetivo de este recorrido es desenrollar cada expresión para garantizar que su traducción a _MIPS_ genere una cantidad constante de código.
-_CIL_ tiene tres secciones:
+1. **Simplificación de la Compilación**: El IR proporciona una abstracción que es más fácil de manipular que el código de máquina directo, permitiendo resolver problemas complejos paso a paso.
+2. **Independencia del Hardware**: Al utilizar un IR, el compilador no está atado a un conjunto específico de instrucciones de hardware, lo que facilita la portabilidad del código fuente a diferentes arquitecturas de máquinas.
 
-- TYPES: contiene declaraciones de tipo.
-- DATA: contiene todas las cadenas de texto constantes que serán usadas durante el programa.
-- CODE: contiene todas las funciones que serán usadas durante el programa.
+3. **Optimización**: El IR permite realizar optimizaciones de código intermedias antes de la generación final del código de máquina, mejorando así el rendimiento y la eficiencia del programa compilado.
 
-Al convertir de Cool a CIL se obtiene el mapeo correcto de atributos y métodos por la forma de recorrer el árbol en el análisis semántico.
+En el caso de IceBox, se utiliza el Class Intermediate Language (CIL), definido en clases, como IR. CIL es un lenguaje de máquina simplificado con soporte para operaciones orientadas a objetos. No tiene concepto de herencia y trata todas las variables como enteros de 32 bits, lo que requiere una interpretación basada en el contexto de uso.
 
-```python
-for type in self.context.types.values():
-            self.attrs[type.name] = {
-                attr.name: (i, htype.name)
-                for i, (attr, htype) in enumerate(type.all_attributes())
-            }
-            self.methods[type.name] = {
-                method.name: (i, htype.name)
-                if htype.name != "Object"
-                or method.name not in ["abort", "type_name", "copy"]
-                else (i, type.name)
-                for i, (method, htype) in enumerate(type.all_methods())
-            }
-```
+La generación de código en CIL implica convertir las estructuras complejas y las expresiones del lenguaje COOL en un conjunto de instrucciones de tres direcciones en CIL. Este paso intermedio es crucial para asegurar que el código generado sea eficiente, optimizado y, sobre todo, funcional en la arquitectura objetivo.
 
-La primera sección que se construye es .TYPES con las declaraciones de los tipos que se van a usar en el programa.
-En CIL no existe el concepto de herencia, la forma
-de asegurar que un tipo pueda acceder a sus métodos y atributos heredados es declarándolos
-explícitamente en su definición. Además, es necesario garantizar que el orden en que se definen
-los mismos en el padre se conserve en los descendientes. Para ello a la hora de definir un tipo A
-se declaran en orden los atributos y métodos correspondientes comenzando por los de su
-ancestro más lejano hasta llegar a su padre y a los propios. Nótese que se hace necesario guardar
-el tipo al que pertenece el atributo o método originalmente, a continuación se explica por qué.
-Dado un tipo A que hereda de B ¿Qué pasa con los atributos heredados cuando vamos a crear
-una instancia de A? ¿Cómo accedemos a la expresión con que se inicializa cada atributo si se
-declaró en otro tipo? Después de un breve análisis, salta a la luz que es necesario que los
-atributos tengan constructores. Entonces, inicializar un atributo heredado se traduce a asignarle
-el valor que devuelve el constructor del mismo. Para hacer el llamado a dicho constructor es
-necesario saber el tipo donde fue declarado el atributo originalmente, por eso se guarda en el
-proceso de construcción del tipo antes descrito. Lo mismo sucede con los métodos.
-La sección .DATA se llena a medida que se visitan cadenas de texto literales, además se añaden
-algunas otras que nos serán útiles más adelante. Por ejemplo, se guardan los nombres de cada
-tipo declarado para poder acceder a ellos y devolverlos en la función type*name.
-Expliquemos entonces de qué va la sección .CODE, que no por última es menos importante. De
-manera general, está conformada por las funciones de COOL que se traducen a CIL. En el cuerpo
-de estas funciones se encuentra la traducción de las expresiones de COOL.Este proceso se hace
-más complejo para ciertos tipos de expresiones. Analicemos una de estas.
-Las expresiones \_case* son de la siguiente forma:
+### Traducción de COOL a CIL en IceBox
 
-```
-case  expr0  of
- ID_1  :  TYPE_1  =>  expr1 ;
-. . .
- ID_n > : TYPE_n  =>  exprn ;
-esac
-```
+El proceso de traducir COOL a CIL (Class Intermediate Language) en IceBox implica varios pasos detallados y funciones específicas. Aquí se detalla cada parte de este proceso:
 
-Esta expresión se utiliza para hacer pruebas sobre el tipo de los objetos en tiempo de ejecución.
-Con ese fin, se evalúa _expr0_ y se guarda su tipo dinámico _C_. Luego se selecciona la rama cuyo
-tipo _TYPE_k_ es el más cercano a _C_ entre los tipos con que _C_ se conforma y se devuelve el valor del
-_exprk_ correspondiente.
-El tipo dinámico _C_ no se conoce hasta el momento de ejecución, que es cuando se evalúa la
-expresión, por tanto, la decisión de por qué rama se debe decantar el case no se puede tomar
-desde _CIL_. La solución consiste entonces en indicarle a _MIPS_ los pasos que debe tomar en esta
-situación. Para esto, se genera el código _CIL_ para cualquiera de los posibles tipos
-dinámicos de _expr0_, que no son más que todos los tipos que heredan del tipo estático de _expr0_. Faltaría ser capaces de detectar errores de este tipo en tiempo de ejecución. 
+#### Configuración Inicial y Funciones Auxiliares
 
-### De _CIL_ a _MIPS_:
+- **Inicialización**: Se crean listas para almacenar tipos (`self.types`), código (`self.code`) y datos (`self.data`). Además, se establecen contadores para gestionar identificadores únicos y se inicializa el contexto semántico.
+- **Funciones Auxiliares**: Se definen métodos para generar identificadores únicos (`generate_next_string_id` y `next_id`), convertir nombres de funciones (`to_function_name`), y manejar nombres de datos y atributos (`to_data_name` y `to_attr_name`).
 
-Para la generación de código _MIPS_ se definió un visitor sobre el _AST_ de _CIL_ generado en el paso
-anterior, este visitor generará a su vez un _AST_ de _MIPS_ que representa las secciones .data y .text
-con sus instrucciones; donde cada nodo conoce su representación en _MIPS_. Posteriormente se
-visitará el nodo principal del _AST_ de MIPS y se producirá el código que será ejecutado por el
-emulador de _SPIM_.
-Al visitar el cil.Program se visitarán los nodos de la sección dottype, para representar en .data la
-tabla de métodos virtuales, para cuando se produzcan llamadas a métodos no estáticos. Por cada
-tipo de nodo se registra en .data un label con el nombre del tipo, .word como tipo de
-almacenamiento, y una serie de labels, cada una correspondiente a un método del tipo.
+#### Registro de Tipos y Funciones
 
-```
-Object : .word, Object_abort, Object_copy, Object_type_name
-```
+- **Registro de Tipos (`register_type`)**: Crea un nuevo nodo de tipo en CIL y lo añade a la lista de tipos.
+- **Registro de Funciones (`register_function`)**: Crea un nuevo nodo de función en CIL y lo añade a la lista de código.
 
-Para acceder a un método específico de un tipo se busca en la dirección de memoria dada por el
-label correspondiente a este, sumada con el índice correspodiente al método, multiplicado por 4
-este índice está dado por el orden en que se declararon los métodos, aquí se hallará un puntero
-al método deseado.
-El siguiente paso es visitar la sección dotdata, para registrar los strings declarados en el código de
-_COOL_, de la siguiente forma:
+#### Creación de Estructuras CIL
 
-```
-string_1 : .asciiz, "Hello, World.\n"
-```
+- **ProgramNode (`visit__ProgramNode`)**: Se recorren todos los tipos en el contexto y se preparan sus atributos y métodos para su mapeo en CIL. Se genera la función principal (`main`) en CIL y se agregan funciones integradas (builtin).
+- **ClassNode (`visit__ClassNode`)**: Por cada clase en COOL, se registra un tipo en CIL, se agregan sus atributos y métodos, y se genera su función de inicialización.
+- **AttributeNode (`visit__AttributeNode`)**: Se crea una función de inicialización para cada atributo, asignando valores predeterminados o expresiones de inicialización.
+- **MethodNode (`visit__MethodNode`)**: Se convierte cada método COOL en una función CIL, procesando sus parámetros y cuerpo.
 
-Finalmente se visitarán los nodos de la sección dotcode, que corresponden a las instrucciones del
-programa.
-Cada uno de estos nodos es un FunctionNode, en cada uno se van generando nodos del _AST_
-siguiendo la siguiente línea:
+#### Traducción de Expresiones
 
-- Se reserva el espacio de las variables locales correspondientes a la función.
-- Se actualiza el frame pointer #$fp# con el stack pointer.
-- Se guarda la dirección de retorno $ra en la pila.
-- Se guarda el frame pointer anterior en la pila.
-- Se visitan las instrucciones de la función.
-- Se restaura el puntero al bloque remplazándolo con el que había sido almacenado.
-- Se restaura la dirección de retorno.
-- Los tipos básicos(bool,int y string) se tratan por valor y el resto por referencia.
-- Se libera el espacio que había sido reservado en la pila.
+- **Asignaciones (`visit__AssignNode`)**: Se traduce la asignación de COOL a CIL, manejando la asignación a variables locales, parámetros o atributos.
+- **Llamadas a Métodos (`visit__MethodCallNode` y `visit__DispatchNode`)**: Se manejan llamadas a métodos, diferenciando entre llamadas estáticas y dinámicas.
+- **Control de Flujo (`visit__IfNode` y `visit__WhileNode`)**: Se traducen estructuras de control como `if` y `while` a sus equivalentes en CIL, utilizando etiquetas y saltos condicionales.
+- **Let (`visit__LetNode`)**: Se maneja la declaración de variables locales con posibles inicializaciones.
+- **Operadores Binarios (`visit__BinaryOperatorNode`)**: Se convierten operaciones binarias (como suma, resta, comparaciones) a instrucciones CIL.
+- **Booleanos, Enteros y Cadenas (`visit__BooleanNode`, `visit__IntegerNode`, `visit__StringNode`)**: Se cargan valores literales directamente en CIL.
+- **Negación y Complemento (`visit__NotNode`, `visit__PrimeNode`)**: Se manejan operaciones unarias como la negación y el complemento.
+- **Case (`visit__CaseNode`)**: Se implementa la lógica para la expresión `case`, manejando la selección dinámica de ramas en tiempo de ejecución.
 
-Siempre se conocerá el offset, con respecto a $fp correspondiete a las variables locales y
-parámetros que se utilizan en el cuerpo de una función.
+#### Funciones integradas y manejo de errores
 
-Para realizar llamadas a funciones que reciban argumentos es obligatorio guardar los
-argumentos en la pila antes de llamar a la función.
+- **Funciones Integradas (Builtin)**: Se agregan funciones integradas de COOL como `abort`, `type_name`, `copy`, y operaciones de entrada/salida.
+- **Manejo de Errores**: Se incluyen estrategias para el manejo de errores en tiempo de ejecución, como en la selección de ramas en `case`.
 
-El recorrido por las instrucciones no es presenta gran complejidad, es simplemente traducir
-sencillas expresiones de _CIL_ a expresiones de MIPS, sin embargo hay algunos casos
-interesantes que vale la pena destacar.
+Este proceso detallado asegura una traducción precisa y eficiente del código COOL a su representación intermedia en CIL, sentando las bases para la posterior generación de código MIPS.
 
-- La reserva dinámica de memoria para instanciar tipos se realiza mediante _Allocate_, el
-  compilador reservará un espacio de tamaño (CantidadAtributos + 1) \* 4. En los
-  primeros 4 bytes ser guarda la dirección del tipo de la instancia, y en las siguientes
-  palabras están reservadas para los atributos.
-  La representación de las instancias de tipos en memoria se estructuró así:
+### De CIL a MIPS
+
+El proceso de conversión de CIL a MIPS representa una etapa fundamental en la compilación de lenguajes de programación como COOL. Esta fase consiste en traducir el Abstract Syntax Tree (AST) de CIL a un AST de MIPS, un lenguaje de bajo nivel más cercano al hardware. El objetivo es generar un código que pueda ser ejecutado por un emulador de SPIM, una versión del procesador MIPS.
+
+#### Estructura y Representación en Memoria
+
+En MIPS, las secciones `.data` y `.text` contienen, respectivamente, los datos constantes (como cadenas de texto) y las instrucciones del programa. La representación en memoria es crucial, especialmente para instancias de tipos y la tabla de métodos virtuales. Esta última facilita las llamadas a métodos no estáticos, con cada tipo almacenando una etiqueta (`label`) y un conjunto de métodos asociados.
+
+En MIPS, la representación en memoria de los objetos y tipos es fundamental. Cada objeto se almacena en bloques de memoria, con el primer bloque reservado para la información del tipo (metadata). Los atributos y métodos se almacenan en bloques consecutivos. Esta organización permite un acceso eficiente a los atributos y la ejecución de métodos.
 
 | Tipo de Atributo | Atributo 1    | Atributo 2    | ... | Atributo n       |
 | ---------------- | ------------- | ------------- | --- | ---------------- |
 | Dirección        | Dirección + 4 | Dirección + 8 |     | Dirección + 4\*n |
 
-No se implemento manejo de memoria. 
+#### Tratamiento de Tipos `Int`, `String` y `Bool` por valor
 
-- Existen dos tipos de llamados a funciones, llamado estático y dinámico.
-  El llamado estático es muy sencillo es simplementer saltar al label dado mediante la
-  función de MIPS _jal_ y al retornar, liberar el espacio en la pila correspondiente a los
-  argumentos pasados a la función.
-  Por otro lado el llamado dinámico es más complejo, pues dada la instancia y el índice
-  del método, se busca en la pila la instancia, se toma la posición 0 que corresponde a la
-  dirección(d) de su tipo, y a partir de esta se obtiene la función que está en d + 4 \* i.
-  Luego se salta al label de la función y por último se libera el espacio en la pila
-  correspondiente a los argumentos pasados.
-  
-  El objeto cadena posee dos atributos: la longitud de la cadena y una referencia a los caracteres. Para mantener las cadenas(string) como tipos por valor se crea un objeto que tiene una copia referenciando al carácter vacío("). Para copiar de una cadena a otra se hace un llamado al sistema para reservar memoria para del tamaño de la cadena(no del objeto cadena), es decir, la cantidad de caracteres de la cadena. A la memoria reservada se copia caracter a caracter de una posición a la otra y se crea una nueva instancia de cadena que apunta a ese espacio en memoria creado. Para comparar dos cadenas, no se comparan las referencias, se toman las referencias que apuntan a los caracteres de ambas cadenas y se comparan los caracteres byte a byte. Para entrar se usa un buffer, que es una dirección en memoria reservada para las entradas, se recorre el buffer hasta el encontrar caracter de salto de línea o el de fin de cadena, de esta forma conocemos la longitud de la cadena y se realiza el mismo que para copiar una cadena.
-  
+En la compilación de CIL a MIPS, los tipos `Int`, `String` y `Bool` presentan un desafío único debido a sus características inherentes. La decisión de tratar estos tipos por valor en lugar de por referencia tiene implicaciones significativas en cómo se manejan en el proceso de compilación. Aquí detallamos cómo se aborda cada uno de estos tipos.
+
+#### 1. **Int y Bool**
+
+`Int` y `Bool` son tipos básicos que se representan típicamente como valores enteros en muchos lenguajes de bajo nivel, incluido MIPS. En el contexto de la compilación de CIL a MIPS, estos tipos se manejan de la siguiente manera:
+
+- **Representación**: Tanto `Int` como `Bool` se representan mediante valores enteros de 32 bits. En MIPS, esto significa que se pueden almacenar directamente en registros o en la pila.
+- **Operaciones**: Las operaciones aritméticas o lógicas en `Int` y `Bool` se realizan directamente utilizando instrucciones MIPS estándar para enteros. Por ejemplo, la adición de dos enteros o la evaluación de una expresión booleana se maneja mediante las instrucciones de suma o comparación de MIPS. Se hacen anotaciones en CIL que permite los llamados a métodos de estos tipos así como el `type of` computarse sin necesidad de acceder al tipo.
+
+- **Eficiencia**: Al tratar estos tipos por valor, se evita la sobrecarga asociada con el manejo de referencias a objetos, lo que resulta en un rendimiento mejorado, especialmente en operaciones que son muy frecuentes como cálculos numéricos o evaluaciones lógicas.
+
+#### 2. **String**
+
+El tipo `String` representa un caso más complejo debido a su naturaleza como una secuencia de caracteres. Sin embargo, en el contexto de CIL a MIPS, se toman decisiones específicas para tratar `String` de manera más eficiente:
+
+- **Inmutabilidad y Copia**: las cadenas son inmutables, lo que significa que cualquier operación que parezca modificar una cadena en realidad resulta en la creación de una nueva cadena. Este enfoque simplifica la representación de las cadenas y su manipulación, permitiendo tratarlas como valores inmutables.
+
+- **Representación en Memoria**: Una cadena se representa con dos atribútos, uno para el tamaño y otro como un puntero a una secuencia de caracteres. Sin embargo, en términos de operaciones, se trata como un valor.
+
+- **Operaciones**: Las operaciones con cadenas, como la concatenación o la comparación, se manejan mediante funciones especializadas en MIPS. Estas operaciones trabajan con las direcciones de las cadenas pero no modifican las cadenas originales sino que crean copias de la instancia, reservando memoria y alojando en nuevos espacios.
+
+#### Llamadas a Métodos en Tiempo Lineal
+
+Las llamadas a métodos, tanto estáticas como dinámicas, se manejan de manera eficiente. Para un método estático, se realiza un salto directo al `label` correspondiente. En el caso de una llamada dinámica, se busca la instancia en la pila, se obtiene el tipo y se calcula la dirección del método basado en su índice, permitiendo así ejecutar el método correcto en tiempo lineal.
+
+#### Manejo de VOID
+
+En MIPS, `Void` se maneja como un tipo especial. Se asigna una dirección específica para representar `Void`, y cuando un objeto COOL tiene valor `void`, esta dirección se utiliza para indicarlo. Esto es esencial para expresiones como `isvoid`, donde se compara la dirección de un objeto con la dirección de `Void` para determinar si el objeto es nulo.
+
+#### Funciones Específicas en MIPS
+
+Algunas operaciones no tienen una traducción directa en MIPS y requieren implementaciones específicas. Ejemplos notables son `STR Compare` y `COPY BYTES`.
+
+- **STR Compare**: Esta función compara dos cadenas caracter por caracter. Se utilizan registros específicos para cargar las direcciones de las cadenas y se itera sobre cada caracter comparándolos.
+- **COPY BYTES**: Se utiliza para copiar una cantidad específica de bytes de una ubicación de memoria a otra. Es esencial para operaciones como la concatenación de cadenas o la copia de objetos.
+
+#### Implementación de TypeOf y Manejo de Input
+
+El TypeOf es una operación crucial que determina el tipo dinámico de un objeto en tiempo de ejecución. Se implementa cargando la dirección de memoria del tipo almacenado en el objeto.
+
+El manejo del input, especialmente para cadenas, implica leer datos del buffer de entrada y almacenarlos en una ubicación de memoria asignada dinámicamente. Esta operación asegura que las entradas del usuario se manejen de manera eficiente y segura.
+
+#### Manejo del Tipo Void y los Tipos VOID
+
+En CIL, el tipo `Void` representa una ausencia de valor. En MIPS, se maneja asignando una dirección de memoria especial que simboliza `Void`. Esto es crucial para operaciones condicionales y el manejo de métodos que no devuelven un valor.
+
+#### Stack y Frame Pointer
+
+En MIPS, el stack es una estructura de datos tipo LIFO (Last In, First Out) utilizada para almacenar información temporal durante la ejecución de un programa. El stack pointer (`SP_REG`) apunta a la parte superior del stack. El frame pointer (`FP_REG`), por otro lado, se usa para mantener un punto de referencia constante al inicio de un frame de función, facilitando el acceso a variables locales y argumentos.
+
+#### Proceso de Llamado a una Función
+
+1. **Preparación para el Llamado**:
+
+   - **Guardar Argumentos**: Los argumentos de la función se empujan al stack. Esto se hace utilizando el método `visit__ArgNode`, que coloca los argumentos en el stack antes de realizar la llamada a la función.
+   - **Actualizar el Stack Pointer**: El stack pointer se ajusta para reservar espacio para las variables locales y argumentos de la función.
+
+2. **Establecimiento del Nuevo Frame**:
+
+   - **Guardado del Frame Pointer Actual**: Se guarda el valor actual del frame pointer (`FP_REG`) en el stack. Esto es importante para poder restaurar este valor una vez que la función haya terminado, manteniendo la integridad del stack.
+   - **Actualización del Frame Pointer**: El frame pointer se actualiza para apuntar a la parte superior del stack actual. Esto marca el inicio del nuevo frame de la función.
+
+3. **Ejecución de la Función**:
+
+   - **Instrucciones de la Función**: Se ejecutan las instrucciones de la función, que pueden incluir operaciones aritméticas, acceso a variables, llamadas a otras funciones, etc.
+   - **Acceso a Variables Locales y Argumentos**: El acceso a variables locales y argumentos se realiza a través de offsets relativos al frame pointer. Esto permite un acceso consistente sin importar los cambios en el stack pointer.
+
+4. **Finalización de la Función**:
+
+   - **Restauración del Frame y Stack Pointers**: Antes de finalizar la función, se restaura el frame pointer al valor que tenía antes de la llamada a la función. El stack pointer también se ajusta para deshacer los cambios realizados al inicio de la función.
+   - **Retorno de Valor**: Si la función retorna un valor, este se coloca generalmente en un registro específico (`A1_REG`) antes de retornar al caller.
+
+5. **Retorno al Caller**:
+   - **Recuperación de Dirección de Retorno y Frame Pointer Anterior**: La dirección de retorno (`RA_REG`) y el frame pointer previo se recuperan del stack, permitiendo que el programa continúe su ejecución desde el punto donde se realizó la llamada a la función.
+   - **Ajuste del Stack Pointer**: Se ajusta el stack pointer para remover cualquier dato relacionado con la función que acaba de finalizar.
+
+Este proceso asegura que cada función tenga su propio espacio de trabajo en el stack, y que las variables locales y argumentos se manejen de forma aislada y segura. Además, permite que las funciones se llamen recursivamente sin interferir entre sí.
+
+#### Proceso de Compilación Paso a Paso
+
+##### 1. Configuración Inicial y Manejo de Registros
+
+- **Registro de Nombres**: Se definen los nombres de los registros disponibles en MIPS, como `t0`, `t1`, etc., y registros de argumentos como `a0`, `a1`, etc.
+- **Registro para Procedimientos Integrados**: Se definen registros específicos (`s0`, `s1`, etc.) para ser utilizados en procedimientos integrados como `COPY_BYTES` y `STR_CMP`.
+- **Manejador de Memoria (`MemoryManager`)**: Esta clase se encarga de administrar el uso de registros, manteniendo un registro de los utilizados y disponibles.
+
+##### 2. Visitando Nodos del AST
+
+- **Nodos de Programa (`visit__ProgramNode`)**: Aquí se procesan los tipos (`dottypes`), los datos (`dotdata`), y las funciones (`dotcode`) del programa CIL. Se generan las secciones `.data` y `.text` para MIPS.
+- **Nodos de Tipo (`visit__TypeNode`)**: Para cada tipo en CIL, se crea una entrada en la sección `.data` de MIPS, que incluye una tabla de métodos virtuales.
+- **Nodos de Función (`visit__FunctionNode`)**: Cada función CIL se traduce a un conjunto de instrucciones MIPS. Se maneja la reserva de espacio para variables locales y se guardan las direcciones de retorno.
+
+##### 3. Traducción de Instrucciones Específicas
+
+- **Asignaciones, Operaciones Aritméticas, y Control de Flujo**: Instrucciones como `AssignNode`, `PlusNode`, `MinusNode`, `GotoNode`, etc., son traducidas a sus equivalentes en MIPS. Esto incluye manejo de operaciones aritméticas y de control de flujo.
+- **Manejo de Cadenas y Entrada/Salida**: Procesos para operaciones con cadenas (`LoadNode`, `ConcatNode`, `SubstringNode`) y E/S (`PrintNode`, `ReadNode`) que implican interacciones más complejas con la memoria y llamadas al sistema.
+
+##### 4. Procedimientos Especiales
+
+- **`COPY_BYTES` y `STR_CMP`**: Son procedimientos MIPS para copiar bloques de bytes y comparar cadenas, respectivamente. Estos procedimientos son esenciales para operaciones que no se pueden traducir directamente de CIL a MIPS.
+
+##### 5. Consideraciones Finales
+
+- **Manejo de Registros y Memoria**: Se utiliza un enfoque cuidadoso para el manejo de registros y memoria, asegurando que los valores se almacenen y recuperen correctamente durante la ejecución del programa, sin embargo no se lleva ningún mecanismo para limpieza o aprovechamiento de la memoria alojada.
