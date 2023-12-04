@@ -446,7 +446,7 @@ El tipo dinámico _C_ no se conoce hasta el momento de ejecución, que es cuando
 expresión, por tanto, la decisión de por qué rama se debe decantar el case no se puede tomar
 desde _CIL_. La solución consiste entonces en indicarle a _MIPS_ los pasos que debe tomar en esta
 situación. Para esto, se genera el código _CIL_ para cualquiera de los posibles tipos
-dinámicos de _expr0_, que no son más que todos los tipos que heredan del tipo estático de _expr0_.
+dinámicos de _expr0_, que no son más que todos los tipos que heredan del tipo estático de _expr0_. Faltaría ser capaces de detectar errores de este tipo en tiempo de ejecución. 
 
 ### De _CIL_ a _MIPS_:
 
@@ -487,7 +487,7 @@ siguiendo la siguiente línea:
 - Se visitan las instrucciones de la función.
 - Se restaura el puntero al bloque remplazándolo con el que había sido almacenado.
 - Se restaura la dirección de retorno.
-
+- Los tipos básicos(bool,int y string) se tratan por valor y el resto por referencia.
 - Se libera el espacio que había sido reservado en la pila.
 
 Siempre se conocerá el offset, con respecto a $fp correspondiete a las variables locales y
@@ -510,6 +510,8 @@ interesantes que vale la pena destacar.
 | ---------------- | ------------- | ------------- | --- | ---------------- |
 | Dirección        | Dirección + 4 | Dirección + 8 |     | Dirección + 4\*n |
 
+No se implemento manejo de memoria. 
+
 - Existen dos tipos de llamados a funciones, llamado estático y dinámico.
   El llamado estático es muy sencillo es simplementer saltar al label dado mediante la
   función de MIPS _jal_ y al retornar, liberar el espacio en la pila correspondiente a los
@@ -519,6 +521,7 @@ interesantes que vale la pena destacar.
   dirección(d) de su tipo, y a partir de esta se obtiene la función que está en d + 4 \* i.
   Luego se salta al label de la función y por último se libera el espacio en la pila
   correspondiente a los argumentos pasados.
+  El objeto cadena posee dos atributos: la longitud de la cadena y una referencia a los caracteres. Para mantener las cadenas(string) como tipos por valor se crea un objeto que tiene una copia referenciando al carácter vacío("). Para copiar de una cadena a otra se hace un llamado al sistema para reservar memoria para del tamaño de la cadena(no del objeto cadena), es decir, la cantidad de caracteres de la cadena. A la memoria reservada se copia caracter a caracter de una posición a la otra y se crea una nueva instancia de cadena que apunta a ese espacio en memoria creado. Para comparar dos cadenas, no se comparan las referencias, se toman las referencias que apuntan a los caracteres de ambas cadenas y se comparan los caracteres byte a byte. Para entrar se usa un buffer, que es una dirección en memoria reservada para las entradas, se recorre el buffer hasta el encontrar caracter de salto de línea o el de fin de cadena, de esta forma conocemos la longitud de la cadena y se realiza el mismo que para copiar una cadena.
   Mucho nodos son importantes entre ellos los que corresponden a la entrada y salida, a
   las operaciones sobre cadenas, y operaciones lógicas y aritméticas, estos llevan más
   trabajo con la lógica de MIPS que no consideramos necesario de abordar.
