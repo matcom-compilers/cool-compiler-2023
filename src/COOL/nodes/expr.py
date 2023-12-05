@@ -1,8 +1,9 @@
 from typing import List
 
 from COOL.nodes import Node
+from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.semantic.visitor import Visitor_Class
-
+from COOL.codegen.codegen_rules import NULL
 
 class Dispatch(Node):
     def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
@@ -15,7 +16,8 @@ class Dispatch(Node):
     def check(self, visitor:Visitor_Class):
         return visitor.visit_dispatch(self)
 
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -27,7 +29,8 @@ class CodeBlock(Node):
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
 
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 class If(Node):
@@ -37,10 +40,12 @@ class If(Node):
         self.else_expr: Node = else_expr
         super().__init__(line, column)
 
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        raise NotImplementedError()
+
     def check(self, visitor):
         return visitor.visit_conditionals(self)
-    def codegen(self):
-        raise NotImplementedError()
 
 
 class While(Node):
@@ -49,11 +54,12 @@ class While(Node):
         self.loop_expr: Node = loop_expr
         super().__init__(line, column)
 
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        raise NotImplementedError()
+
     def check(self, visitor):
         return visitor.visit_loops(self)
-    
-    def codegen(self):
-        raise NotImplementedError()
 
 
 class Let(Node):
@@ -61,12 +67,12 @@ class Let(Node):
         self.let_list: List[Node] = let_list
         self.expr: Node = expr
         super().__init__(line, column)
-
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        raise NotImplementedError()
+    
     def check(self, visitor):
         return visitor.visit_let(self)
-
-    def codegen(self):
-        raise NotImplementedError()
 
 
 class Case(Node):
@@ -75,11 +81,13 @@ class Case(Node):
         self.cases: List[Node] = cases
         super().__init__(line, column)
 
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        raise NotImplementedError()
+
     def check(self, visitor):
         return visitor.visit_case(self)
-    
-    def codegen(self):
-        raise NotImplementedError()
+
 
 class Case_expr(Node):
     def __init__(self, line: int, column: int, id:str, type:str, expr:Node) -> None:
@@ -87,23 +95,25 @@ class Case_expr(Node):
         self.type = type
         self.expr = expr
         super().__init__(line, column)
-
-    def check(self, visitor):
-        return visitor.visit_case_expr(self)
     
     def codegen(self):
         raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_case_expr(self)
+
 
 class New(Node):
     def __init__(self, line: int, column: int, type: str):
         self.type: str = type
         super().__init__(line, column)
+    
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        raise NotImplementedError()
 
     def check(self,visitor:Visitor_Class):
         return visitor.visit_new(self)
-
-    def codegen(self):
-        raise NotImplementedError()
 
 
 class Isvoid(Node):
@@ -111,18 +121,17 @@ class Isvoid(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
+
     def check(self, visitor):
         return visitor.visit_isvoid(self)
 
-    def codegen(self):
-        raise NotImplementedError()
-    
-# class Self(Node):
-#     def __init__(self, line: int, column: int):
-#         super().__init__(line, column)
-
-#     def check(self, visitor):
-#         return visitor.visit_self(self)
-
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
+        expr = self.expr.codegen(mips_visitor)
+        obj = (
+            expr +
+            f"    move {mips_visitor.register_store_results}, $t0\n"
+            f"    la  $t1, {NULL}\n"
+            f"    seq $t0, $t0, $t1\n"
+        )
         raise NotImplementedError()

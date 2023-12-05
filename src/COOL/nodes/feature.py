@@ -3,12 +3,7 @@ from typing import List
 from COOL.nodes import Node
 from COOL.codegen.mips_visitor import MipsVisitor
 
-from COOL.nodes.codegen_rules import Types
-from COOL.nodes.codegen_rules import NULL
-from COOL.nodes.codegen_rules import NEWLINE
-from COOL.nodes.codegen_rules import CREATE_FUNCTION
-from COOL.nodes.codegen_rules import STORE_DATA
-from COOL.nodes.codegen_rules import SET_VAR_IN_DATA_SECTION
+from COOL.codegen.codegen_rules import NULL
 
 
 class Method(Node):
@@ -19,18 +14,11 @@ class Method(Node):
         self.formals: List[Node] = formals
         super().__init__(line, column)
 
-    def codegen(self):
-        data, text = [], []
-        for _formal in self.formals:
-            data.append(
-                SET_VAR_IN_DATA_SECTION.format(
-                    owner=self.id, var_name=_formal.id,
-                    type=Types[_formal.type.upper()].value,
-                    value=0)
-                )
-        text.append(CREATE_FUNCTION.format(function_name=self.id))
-        # TODO: execute expr
-        return data, text
+    def codegen(self, mips_visitor: MipsVisitor):
+        mips_visitor.visit_method(self)
+        expr = self.expr.codegen(mips_visitor)
+        mips_visitor.add_expression(expr)
+        mips_visitor.unvisit_method(self)
 
     def check(self, visitor):
         visitor.visit_method(self)
@@ -43,7 +31,8 @@ class ExecuteMethod(Node):
         self.id = id
         super().__init__(line, column)
 
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
     def check(self,visitor):
@@ -55,11 +44,9 @@ class Attribute(Node):
         self.id = id
         super().__init__(line, column)
 
-    def codegen(self):
-        return [], []
-
     def check(self, visitor):
         visitor.visit_attribute(self)
+
 
 class AttributeDeclaration(Attribute):
     def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
@@ -71,12 +58,12 @@ class AttributeDeclaration(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        mips_visitor.attributes.append(
-            f"    li $t0, {NULL}" +
-            NEWLINE +
-            f"    sw $t0, {mips_visitor.class_memory}($v0)"
+        mips_visitor.add_attribute(
+            f"    # attribute {self.id}: {self.type}\n"
+            f"    la {mips_visitor.register_store_results}, {NULL}\n"
+            f"    sw {mips_visitor.register_store_results}, 0({mips_visitor.register_memory_pointer})\n"
+            f"    addiu $v0, $v0, 4\n"
         )
-        mips_visitor.class_memory += 4
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
@@ -94,26 +81,17 @@ class AttributeInicialization(Attribute):
     
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        # TODO: how to return expr codegen?
         expr = self.expr.codegen(mips_visitor)
-        match self.type:
-            case "Int":
-                mips_visitor.attributes.append(
-                    expr +
-                    NEWLINE +
-                    f"    sw $t0, {mips_visitor.class_memory}($v0)"
-                )
-            case "String":
-                pass
-            case "Bool":
-                pass
-            case "Object":
-                pass
-            case "IO":
-                pass
-            case "SELF_TYPE":
-                pass
-        mips_visitor.class_memory += 4
+        mips_visitor.add_attribute(
+            f"    # attribute {self.id}: {self.type}\n"
+            f"    addiu $sp, $sp, -4\n"
+            f"    sw $v0, 0($sp)\n"
+            + expr +
+            f"    lw $v0, 0($sp)\n"
+            f"    addiu $sp, $sp, 4\n"
+            f"    sw {mips_visitor.register_store_results}, 0($v0)\n"
+            f"    addiu $v0, $v0, 4\n"
+        )
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
@@ -127,7 +105,7 @@ class Formal(Node):
         super().__init__(line, column)
 
     def codegen(self):
-        raise NotImplementedError()
+        pass
 
     def check(self, visitor):
         raise NotImplementedError()
