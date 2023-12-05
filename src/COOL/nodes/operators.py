@@ -8,10 +8,11 @@ from COOL.codegen.codegen_rules import POP_STACK
 
 
 class UnaryOperator(Node):
-    def __init__(self, line: int, column: int, expr: Node, possibles_types:list, return_type:str) -> None:
+    def __init__(self, line: int, column: int, expr: Node, possibles_types:list, return_type:str, symbol:str) -> None:
         self.expr: Node = expr
         self.possibles_types = possibles_types
         self.return_type = return_type
+        self.symbol = symbol
         super().__init__(line, column)
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
@@ -32,12 +33,12 @@ class UnaryOperator(Node):
 
 
 class Operator(Node):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node, possibles_types:list, return_type:str) -> None:
+    def __init__(self, line: int, column: int, expr1: Node, expr2: Node, possibles_types:list, return_type:str, symbol:str) -> None:
         self.expr1: Node = expr1
         self.expr2: Node = expr2
         self.possibles_types = possibles_types
         self.return_type = return_type
-
+        self.symbol = symbol
         super().__init__(line, column)
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
@@ -62,7 +63,7 @@ class Operator(Node):
 
 class Add(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int', '+')
 
     def operation(self):
         return "    add $t0, $t0, $t1\n"
@@ -70,7 +71,7 @@ class Add(Operator):
 
 class Sub(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int', '-')
 
     def operation(self):
         return "    sub $t0, $t0, $t1\n"
@@ -78,7 +79,7 @@ class Sub(Operator):
 
 class Div(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
-        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int', '/')
 
     def operation(self):
         return "    div $t0, $t0, $t1\n"
@@ -88,7 +89,7 @@ class Times(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         self.possibles_types = ['Int']
         self.return_type = 'Int'
-        super().__init__(line, column, expr1, expr2, ['Int'],'Int')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Int', '*')
 
     def operation(self):
         return "    mul $t0, $t0, $t1\n"
@@ -98,7 +99,7 @@ class Less(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         self.possibles_types = ['Int']
         self.return_type = 'Bool'
-        super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<')
 
     def operation(self):
         operation = (
@@ -111,7 +112,7 @@ class Less(Operator):
 class LessEqual(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
 
-        super().__init__(line, column, expr1, expr2, ['Int'],'Bool')
+        super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<=')
 
     def operation(self):
         operation = (
@@ -126,7 +127,7 @@ class LessEqual(Operator):
 class Equal(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         
-        super().__init__(line, column, expr1, expr2, ['All'],'Bool')
+        super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
     def operation(self):
         operation = (
@@ -138,7 +139,7 @@ class Equal(Operator):
 
 class Not(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
-        super().__init__(line, column, expr, ['Bool'],'Bool')
+        super().__init__(line, column, expr, ['Bool'],'Bool', 'not')
 
     def operation(self):
         operation = "    xori $t0, $t0, 1\n"
@@ -147,7 +148,7 @@ class Not(UnaryOperator):
 
 class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
-        super().__init__(line, column, expr, ['Int'],'Int')
+        super().__init__(line, column, expr, ['Int'],'Int', '~')
 
     def operation(self):
         operation = "    and $t0, $t0, $t1\n"

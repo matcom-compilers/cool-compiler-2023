@@ -36,20 +36,3 @@ class Class(Node):
 
     def check(self, visitor:Visitor_Program):
         visitor.visit_class(self)
-        self.class_visitor =  Visitor_Class( scope= {
-            'type': self.type, 
-            'inherits': self.inherits, 
-            'features': self.features_dict, 
-            'methods': self.methods_dict, 
-            'attributes': self.attributes_dict, 
-            'inherits_instance': self.inherits_instance, 
-            'line': self.line, 
-            'column': self.column,
-            'lineage': self.lineage,
-            'all_types':visitor.types,
-            'inheritance_tree':visitor.tree,
-            'basic_types':visitor.basic_types
-            })
-        for feature in self.features:
-            feature.check(self.class_visitor)
-        visitor.errors += self.class_visitor.errors

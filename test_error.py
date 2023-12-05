@@ -85,6 +85,7 @@ if __name__ == "__main__":
     # out = [f[:-3] + "_error.txt" for f in cls]
     # test_errors(cls, out)
 
+
     # Testing codegen
     # folder = "./tests/codegen/"
     # files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])

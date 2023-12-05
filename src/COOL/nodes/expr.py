@@ -40,12 +40,12 @@ class If(Node):
         self.else_expr: Node = else_expr
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_conditionals(self)
 
 
 class While(Node):
@@ -54,12 +54,12 @@ class While(Node):
         self.loop_expr: Node = loop_expr
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_loops(self)
 
 
 class Let(Node):
@@ -67,13 +67,12 @@ class Let(Node):
         self.let_list: List[Node] = let_list
         self.expr: Node = expr
         super().__init__(line, column)
-
-    def check(self):
-        raise NotImplementedError()
-
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
+    
+    def check(self, visitor):
+        return visitor.visit_let(self)
 
 
 class Case(Node):
@@ -82,25 +81,39 @@ class Case(Node):
         self.cases: List[Node] = cases
         super().__init__(line, column)
 
-    def check(self):
-        raise NotImplementedError()
-
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_case(self)
+
+
+class Case_expr(Node):
+    def __init__(self, line: int, column: int, id:str, type:str, expr:Node) -> None:
+        self.id = id
+        self.type = type
+        self.expr = expr
+        super().__init__(line, column)
+    
+    def codegen(self):
+        raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_case_expr(self)
 
 
 class New(Node):
     def __init__(self, line: int, column: int, type: str):
         self.type: str = type
         super().__init__(line, column)
-
-    def check(self,visitor:Visitor_Class):
-        return visitor.visit_new(self)
-
+    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
+
+    def check(self,visitor:Visitor_Class):
+        return visitor.visit_new(self)
 
 
 class Isvoid(Node):
@@ -108,8 +121,9 @@ class Isvoid(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
-    def check(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+
+    def check(self, visitor):
+        return visitor.visit_isvoid(self)
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
