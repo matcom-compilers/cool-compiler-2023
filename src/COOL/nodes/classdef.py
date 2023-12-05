@@ -1,5 +1,4 @@
 from typing import List
-from typing import Tuple
 
 from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.semantic.visitor import Visitor_Program

@@ -1,8 +1,9 @@
 from typing import List
 
 from COOL.nodes import Node
+from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.semantic.visitor import Visitor_Class
-
+from COOL.codegen.codegen_rules import NULL
 
 class Dispatch(Node):
     def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
@@ -16,7 +17,7 @@ class Dispatch(Node):
         return visitor.visit_dispatch(self)
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -29,7 +30,7 @@ class CodeBlock(Node):
         return visitor.visit_code_block(self)
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 class If(Node):
@@ -43,7 +44,7 @@ class If(Node):
         raise NotImplementedError()
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -57,7 +58,7 @@ class While(Node):
         raise NotImplementedError()
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -71,7 +72,7 @@ class Let(Node):
         raise NotImplementedError()
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -85,7 +86,7 @@ class Case(Node):
         raise NotImplementedError()
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -98,7 +99,7 @@ class New(Node):
         return visitor.visit_new(self)
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
 
@@ -107,9 +108,16 @@ class Isvoid(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
-    def check(self):
+    def check(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
     # TODO
-    def codegen(self):
+    def codegen(self, mips_visitor: MipsVisitor):
+        expr = self.expr.codegen(mips_visitor)
+        obj = (
+            expr +
+            f"    move {mips_visitor.register_store_results}, $t0\n"
+            f"    la  $t1, {NULL}\n"
+            f"    seq $t0, $t0, $t1\n"
+        )
         raise NotImplementedError()

@@ -14,7 +14,6 @@ class Method(Node):
         self.formals: List[Node] = formals
         super().__init__(line, column)
 
-    # TODO: add formals
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
@@ -58,11 +57,11 @@ class AttributeDeclaration(Attribute):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         mips_visitor.add_attribute(
-            f"    # attribute {self.id}: {self.type}\n" +
-            f"    li $t0, {NULL}\n" +
-            f"    sw $t0, {mips_visitor.class_memory}($v0)\n"
+            f"    # attribute {self.id}: {self.type}\n"
+            f"    la {mips_visitor.register_store_results}, {NULL}\n"
+            f"    sw {mips_visitor.register_store_results}, 0({mips_visitor.register_memory_pointer})\n"
+            f"    addiu $v0, $v0, 4\n"
         )
-        mips_visitor.class_memory += 4
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
@@ -80,25 +79,16 @@ class AttributeInicialization(Attribute):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         expr = self.expr.codegen(mips_visitor)
-        # TODO
-        match self.type:
-            case "Int":
-                mips_visitor.add_attribute(
-                    f"    # attribute {self.id}: {self.type}\n" +
-                    expr +
-                    f"    sw $t0, {mips_visitor.class_memory}($v0)\n"
-                )
-                mips_visitor.class_memory += 4
-            case "String":
-                pass
-            case "Bool":
-                pass
-            case "Object":
-                pass
-            case "IO":
-                pass
-            case "SELF_TYPE":
-                pass
+        mips_visitor.add_attribute(
+            f"    # attribute {self.id}: {self.type}\n"
+            f"    addiu $sp, $sp, -4\n"
+            f"    sw $v0, 0($sp)\n"
+            + expr +
+            f"    lw $v0, 0($sp)\n"
+            f"    addiu $sp, $sp, 4\n"
+            f"    sw {mips_visitor.register_store_results}, 0($v0)\n"
+            f"    addiu $v0, $v0, 4\n"
+        )
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
@@ -111,9 +101,8 @@ class Formal(Node):
         self.id = id
         super().__init__(line, column)
 
-    # TODO
     def codegen(self):
-        formal = None
+        pass
 
     def check(self, visitor):
         raise NotImplementedError()

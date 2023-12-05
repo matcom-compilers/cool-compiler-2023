@@ -143,7 +143,8 @@ set_bool:
 
     set_bool_true:
     la $t0, true
-    jr $ra"""
+    jr $ra
+"""
 
 STR_LEN=\
 """
@@ -156,7 +157,8 @@ str_len:
 
     str_len_end:
     move $t0, $t1
-    jr $ra"""
+    jr $ra
+"""
 
 
 STR_DATA_TO_STACK=\
@@ -185,7 +187,8 @@ str_stack_in_loop:
     j str_stack_in_loop
 
     str_stack_in_loop_end:
-    jr $ra"""
+    jr $ra
+"""
 
 
 STR_STACK_TO_HEAP=\
@@ -205,7 +208,8 @@ str_heap_in_loop:
 
     str_heap_in_loop_end:
     sub $v0, $v0, $t1
-    jr $ra"""
+    jr $ra
+"""
 
 
 STR_HEAP_TO_STACK=\
@@ -231,7 +235,8 @@ str_heap_out_loop:
     j str_heap_out_loop
 
     str_heap_out_loop_end:
-    jr $ra"""
+    jr $ra
+"""
 
 
 FUNCTIONS = [

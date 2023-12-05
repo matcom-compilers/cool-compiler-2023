@@ -4,6 +4,7 @@ from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.nodes import Node
 from COOL.codegen.codegen_rules import TRUE
 from COOL.codegen.codegen_rules import FALSE
+from COOL.codegen.codegen_rules import string_length
 
 
 class Object(Node):
@@ -20,7 +21,12 @@ class Interger(Object):
         super().__init__(line, column, value)
     
     def codegen(self, mips_visitor: MipsVisitor):
-        return f"    la  $t0, {self.value}\n"
+        mips_visitor.visit_object(self)
+        obj = (
+            f"    li  $t0, {self.value}\n"
+        )
+        mips_visitor.unvisit_object(self)
+        return obj
 
     def check(self,visitor):
         return 'Int'
@@ -35,8 +41,16 @@ class String(Object):
         mips_visitor.add_data(
             f"{str_name}:  .asciiz \"{self.value}\"\n"
         )
-        return f"    la  $t0, {str_name}"
-
+        obj = (
+            f"    la  {mips_visitor.register_store_results}, {str_name}\n"
+            f"    jal str_stack_in\n"
+            f"    la  {mips_visitor.register_store_results}, {string_length(self.value)}\n"
+            f"    li  $v0, 9\n"
+            f"    syscall\n"
+            f"    jal str_heap_in\n"
+            f"    move {mips_visitor.register_store_results}, $v0\n"
+        )
+        return obj
     
     def check(self,visitor):
         return 'String'
