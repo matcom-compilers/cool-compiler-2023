@@ -1,6 +1,7 @@
 from COOL.error import Error
-from COOL.nodes.basic_classes import BasicBool, BasicInt, BasicIO, BasicObject, BasicString
+from COOL.error import SemError
 
+from COOL.nodes.basic_classes import BasicBool, BasicInt, BasicIO, BasicObject, BasicString
 
 
 
@@ -13,7 +14,7 @@ class Visitor_Program:
             'Object': BasicObject(), 'IO': BasicIO(), 'Int': BasicInt(), 'String': BasicString(), 'Bool': BasicBool()}
 
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
-        self.errors = []
+        # self.errors = []
 
 
     def _check_cycle(self, class_:str, node):
@@ -22,8 +23,13 @@ class Visitor_Program:
         lineage.add(class_)
         while temp_class in self.tree.keys():
             if self.types[temp_class].inherits in lineage:
-                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.'))
-                return 
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'SemanticError',
+                    f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.')
+                # self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.'))
+                # return 
             lineage.add(self.types[temp_class].inherits)
             temp_class = self.tree[temp_class]
 
@@ -74,20 +80,40 @@ class Visitor_Program:
     def visit_program(self, node):
         for i in node.classes:
             if  i.type in self.basic_types.keys():
-                self.errors.append(Error.error(i.line,i.column,'SemanticError',f'Redefinition of basic class {i.type}.' ))
+                raise SemError(
+                    i.line,
+                    i.column,
+                    'SemanticError',
+                    f'Redefinition of basic class {i.type}.')
+                # self.errors.append(Error.error(i.line,i.column,'SemanticError',f'Redefinition of basic class {i.type}.' ))
             elif i.type in self.types.keys():
-                self.errors.append(Error.error(i.line,i.column,"SemanticError",'Classes may not be redefined'))
+                raise SemError(
+                    i.line,
+                    i.column,
+                    'SemanticError',
+                    f'Classes may not be redefined.')
+                # self.errors.append(Error.error(i.line,i.column,"SemanticError",'Classes may not be redefined'))
             self.types[i.type] = i
 
         for cls in node.classes:
             if cls.inherits:
                 if not cls.inherits in self.types.keys():
                     if cls.inherits in self.basic_types:
-                        self.errors.append(Error.error(cls.line, cls.column, 'SemanticError',
-                            f'Class {cls.type} cannot inherit class {cls.inherits}. '))
+                        raise SemError(
+                            cls.line,
+                            cls.column,
+                            'SemanticError',
+                            f'Class {cls.type} cannot inherit class {cls.inherits}. ')
+                        # self.errors.append(Error.error(cls.line, cls.column, 'SemanticError',
+                        #     f'Class {cls.type} cannot inherit class {cls.inherits}. '))
                     else :
-                        self.errors.append(Error.error(cls.line, cls.column, 'TypeError',
-                            f'Class {cls.type} inherits from an undefined class {cls.inherits}.'))
+                        raise SemError(
+                            cls.line,
+                            cls.column,
+                            'TypeError',
+                            f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
+                        # self.errors.append(Error.error(cls.line, cls.column, 'TypeError',
+                        #     f'Class {cls.type} inherits from an undefined class {cls.inherits}.'))
                 self.tree[cls.type] = cls.inherits
                 self._check_cycle(cls.type,cls)
 
@@ -95,19 +121,39 @@ class Visitor_Program:
         meth_node = set()
         for meth in features:
             if meth.id in meth_node:
-                self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Method {meth.id} is multiply defined.'))
+                raise SemError(
+                    meth.line,
+                    meth.column,
+                    'SemanticError',
+                    f'Method {meth.id} is multiply defined.')
+                # self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Method {meth.id} is multiply defined.'))
 
             if meth.type not in self.types.keys() and not (meth.type in self.basic_types.keys()):
-                self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
+                raise SemError(
+                    meth.line,
+                    meth.column,
+                    'TypeError',
+                    f'Undefined return type {meth.type} in method test.')
+                # self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Undefined return type {meth.type} in method test.'))
 
             meth_formals_name = set()
             for formal in meth.formals:
                 
                 if formal.type not in self.types.keys() and not (formal.type in self.basic_types.keys()):
-                    self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Class {formal.type} of formal parameter {formal.id} is undefined.'))
+                    raise SemError(
+                        formal.line,
+                        formal.column,
+                        'TypeError',
+                        f'Class {formal.type} of formal parameter {formal.id} is undefined.')
+                    # self.errors.append(Error.error(meth.line,meth.column,'TypeError',f'Class {formal.type} of formal parameter {formal.id} is undefined.'))
                 
                 if formal.id in meth_formals_name:
-                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Formal parameter {formal.id} is multiply defined.'))
+                    raise SemError(
+                        formal.line,
+                        formal.column,
+                        'SemanticError',
+                        f'Formal parameter {formal.id} is multiply defined.')
+                    # self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Formal parameter {formal.id} is multiply defined.'))
                 meth_formals_name.add(formal.id)
             meth_node.add(meth.id)
         
@@ -115,10 +161,20 @@ class Visitor_Program:
         attrib_node = set()
         for attrb in features:
             if attrb.id in attrib_node:
-                self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is multiply defined in class.'))
+                raise SemError(
+                    attrb.line,
+                    attrb.column,
+                    'SemanticError',
+                    f'Attribute {attrb.id} is multiply defined in class.')
+                # self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is multiply defined in class.'))
 
             if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
-                self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
+                raise SemError(
+                    attrb.line,
+                    attrb.column,
+                    'TypeError',
+                    f'Class {attrb.type} of attribute {attrb.id} is undefined.')
+                # self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Class {attrb.type} of attribute {attrb.id} is undefined.'))
 
             attrib_node.add(attrb.id)
 
@@ -132,8 +188,12 @@ class Visitor_Program:
         for attrb in node.attributes:
             equals_attrbs = self._search_attribute_name_in_lineage(lineage,attrb)
             if len(equals_attrbs) > 0:
-                self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
-
+                raise SemError(
+                    attrb.line,
+                    attrb.column,
+                    'SemanticError',
+                    f'Attribute {attrb.id} is an attribute of an inherited class.')
+                # self.errors.append(Error.error(attrb.line,attrb.column,'SemanticError',f'Attribute {attrb.id} is an attribute of an inherited class.'))
 
         for meth in node.methods:
             equals_methods = self._search_method_name_in_lineage(lineage, meth)
@@ -141,14 +201,29 @@ class Visitor_Program:
                 equal_meth = equals_methods[0]
                 
                 if len(meth.formals) != len(equal_meth.formals):
-                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
-                    break
+                    raise SemError(
+                        meth.line,
+                        meth.column,    
+                        'SemanticError',
+                        f'Incompatible number of formal parameters in redefined method {meth.id}.')
+                    # self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'Incompatible number of formal parameters in redefined method {meth.id}.'))
+                    # break
                 for j in range(len(meth.formals)):
                     if meth.formals[j].type != equal_meth.formals[j].type:
-                        self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
+                        raise SemError(
+                            meth.line,
+                            meth.column,
+                            'SemanticError',
+                            f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.')
+                        # self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.'))
                 
                 if meth.type != equal_meth.type:
-                    self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
+                    raise SemError(
+                        meth.line,
+                        meth.column,
+                        'SemanticError',
+                        f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.')
+                    # self.errors.append(Error.error(meth.line,meth.column,'SemanticError',f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.'))
             
         
         node.methods_dict = {}
@@ -202,13 +277,18 @@ class Visitor_Class:
             'Object':'OBJECT',
             'IO':'IO',
         }
-
+        self.keywords = {'self'}
 
     def visit_attribute_initialization(self, node):
         attrb = node
-        if attrb.id == 'self':
-            self.errors.append(Error.error(attrb.line,attrb.column, 'SemanticError', '\'self\' cannot be the name of an attribute.'))
-            return None
+        if attrb.id in self.keywords:
+            raise SemError(
+                attrb.line,
+                attrb.column,
+                'SemanticError',
+                f'\'{attrb.id}\' cannot be the name of an attribute.')
+            # self.errors.append(Error.error(attrb.line,attrb.column, 'SemanticError', '\'self\' cannot be the name of an attribute.'))
+            # return None
         if attrb.__dict__.get('expr'):
             attrb_expr = attrb.expr
             type = attrb_expr.check(self)
@@ -219,12 +299,22 @@ class Visitor_Class:
                 if self.all_types.get(type):
                     lineage = self.all_types[type].lineage
                     if attrb.type not in lineage:
-                        self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
-                        return None
+                        raise SemError(
+                            attrb.line,
+                            attrb.column,
+                            'TypeError',
+                            f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
+                        # self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+                        # return None
                     else: 
                         node.dynamic_type = type
                         return type
-                self.errors.append(Error.error(attrb.line,attrb.expr.column['LET'],'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+                raise SemError(
+                    attrb.line,
+                    attrb.column,#.expr.column['LET'],
+                    'TypeError',
+                    f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
+                # self.errors.append(Error.error(attrb.line,attrb.expr.column['LET'],'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
         return None
 
 
@@ -239,20 +329,35 @@ class Visitor_Class:
 
     def visit_dispatch_type(self,node):
         if not self.all_types.get(node.type):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {node.type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Dispatch on undefined class {node.type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {node.type}.'))
+            # return None
         static_type = node.expr.check(self)
         if not static_type:
             return None
         if not static_type in self.all_types.keys():
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {static_type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Dispatch on undefined class {static_type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {static_type}.'))
+            # return None
         static_type = self.all_types.get(static_type)
         disp_type = self.all_types.get(node.type)
 
         if not node.id in static_type.methods_dict.keys() or not node.id in disp_type.methods_dict.keys():
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.'))
+            # return None
         
         node.expr = disp_type.type
         node.type = None
@@ -264,16 +369,31 @@ class Visitor_Class:
         if expr_type:
             if not expr_type in self.all_types.keys() and not expr_type in self.basic_types.keys():
                 #TODO search this error
-                self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
-                return None
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'TypeError',
+                    f'Dispatch on undefined class {expr_type}.')
+                # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Dispatch on undefined class {expr_type}.'))
+                # return None
             class_meths = self.all_types[expr_type] if self.all_types.get(expr_type) else self.basic_types.get(expr_type)
             class_meths = class_meths.methods_dict
             if not node.id in class_meths.keys():
-                self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
-                return None
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'AttributeError',
+                    f'Dispatch to undefined method {node.id}.')
+                # self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+                # return None
             elif not len(class_meths[node.id].formals) == len(node.exprs):
                 #TODO search this error    
-                self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'SemanticError',
+                    f'Method {node.id} called with wrong number of arguments.')
+                # self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Method {node.id} called with wrong number of arguments.'))
             
             elif len(class_meths[node.id].formals)>0:
                 for i, formal in enumerate(class_meths[node.id].formals):
@@ -283,36 +403,61 @@ class Visitor_Class:
                     
                     if not(type.type == formal.type) and not (formal.type in type.lineage):
                         #TODO search this error
-                            self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
-                            return None
+                            raise SemError(
+                                node.line,
+                                node.column,
+                                'TypeError',
+                                f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.')
+                            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.'))
+                            # return None
             return class_meths[node.id].type
 
     def visit_dispatch_not_expr(self,node):
         if not self.scope['methods'].get(node.id):
-            self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'AttributeError',
+                f'Dispatch to undefined method {node.id}.')
+            # self.errors.append(Error.error(node.line,node.column,'AttributeError',f'Dispatch to undefined method {node.id}.'))
+            # return None
         return self.scope['methods'][node.id].type
         
             
     def visit_method(self, node):
         for i in node.formals:
-            if i.id == 'self':
-                self.errors.append(Error.error(node.line,node.column,'SemanticError','\'self\' cannot be the name of a formal parameter.'))
-                return None
+            if i.id in self.keywords :
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'SemanticError',
+                    f'\'{i.id}\' cannot be the name of a formal parameter.')
+                # self.errors.append(Error.error(node.line,node.column,'SemanticError','\'self\' cannot be the name of a formal parameter.'))
+                # return None
         self.temporal_scope = {i.id:i for i in node.formals}     
         type = node.expr.check(self)        
         self.temporal_scope = {}
         if not type:
             return None
         if  (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Undefined return type {type} in method {node.id}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            # return None
         
         type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
         
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.'))
+            # return None
         
         return type
 
@@ -352,8 +497,13 @@ class Visitor_Class:
                 type2 = type2.type
 
         if not type1 or not type2:
-            self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,#[self.operators_symbols[node.symbol]],
+                'TypeError',
+                f'non-Int arguments: {type1} {node.symbol} {type2}')
+            # self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
+            # raise
         
         possible_types = node.possibles_types
         if  possible_types[0] == 'All':
@@ -362,14 +512,30 @@ class Visitor_Class:
                 type1_basic = type1 in self.basic_types.keys()
                 type2_basic = type2 in self.basic_types.keys()
                 if type1_basic and type2_basic:
-                    self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
-                    return None
+                    raise SemError(
+                        node.line,
+                        node.column,
+                        'TypeError',
+                        f'Illegal comparison with a basic type.')
+                    # self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
+                    # return None
                 if type1_basic or type2_basic:
-                    self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
-                    return None                
+                    raise SemError(
+                        node.line,
+                        node.column,
+                        'TypeError',
+                        f'Illegal comparison with a basic type.')
+                    # self.errors.append(Error.error(node.line,node.column,'TypeError','Illegal comparison with a basic type.'))
+                    # return None                
 
         elif not (type1 in possible_types and type2 in possible_types):
-            self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
+            raise SemError(
+                node.line,
+                node.column,#[self.operators_symbols[node.symbol]],
+                'TypeError',
+                f'non-Int arguments: {type1} {node.symbol} {type2}')
+            # self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
+            # raise 
         return node.return_type
         
     def visit_unary_operator(self, node):
@@ -382,19 +548,34 @@ class Visitor_Class:
                 type1 = type1.type
         
         if not type1:
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
+            # return None
               
         possible_types = node.possibles_types
         if not (type1 in possible_types):
-            self.errors.append(Error.error(node.line,node.expr.expr1.column[self.type_dict[type1]],'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
+            # self.errors.append(Error.error(node.line,node.expr.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
         return node.return_type
 
     def visit_new(self, node):
         if not node.type in self.basic_types.keys() and not node.type in self.all_types.keys():
             new_ ='\'new\''
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'{new_} used with undefined class {node.type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'{new_} used with undefined class {node.type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'{new_} used with undefined class {node.type}.'))
+            # return None
         return node.type 
     
     def visit_execute_method(self,node):
@@ -406,16 +587,26 @@ class Visitor_Class:
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:
-            if node.id == 'self':
+            if node.id in self.keywords:
                 return self.scope['type']
-            self.errors.append(Error.error(node.line,node.column,'NameError',f'Undeclared identifier {node.id}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'NameError',
+                f'Undeclared identifier {node.id}.')
+            # self.errors.append(Error.error(node.line,node.column,'NameError',f'Undeclared identifier {node.id}.'))
+            # return None
 
     def visit_let(self, node):
         for i in node.let_list:
-            if i.id == 'self':
-                self.errors.append(Error.error(node.line,node.column,'SemanticError','\'self\' cannot be bound in a \'let\' expression.'))
-                return None
+            if i.id in self.keywords:
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'SemanticError',
+                    f'\'{i.id}\' cannot be bound in a \'let\' expression.')
+                # self.errors.append(Error.error(node.line,node.column,'SemanticError',f'\'{i.id}\' cannot be bound in a \'let\' expression.'))
+                # return None
         for i in node.let_list:
             i.check(self)
         self.temporal_scope = {i.id:i for i in node.let_list}     
@@ -424,8 +615,13 @@ class Visitor_Class:
         if not type:
             return None
         if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Undefined return type {type} in method {node.id}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            # return None
 
         return type
 
@@ -447,15 +643,25 @@ class Visitor_Class:
         dynamic_type = node.expr.check(self)
         if not dynamic_type or dynamic_type =='void':
             #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Case on void.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Case on void.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Case on void.'))
+            # return None
         cases = node.cases
         return_types = []
         types = []
         for case in cases:
-            if case.id == 'self':
-                self.errors.append(Error.error(node.line,node.column,'SemanticError','Identifier \'self\' bound in \'case\'.'))
-                return None
+            if case.id in self.keywords:
+                raise SemError(
+                    node.line,
+                    node.column,
+                    'SemanticError',
+                    f'Identifier \'{case.id}\' bound in \'case\'.')
+                # self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Identifier \'{case.id}\' bound in \'case\'.'))
+                # return None
             
             return_type = case.check(self)
             if not return_type:
@@ -464,11 +670,21 @@ class Visitor_Class:
 
             type = case.type
             if not type in self.basic_types.keys() and not type in self.all_types.keys():
-                self.errors.append(Error.error(case.line,case.column,'TypeError',f'Class {type} of case branch is undefined.'))
-                return None
+                raise SemError(
+                    case.line,
+                    case.column,
+                    'TypeError',
+                    f'Class {type} of case branch is undefined.')
+                # self.errors.append(Error.error(case.line,case.column,'TypeError',f'Class {type} of case branch is undefined.'))
+                # return None
             if type in types:
-                self.errors.append(Error.error(case.line,case.column,'SemanticError',f'Duplicate branch {type} in case statement.'))
-                return None
+                raise SemError(
+                    case.line,
+                    case.column,
+                    'SemanticError',
+                    f'Duplicate branch {type} in case statement.')
+                # self.errors.append(Error.error(case.line,case.column,'SemanticError',f'Duplicate branch {type} in case statement.'))
+                # return None
             types.append(type)
 
         comm_type = 'Object'
@@ -485,11 +701,16 @@ class Visitor_Class:
         then_expr = node.then_expr.check(self)
         else_expr = node.else_expr.check(self)
         if not if_expr or not then_expr or not else_expr:
-            return None
+            return None,0
         if not if_expr == 'Bool':
             #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Predicate of \'if\' does not have type Bool.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Predicate of \'if\' does not have type Bool.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Predicate of \'if\' does not have type Bool.'))
+            # return None
         if then_expr == else_expr:
             return then_expr
         if then_expr in self.basic_types.keys() or else_expr in self.basic_types.keys():
@@ -505,20 +726,35 @@ class Visitor_Class:
         predicate_type = node.while_expr.check(self)
         body_type = node.loop_expr.check(self)
         if not predicate_type == 'Bool':
-            self.errors.append(Error.error(node.line,node.column,'TypeError', 'Loop condition does not have type Bool.'))
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Loop condition does not have type Bool.') 
+            # self.errors.append(Error.error(node.line,node.column,'TypeError', 'Loop condition does not have type Bool.'))
         return 'Object'
 
 
     def visit_assign(self, node):
-        if node.id == 'self':
-            self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Cannot assign to \'self\'.'))
-            return None
+        if node.id in self.keywords:
+            raise SemError(
+                node.line,
+                node.column,
+                'SemanticError',
+                f'Cannot assign to \'{node.id}\'.')
+            # self.errors.append(Error.error(node.line,node.column,'SemanticError',f'Cannot assign to \'self\'.'))
+            # return None
         type = node.expr.check(self)
         if not type:
             return None
         if (not type in self.all_types.keys() )and (not type in self.basic_types.keys()):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Undefined return type {type} in method {node.id}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            # return None
         
         node.dynamic_type = type
         return type
@@ -530,14 +766,25 @@ class Visitor_Class:
             return None
         if (not type in self.all_types.keys()) and (not type in self.basic_types.keys()):
             #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
-            return None  
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Undefined return type {type} in method {node.id}.')
+                
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Undefined return type {type} in method {node.id}.'))
+            # return None  
               
         type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
             #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f' Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.')
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f' Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.'))
+            # return None
         node.dynamic_type = type
         return type
 
@@ -545,8 +792,14 @@ class Visitor_Class:
     def visit_declaration(self, node):
         if not node.type in self.all_types.keys() and not node.type in self.basic_types.keys():
             #TODO search this error
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Class {node.type} of let-bound identifier {node.id} is undefined.'))
-            return None
+            raise SemError(
+                node.line,
+                node.column,
+                'TypeError',
+                f'Class {node.type} of let-bound identifier {node.id} is undefined.'
+            )
+            # self.errors.append(Error.error(node.line,node.column,'TypeError',f'Class {node.type} of let-bound identifier {node.id} is undefined.'))
+            # return None
         return node.type
 
 
