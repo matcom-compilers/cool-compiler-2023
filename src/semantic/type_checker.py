@@ -1,39 +1,13 @@
-from parsing.ast import (
-    AssignNode,
-    AttributeNode,
-    BinaryOperator,
-    BinaryOperatorNode,
-    BlockNode,
-    BooleanNode,
-    CaseNode,
-    CaseOptionNode,
-    ClassNode,
-    DispatchNode,
-    IdentifierNode,
-    IfNode,
-    IntegerNode,
-    IsVoidNode,
-    LetNode,
-    MethodCallNode,
-    MethodNode,
-    NewNode,
-    NotNode,
-    PrimeNode,
-    ProgramNode,
-    StringNode,
-    WhileNode,
-)
+from parsing.ast import (AssignNode, AttributeNode, BinaryOperator,
+                         BinaryOperatorNode, BlockNode, BooleanNode, CaseNode,
+                         CaseOptionNode, ClassNode, DispatchNode,
+                         IdentifierNode, IfNode, IntegerNode, IsVoidNode,
+                         LetNode, MethodCallNode, MethodNode, NewNode, NotNode,
+                         PrimeNode, ProgramNode, StringNode, WhileNode)
 from semantic.context import Context
 from semantic.scope import Scope
-from semantic.types import (
-    BoolType,
-    ErrorType,
-    IntType,
-    ObjectType,
-    SelfType,
-    StringType,
-    Type,
-)
+from semantic.types import (BoolType, ErrorType, IntType, SelfType, StringType,
+                            Type)
 from utils.loggers import LoggerUtility
 from utils.visitor import Visitor
 
@@ -72,7 +46,7 @@ class TypeChecker(Visitor):
         assert self.current_type
         if node.name == "self":
             self.error(
-                f"SemanticError: Attribute name cannot be self",
+                "SemanticError: Attribute name cannot be self",
                 node.location,
                 "Attribute",
                 "self",
@@ -94,7 +68,7 @@ class TypeChecker(Visitor):
                     type="Attribute",
                     value=expr_type,
                 )
-
+        
         scope.define_variable(node.name, attr_type)
 
     def visit__MethodNode(self, node: MethodNode, scope: Scope):
@@ -138,8 +112,18 @@ class TypeChecker(Visitor):
 
     def visit__AssignNode(self, node: AssignNode, scope: Scope):
         assert self.current_type
+        static_type = scope.find_variable_or_attribute(node.name, self.current_type).type
         assig_type = node.expr.accept(self, scope=scope)
         assig_type = assig_type if assig_type != SelfType() else self.current_type
+
+        if not assig_type.conforms_to(static_type):
+            self.error(
+                "SemanticError: Assign do not conforms",
+                location=node.location,
+                type="Assignment",
+                value=f"{node.name}:{assig_type.name}",
+            )
+            assig_type = ErrorType()
 
         if node.name == "self":
             self.error(
@@ -338,7 +322,7 @@ class TypeChecker(Visitor):
         for var_name, var_type, init_expr, location in node.bindings:
             if var_name == "self":
                 self.error(
-                    f"SemanticError: 'self' cannot be bound in a 'let' expression.",
+                    "SemanticError: 'self' cannot be bound in a 'let' expression.",
                     location=location,
                     type="Let",
                     value=var_type,
@@ -467,6 +451,7 @@ class TypeChecker(Visitor):
         if scope.is_defined(node.name, self.current_type):
             var_or_attr = scope.find_variable_or_attribute(node.name, self.current_type)
             node.type = var_or_attr.type if var_or_attr else ErrorType()
+            
             node.computed_type = node.type.name
             return node.type
         else:
@@ -548,9 +533,10 @@ class TypeChecker(Visitor):
             return while_type  # While always return VOID
         else:
             self.error(
-                f"TypeError: Loop condition does not have type Bool.",
+                "TypeError: Loop condition does not have type Bool.",
                 location=node.location,
                 type="Dispatch",
                 value=condition_type.name,
             )
+            return ErrorType()
             return ErrorType()

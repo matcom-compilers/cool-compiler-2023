@@ -224,10 +224,13 @@ class CaseNode(ExpressionNode):
 
 class CaseOptionNode(Node):
     def __init__(self, name, type, expr, location):
-        super().__init__(location)
         self.name = name
         self.type = type
         self.expr = expr
+        super().__init__(location)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class NewNode(ExpressionNode):
