@@ -1,6 +1,10 @@
 from COOL.nodes import Node
 from COOL.codegen.mips_visitor import MipsVisitor
 
+from COOL.codegen.utils import Instruction
+from COOL.codegen.utils import Comment
+from COOL.codegen.utils import Label
+
 
 class GetVariable(Node):
     def __init__(self, line: int, column: int, id:str) -> None:
@@ -10,7 +14,9 @@ class GetVariable(Node):
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         var = mips_visitor.get_variable(self)
-        obj = f"    move {mips_visitor.register_store_results}, {var}\n"
+        obj = [
+            Instruction("move", mips_visitor.register_store_results, var)
+        ]
         return obj
 
     def check(self, visitor):
@@ -59,10 +65,10 @@ class Assign(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         var = mips_visitor.get_variable(self)
         expr = self.expr.codegen(mips_visitor)
-        obj = (
-            expr +
-            f"    move {var}, {mips_visitor.register_store_results}\n"
-        )
+        obj = [
+            *expr,
+            Instruction("move", var, mips_visitor.register_store_results)
+        ]
         return obj
 
     def check(self, visitor):

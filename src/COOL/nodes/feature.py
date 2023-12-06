@@ -3,7 +3,11 @@ from typing import List
 from COOL.nodes import Node
 from COOL.codegen.mips_visitor import MipsVisitor
 
-from COOL.codegen.codegen_rules import NULL
+from COOL.codegen.utils import Instruction
+from COOL.codegen.utils import Comment
+from COOL.codegen.utils import Label
+from COOL.codegen.utils import NULL
+from COOL.codegen.utils import FALSE
 
 
 class Method(Node):
@@ -33,7 +37,16 @@ class ExecuteMethod(Node):
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_execute_method(self)
+        exprs = [expr.codegen(mips_visitor) for expr in self.exprs]
+        obj = [
+            Comment(f"EXECUTE_METHOD_{mips_visitor.current_state}"),
+            Instruction("addiu", "$sp", "$sp", "-4"),
+            Instruction("sw", "$v0", "0($sp)"),
+            *exprs,
+            Instruction("jal", mips_visitor.get_class_method()),
+        ]
+        mips_visitor.unvisit_execute_method(self)
 
     def check(self,visitor):
         visitor.visit_execute_method(node = self)
@@ -56,14 +69,31 @@ class AttributeDeclaration(Attribute):
 
         super().__init__(line, column, id)
 
+    # FIX: initializations, "", 0, false
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        mips_visitor.add_attribute(
-            f"    # attribute {self.id}: {self.type}\n"
-            f"    la {mips_visitor.register_store_results}, {NULL}\n"
-            f"    sw {mips_visitor.register_store_results}, 0({mips_visitor.register_memory_pointer})\n"
-            f"    addiu $v0, $v0, 4\n"
-        )
+        if self.type == "Int" or self.type == "String":
+            obj = [
+                Comment(f"attribute {self.id}: {self.type}"),
+                Instruction("la", mips_visitor.register_store_results, "0"),
+                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("addiu", "$v0", "$v0", "4"),
+            ]
+        elif self.type == "Bool":
+            obj = [
+                Comment(f"attribute {self.id}: {self.type}"),
+                Instruction("la", mips_visitor.register_store_results, FALSE),
+                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("addiu", "$v0", "$v0", "4"),
+            ]
+        else:
+            obj = [
+                Comment(f"attribute {self.id}: {self.type}"),
+                Instruction("la", mips_visitor.register_store_results, NULL),
+                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("addiu", "$v0", "$v0", "4"),
+            ]
+        mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
@@ -82,16 +112,17 @@ class AttributeInicialization(Attribute):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         expr = self.expr.codegen(mips_visitor)
-        mips_visitor.add_attribute(
-            f"    # attribute {self.id}: {self.type}\n"
-            f"    addiu $sp, $sp, -4\n"
-            f"    sw $v0, 0($sp)\n"
-            + expr +
-            f"    lw $v0, 0($sp)\n"
-            f"    addiu $sp, $sp, 4\n"
-            f"    sw {mips_visitor.register_store_results}, 0($v0)\n"
-            f"    addiu $v0, $v0, 4\n"
-        )
+        obj = [
+            Comment(f"attribute {self.id}: {self.type}"),
+            Instruction("addiu", "$sp", "$sp", "-4"),
+            Instruction("sw", "$v0", "0($sp)"),
+            *expr,
+            Instruction("lw", "$v0", "0($sp)"),
+            Instruction("addiu", "$sp", "$sp", "4"),
+            Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+            Instruction("addiu", "$v0", "$v0", "4"),
+        ]
+        mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):

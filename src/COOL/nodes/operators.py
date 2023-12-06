@@ -2,6 +2,9 @@ from abc import abstractmethod
 
 from COOL.nodes import Node
 
+from COOL.codegen.utils import Instruction
+from COOL.codegen.utils import Comment
+from COOL.codegen.utils import Label
 from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.codegen.codegen_rules import PUSH_STACK
 from COOL.codegen.codegen_rules import POP_STACK
@@ -18,10 +21,10 @@ class UnaryOperator(Node):
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr = self.expr.codegen(mips_visitor)
         operation = self.operation()
-        result = (
-            expr +
-            operation
-        )
+        result = [
+            *expr,
+            *operation
+        ]
         return result
 
     @abstractmethod
@@ -45,13 +48,15 @@ class Operator(Node):
         expr1 = self.expr1.codegen(mips_visitor)
         expr2 = self.expr2.codegen(mips_visitor)
         operation = self.operation()
-        result =(
-            expr1 +
-            PUSH_STACK.format(register="t0") +
-            expr2 +
-            POP_STACK.format(register="t1") +
-            operation
-        )
+        result =[
+            *expr1,
+            Instruction("addiu", "$sp", "$sp", "-4"),
+            Instruction("sw", "$t0", "0($sp)"),
+            *expr2,
+            Instruction("lw", "$t1", "0($sp)"),
+            Instruction("addiu", "$sp", "$sp", "4"),
+            *operation
+        ]
         return result
 
     @abstractmethod
@@ -66,7 +71,10 @@ class Add(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '+')
 
     def operation(self):
-        return "    add $t0, $t0, $t1\n"
+        obj = [
+            Instruction("add", "$t0", "$t0", "$t1"),
+        ]
+        return obj
 
 
 class Sub(Operator):
@@ -74,7 +82,10 @@ class Sub(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '-')
 
     def operation(self):
-        return "    sub $t0, $t0, $t1\n"
+        obj = [
+            Instruction("sub", "$t0", "$t0", "$t1"),
+        ]
+        return obj
 
 
 class Div(Operator):
@@ -82,7 +93,10 @@ class Div(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '/')
 
     def operation(self):
-        return "    div $t0, $t0, $t1\n"
+        obj = [
+            Instruction("div", "$t0", "$t0", "$t1"),
+        ]
+        return obj
 
 
 class Times(Operator):
@@ -92,7 +106,10 @@ class Times(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '*')
 
     def operation(self):
-        return "    mul $t0, $t0, $t1\n"
+        obj = [
+            Instruction("mul", "$t0", "$t0", "$t1"),
+        ]
+        return obj
 
 
 class Less(Operator):
@@ -102,11 +119,11 @@ class Less(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<')
 
     def operation(self):
-        operation = (
-            "    slt $t0, $t0, $t1\n"
-            "    jal set_bool\n"
-        )
-        return operation
+        obj = [
+            Instruction("slt", "$t0", "$t0", "$t1"),
+            Instruction("jal", "set_bool")
+        ]
+        return obj
 
 
 class LessEqual(Operator):
@@ -115,13 +132,13 @@ class LessEqual(Operator):
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<=')
 
     def operation(self):
-        operation = (
-            "    sgt $t2, $t0, $t1\n"
-            "    seq $t3, $t0, $t1\n"
-            "    or $t0, $t2, $t3\n"
-            "    jal set_bool\n"
-        )
-        return operation
+        obj = [
+            Instruction("sgt", "$t2", "$t0", "$t1"),
+            Instruction("seq", "$t3", "$t0", "$t1"),
+            Instruction("or", "$t0", "$t2", "$t3"),
+            Instruction("jal", "set_bool")
+        ]
+        return obj
 
 
 class Equal(Operator):
@@ -130,11 +147,11 @@ class Equal(Operator):
         super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
     def operation(self):
-        operation = (
-            "    seq $t0, $t0, $t1\n"
-            "    jal set_bool\n"
-        )
-        return operation
+        obj = [
+            Instruction("seq", "$t0", "$t0", "$t1"),
+            Instruction("jal", "set_bool")
+        ]
+        return obj
 
 
 class Not(UnaryOperator):
@@ -142,8 +159,10 @@ class Not(UnaryOperator):
         super().__init__(line, column, expr, ['Bool'],'Bool', 'not')
 
     def operation(self):
-        operation = "    xori $t0, $t0, 1\n"
-        return operation
+        obj = [
+            Instruction("xori", "$t0", "$t0", "1"),
+        ]
+        return obj
 
 
 class Bitwise(UnaryOperator):
@@ -151,5 +170,7 @@ class Bitwise(UnaryOperator):
         super().__init__(line, column, expr, ['Int'],'Int', '~')
 
     def operation(self):
-        operation = "    and $t0, $t0, $t1\n"
-        return operation
+        obj = [
+            Instruction("and", "$t0", "$t0", "$t1"),
+        ]
+        return obj
