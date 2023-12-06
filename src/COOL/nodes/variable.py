@@ -1,5 +1,5 @@
 from COOL.nodes import Node
-# from COOL.semantic.visitor import Visitor
+from COOL.codegen.mips_visitor import MipsVisitor
 
 
 class GetVariable(Node):
@@ -7,8 +7,11 @@ class GetVariable(Node):
         self.id = id
         super().__init__(line, column)
 
-    def codegen(self):
-        raise NotImplementedError()
+    # FIX
+    def codegen(self, mips_visitor: MipsVisitor):
+        var = mips_visitor.get_variable(self)
+        obj = f"    move {mips_visitor.register_store_results}, {var}\n"
+        return obj
 
     def check(self, visitor):
         return visitor.visit_get_variable(self)
@@ -22,7 +25,8 @@ class Initialization(Node):
 
         super().__init__(line, column)
 
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
     def check(self, visitor):
@@ -36,7 +40,8 @@ class Declaration(Node):
 
         super().__init__(line, column)
     
-    def codegen(self):
+    # TODO
+    def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
 
     def check(self, visitor):
@@ -50,8 +55,15 @@ class Assign(Node):
 
         super().__init__(line, column)
 
-    def codegen(self):
-        raise NotImplementedError()
+    # FIX
+    def codegen(self, mips_visitor: MipsVisitor):
+        var = mips_visitor.get_variable(self)
+        expr = self.expr.codegen(mips_visitor)
+        obj = (
+            expr +
+            f"    move {var}, {mips_visitor.register_store_results}\n"
+        )
+        return obj
 
     def check(self, visitor):
         return visitor.visit_assign(self)
