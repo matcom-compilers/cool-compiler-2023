@@ -1,0 +1,651 @@
+
+.TYPES
+type Object {
+  method __conforms_to : Object____conforms_to;
+  method abort : Object__abort;
+  method type_name : Object__type_name;
+  method copy : Object__copy;
+}
+
+type IO {
+  method __conforms_to : IO____conforms_to;
+  method abort : Object__abort;
+  method type_name : IO__type_name;
+  method copy : IO__copy;
+  method out_string : IO__out_string;
+  method out_int : IO__out_int;
+  method in_string : IO__in_string;
+  method in_int : IO__in_int;
+}
+
+type Int {
+  method __conforms_to : Int____conforms_to;
+  method abort : Object__abort;
+  method type_name : Int__type_name;
+  method copy : Int__copy;
+}
+
+type String {
+  method __conforms_to : String____conforms_to;
+  method abort : Object__abort;
+  method type_name : String__type_name;
+  method copy : String__copy;
+  method length : String__length;
+  method concat : String__concat;
+  method substr : String__substr;
+}
+
+type Bool {
+  method __conforms_to : Bool____conforms_to;
+  method abort : Object__abort;
+  method type_name : Bool__type_name;
+  method copy : Bool__copy;
+}
+
+type SELF_TYPE {
+  method __conforms_to : SELF_TYPE____conforms_to;
+}
+
+type Main {
+  method __conforms_to : Main____conforms_to;
+  method abort : Object__abort;
+  method type_name : Main__type_name;
+  method copy : Main__copy;
+  method out_string : IO__out_string;
+  method out_int : IO__out_int;
+  method in_string : IO__in_string;
+  method in_int : IO__in_int;
+  method main : Main__main;
+  method fib : Main__fib;
+}
+
+
+.DATA
+data_0_EOL = "\n";
+
+data_1_abort_msg = "Abort called from class ";
+
+data_2_TYPE_NAME_Object = "Object";
+
+data_3_TYPE_NAME_IO = "IO";
+
+data_4_TYPE_NAME_Int = "Int";
+
+data_5_TYPE_NAME_String = "String";
+
+data_6_TYPE_NAME_Bool = "Bool";
+
+data_7_TYPE_NAME_SELF_TYPE = "SELF_TYPE";
+
+data_8_TYPE_NAME_Main = "Main";
+
+data_9_STR = Enter n to find nth fibonacci number!
+;
+
+data_10_STR = 
+;
+
+
+.CODE
+function Void____init {
+
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE Void;	
+	RETURN _l_self;
+}
+
+function main {
+
+
+	LOCAL _l_0;	
+	LOCAL _l_1;
+
+	_l_0 = CALL Main____init;	
+	ARG _l_0;	
+	_l_1 = CALL Main__main;	
+	EXIT 0;
+}
+
+function Object__abort {
+	PARAM param__self;
+
+	LOCAL _l_self;	
+	LOCAL _l_type;	
+	LOCAL _l_2;	
+	LOCAL _l_3;	
+	LOCAL _l_4;	
+	LOCAL _l_5;	
+	LOCAL _l_6;
+
+	_l_self = TYPEOF param__self;	
+	_l_type = VCALL _l_self 2;	
+	ARG _l_type;	
+	_l_2 = CALL String____init;	
+	_l_3 = LOAD data_0_EOL;	
+	ARG _l_3;	
+	_l_4 = CALL String____init;	
+	_l_5 = LOAD data_1_abort_msg;	
+	ARG _l_5;	
+	_l_6 = CALL String____init;	
+	PRINT _l_6;	
+	PRINT _l_2;	
+	PRINT _l_4;	
+	EXIT 1;
+}
+
+function IO__out_string {
+	PARAM param__self;	
+	PARAM param__str;
+
+	LOCAL _l_0;
+
+	ARG param__str;	
+	_l_0 = CALL String____init;	
+	PRINT _l_0;	
+	RETURN param__self;
+}
+
+function IO__out_int {
+	PARAM param__self;	
+	PARAM param__int;
+
+	LOCAL _l_0;
+
+	ARG param__int;	
+	_l_0 = CALL Int____init;	
+	PRINT _l_0;	
+	RETURN param__self;
+}
+
+function IO__in_string {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = READ;	
+	RETURN _l_0;
+}
+
+function IO__in_int {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = READ;	
+	RETURN _l_0;
+}
+
+function String__length {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LENGTH param__self;	
+	RETURN _l_0;
+}
+
+function String__concat {
+	PARAM param__self;	
+	PARAM param__s;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_2;	
+	LOCAL _l_3;
+
+	_l_0 = LENGTH param__self;	
+	_l_1 = LENGTH param__s;	
+	_l_3 = _l_0 + _l_1;	
+	_l_2 = CONCAT param__self param__s;	
+	RETURN _l_2;
+}
+
+function String__substr {
+	PARAM param__self;	
+	PARAM param__i;	
+	PARAM param__l;
+
+	LOCAL _l_0;
+
+	_l_0 = SUBSTRING param__self param__l;	
+	RETURN _l_0;
+}
+
+function Int____init {
+	PARAM param__value;
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE Int;	
+	SETATTR _l_self 0 param__value	
+	RETURN _l_self;
+}
+
+function Bool____init {
+	PARAM param__value;
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE Bool;	
+	SETATTR _l_self 0 param__value	
+	RETURN _l_self;
+}
+
+function String____init {
+	PARAM param__value;
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE String;	
+	SETATTR _l_self 0 param__value	
+	RETURN _l_self;
+}
+
+function Object____init {
+
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE Object;	
+	RETURN _l_self;
+}
+
+function Object____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_2;	
+	LOCAL _l_3;
+
+	_l_0 = LOAD Object;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_0;	
+	_l_2 = LOAD 0;	
+	RETURN _l_2;	
+	LABEL LABEL_then_0;	
+	_l_3 = LOAD 1;	
+	RETURN _l_3;
+}
+
+function Object__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_2_TYPE_NAME_Object;	
+	RETURN _l_0;
+}
+
+function Object__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE Object;	
+	RETURN _l_copy;
+}
+
+function IO____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_rec_call;	
+	LOCAL _l_3;	
+	LOCAL _l_4;
+
+	_l_0 = LOAD IO;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_1;	
+	_l_3 = LOAD Object;	
+	ARG param__other_type;	
+	_l_rec_call = VCALL _l_3 0;	
+	RETURN _l_rec_call;	
+	LABEL LABEL_then_1;	
+	_l_4 = LOAD 1;	
+	RETURN _l_4;
+}
+
+function IO__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_3_TYPE_NAME_IO;	
+	RETURN _l_0;
+}
+
+function IO__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE IO;	
+	RETURN _l_copy;
+}
+
+function Int____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_rec_call;	
+	LOCAL _l_3;	
+	LOCAL _l_4;
+
+	_l_0 = LOAD Int;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_2;	
+	_l_3 = LOAD Object;	
+	ARG param__other_type;	
+	_l_rec_call = VCALL _l_3 0;	
+	RETURN _l_rec_call;	
+	LABEL LABEL_then_2;	
+	_l_4 = LOAD 1;	
+	RETURN _l_4;
+}
+
+function Int__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_4_TYPE_NAME_Int;	
+	RETURN _l_0;
+}
+
+function Int__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE Int;	
+	RETURN _l_copy;
+}
+
+function String____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_rec_call;	
+	LOCAL _l_3;	
+	LOCAL _l_4;
+
+	_l_0 = LOAD String;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_3;	
+	_l_3 = LOAD Object;	
+	ARG param__other_type;	
+	_l_rec_call = VCALL _l_3 0;	
+	RETURN _l_rec_call;	
+	LABEL LABEL_then_3;	
+	_l_4 = LOAD 1;	
+	RETURN _l_4;
+}
+
+function String__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_5_TYPE_NAME_String;	
+	RETURN _l_0;
+}
+
+function String__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE String;	
+	RETURN _l_copy;
+}
+
+function Bool____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_rec_call;	
+	LOCAL _l_3;	
+	LOCAL _l_4;
+
+	_l_0 = LOAD Bool;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_4;	
+	_l_3 = LOAD Object;	
+	ARG param__other_type;	
+	_l_rec_call = VCALL _l_3 0;	
+	RETURN _l_rec_call;	
+	LABEL LABEL_then_4;	
+	_l_4 = LOAD 1;	
+	RETURN _l_4;
+}
+
+function Bool__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_6_TYPE_NAME_Bool;	
+	RETURN _l_0;
+}
+
+function Bool__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE Bool;	
+	RETURN _l_copy;
+}
+
+function SELF_TYPE____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_2;	
+	LOCAL _l_3;
+
+	_l_0 = LOAD SELF_TYPE;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_5;	
+	_l_2 = LOAD 0;	
+	RETURN _l_2;	
+	LABEL LABEL_then_5;	
+	_l_3 = LOAD 1;	
+	RETURN _l_3;
+}
+
+function SELF_TYPE__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_7_TYPE_NAME_SELF_TYPE;	
+	RETURN _l_0;
+}
+
+function SELF_TYPE__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE SELF_TYPE;	
+	RETURN _l_copy;
+}
+
+function Main____conforms_to {
+	PARAM param__other_type;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_rec_call;	
+	LOCAL _l_3;	
+	LOCAL _l_4;
+
+	_l_0 = LOAD Main;	
+	_l_1 = _l_0 - param__other_type;	
+	IF _l_1 = 0 GOTO LABEL_then_6;	
+	_l_3 = LOAD IO;	
+	ARG param__other_type;	
+	_l_rec_call = VCALL _l_3 0;	
+	RETURN _l_rec_call;	
+	LABEL LABEL_then_6;	
+	_l_4 = LOAD 1;	
+	RETURN _l_4;
+}
+
+function Main__type_name {
+	PARAM param__self;
+
+	LOCAL _l_0;
+
+	_l_0 = LOAD data_8_TYPE_NAME_Main;	
+	RETURN _l_0;
+}
+
+function Main__copy {
+	PARAM param__self;
+
+	LOCAL _l_copy;
+
+	_l_copy = ALLOCATE Main;	
+	RETURN _l_copy;
+}
+
+function Main____init {
+
+
+	LOCAL _l_self;
+
+	_l_self = ALLOCATE Main;	
+	RETURN _l_self;
+}
+
+function Main__main {
+	PARAM param__self;
+
+	LOCAL _l_0;	
+	LOCAL _l_1;	
+	LOCAL _l_2;	
+	LOCAL _l_3;	
+	LOCAL _l_4;	
+	LOCAL _l_5;	
+	LOCAL _l_6;	
+	LOCAL _l_7;	
+	LOCAL _l_8;	
+	LOCAL _l_9;	
+	LOCAL _l_10;
+
+	_l_1 = LOAD data_9_STR;	
+	ARG _l_1;	
+	_l_2 = CALL String____init;	
+	ARG param__self;	
+	ARG _l_2;	
+	_l_0 = CALL Main__out_string;	
+	ARG param__self;	
+	_l_5 = CALL Main__in_int;	
+	ARG _l_5;	
+	_l_6 = CALL Int____init;	
+	ARG param__self;	
+	ARG _l_6;	
+	_l_4 = CALL Main__fib;	
+	ARG _l_4;	
+	_l_7 = CALL Int____init;	
+	ARG param__self;	
+	ARG _l_7;	
+	_l_3 = CALL Main__out_int;	
+	_l_9 = LOAD data_10_STR;	
+	ARG _l_9;	
+	_l_10 = CALL String____init;	
+	ARG param__self;	
+	ARG _l_10;	
+	_l_8 = CALL Main__out_string;	
+	RETURN _l_8;
+}
+
+function Main__fib {
+	PARAM param__self;	
+	PARAM param__i;
+
+	LOCAL _l_a;	
+	LOCAL _l_1;	
+	LOCAL _l_2;	
+	LOCAL _l_b;	
+	LOCAL _l_4;	
+	LOCAL _l_5;	
+	LOCAL _l_c;	
+	LOCAL _l_7;	
+	LOCAL _l_8;	
+	LOCAL _l_9;	
+	LOCAL _l_10;	
+	LOCAL _l_11;	
+	LOCAL _l_12;	
+	LOCAL _l_13;	
+	LOCAL _l_14;	
+	LOCAL _l_15;	
+	LOCAL _l_16;	
+	LOCAL _l_17;	
+	LOCAL _l_18;	
+	LOCAL _l_19;	
+	LOCAL _l_20;	
+	LOCAL _l_21;	
+	LOCAL _l_22;	
+	LOCAL _l_23;	
+	LOCAL _l_24;
+
+	_l_1 = LOAD 1;	
+	ARG _l_1;	
+	_l_2 = CALL Int____init;	
+	_l_a = _l_2 	
+	_l_4 = LOAD 0;	
+	ARG _l_4;	
+	_l_5 = CALL Int____init;	
+	_l_b = _l_5 	
+	_l_7 = LOAD 0;	
+	ARG _l_7;	
+	_l_8 = CALL Int____init;	
+	_l_c = _l_8 	
+	LABEL LABEL_while_label_0;	
+	_l_10 = LOAD 0;	
+	_l_12 = param__i - _l_10;	
+	IF _l_12 = 0 GOTO LABEL_then_7;	
+	_l_14 = LOAD 0;	
+	_l_13 = _l_14 	
+	GOTO LABEL_continue_0;	
+	LABEL LABEL_then_7;	
+	_l_15 = LOAD 1;	
+	_l_13 = _l_15 	
+	LABEL LABEL_continue_0;	
+	_l_16 = LOAD 1;	
+	_l_9 = _l_16 - _l_13;	
+	IF _l_9 > 0 GOTO LABEL_loop_label_0;	
+	GOTO LABEL_pool_label_0;	
+	LABEL LABEL_loop_label_0;	
+	_l_17 = _l_a + _l_b;	
+	ARG _l_17;	
+	_l_18 = CALL Int____init;	
+	_l_c = _l_18 	
+	_l_19 = LOAD 1;	
+	_l_20 = param__i - _l_19;	
+	ARG _l_20;	
+	_l_21 = CALL Int____init;	
+	param__i = _l_21 	
+	ARG _l_a;	
+	_l_22 = CALL Int____init;	
+	_l_b = _l_22 	
+	ARG _l_c;	
+	_l_23 = CALL Int____init;	
+	_l_a = _l_23 	
+	GOTO LABEL_while_label_0;	
+	LABEL LABEL_pool_label_0;	
+	_l_24 = CALL Void____init;	
+	RETURN _l_c;
+}
+

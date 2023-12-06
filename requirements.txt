@@ -1,2 +1,6 @@
 pytest
 pytest-ordering
+
+
+# For better logging
+coloredlogs==15.0.1
