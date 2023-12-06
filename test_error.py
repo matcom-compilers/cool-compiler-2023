@@ -63,7 +63,7 @@ def test_codegen(cls, out, inp):
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
     folder = "./tests/semantic/"
-    # folder = "./tests/lauren/progress/now/"
+    folder = "./tests/lauren/progress/now/"
     # folder = "./tests/lauren/working_on/"
     # folder = "./tests/lauren/passed/"
     # folder = "./tests/lauren/yet/"

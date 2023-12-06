@@ -15,6 +15,7 @@ class Visitor_Program:
         self.tree = {}# Is the tree of heritance, In each "key" there is a class and its "value" is the class from which it inherits.
         self.errors = []
 
+
     def _check_cycle(self, class_:str, node):
         temp_class = class_
         lineage = set()
@@ -181,6 +182,26 @@ class Visitor_Class:
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
+        self.operators_symbols = {
+            '+': "PLUS", 
+            '-': "MINUS", 
+            '*': "TIMES", 
+            '/': "DIVIDE", 
+            '<': "LESS", 
+            '<=': "LESSEQUAL", 
+            '=': "EQUAL", 
+            'not': "NOT", 
+            '~': "BITWISE", 
+            '<-': "ASSIGN", 
+            '=>': "DARROW",
+        }
+        self.type_dict = {
+            'Int':'NUMBER',
+            'String':'STRING',
+            'Bool':'BOOL',
+            'Object':'OBJECT',
+            'IO':'IO',
+        }
 
 
     def visit_attribute_initialization(self, node):
@@ -203,7 +224,7 @@ class Visitor_Class:
                     else: 
                         node.dynamic_type = type
                         return type
-                self.errors.append(Error.error(attrb.line,attrb.column,'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
+                self.errors.append(Error.error(attrb.line,attrb.expr.column['LET'],'TypeError',f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.'))
         return None
 
 
@@ -331,7 +352,7 @@ class Visitor_Class:
                 type2 = type2.type
 
         if not type1 or not type2:
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
+            self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
             return None
         
         possible_types = node.possibles_types
@@ -348,7 +369,7 @@ class Visitor_Class:
                     return None                
 
         elif not (type1 in possible_types and type2 in possible_types):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
+            self.errors.append(Error.error(node.line,node.column[self.operators_symbols[node.symbol]],'TypeError',f'non-{node.return_type} arguments: {type1} {node.symbol} {type2}'))
         return node.return_type
         
     def visit_unary_operator(self, node):
@@ -366,7 +387,7 @@ class Visitor_Class:
               
         possible_types = node.possibles_types
         if not (type1 in possible_types):
-            self.errors.append(Error.error(node.line,node.column,'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
+            self.errors.append(Error.error(node.line,node.expr.expr1.column[self.type_dict[type1]],'TypeError',f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.'))
         return node.return_type
 
     def visit_new(self, node):
