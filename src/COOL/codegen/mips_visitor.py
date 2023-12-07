@@ -7,7 +7,6 @@ from COOL.codegen.utils import Instruction
 
 from COOL.codegen.utils import DATA_SECTION
 from COOL.codegen.utils import TEXT_SECTION
-from COOL.codegen.codegen_rules import CREATE_FUNCTION
 from COOL.codegen.functions import FUNCTIONS
 
 
