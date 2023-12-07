@@ -1,12 +1,12 @@
 from typing import List
 
 from COOL.codegen.utils import Data
+from COOL.codegen.utils import Comment
+from COOL.codegen.utils import Label
 from COOL.codegen.utils import Instruction
 
 from COOL.codegen.utils import DATA_SECTION
 from COOL.codegen.utils import TEXT_SECTION
-from COOL.codegen.codegen_rules import CREATE_CLASS
-# from COOL.codegen.codegen_rules import REQUEST_MEMORY
 from COOL.codegen.codegen_rules import CREATE_FUNCTION
 from COOL.codegen.functions import FUNCTIONS
 
@@ -85,46 +85,71 @@ class MipsVisitor:
             attributes = self.test_section_classes[_cls]["attributes"]
             memory = self.test_section_classes[_cls]["memory"]
             methods = self.test_section_classes[_cls]["methods"]
-            
-            text_section +=\
-            CREATE_CLASS.format(
-                class_name=_cls,
-                attributes="\n".join(map(str, attributes)),
-                # request_memory=REQUEST_MEMORY.format(memory=memory),
-                request_memory=""
+            text_section += "\n".join(map(
+                str,
+                self.create_class(
+                        _class=_cls,
+                        memory=memory,
+                        attributes=attributes
+                    )
+                )
             )
             # TODO: clean the stack
             for _method in methods.keys():
-                text_section +=\
-                CREATE_FUNCTION.format(
-                    function_name=_method,
-                    class_name=_cls,
-                    method="\n".join(map(str, methods[_method])),
-                    clean_stack="    <clean_stack>\n",
+                text_section += "\n".join(map(
+                str,
+                self.create_function(
+                        _function=_method,
+                        _class=_cls,
+                        _method=methods[_method]
+                    )
                 )
+            )
         for _function in FUNCTIONS:
             text_section += _function
         
         return data_section + text_section
 
     @property
-    def register_return(self):
+    def rr(self):
+        """
+        Register return
+        """
         return "$ra"
     
     @property
-    def register_stack_pointer(self):
+    def rsp(self):
+        """
+        Register stack pointer
+        """
         return "$sp"
     
     @property
-    def register_memory_pointer(self):
+    def rsi(self):
+        """
+        Register system input
+        """
+        return "$a0"
+    
+    @property
+    def rmr(self):
+        """
+        Register method return
+        """
         return "$v0"
     
-    @property
-    def register_store_memory(self):
-        return "$t7"
+    # @property
+    # def rcr(self):
+    #     """
+    #     Register class return
+    #     """
+    #     return "$t7"
     
     @property
-    def register_store_results(self):
+    def rsr(self):
+        """
+        Register store results
+        """
         return "$t0"
     
     @property
@@ -142,6 +167,30 @@ class MipsVisitor:
             for _cls in data.keys() if data[_cls]
         ]
         return data_section
+
+    def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
+        obj = [
+            Comment(f"Create class {_class}"),
+            Label(_class),
+            Instruction("li", self.rsi, memory),
+            Instruction("li", self.rmr, 9),
+            Instruction("syscall"),
+            *attributes,
+        ]
+        return obj
+
+    def create_function(self, _function: str, _class: str, _method: List[Instruction]):
+        obj = [
+            Comment(f"Create function {_function} from class {_class}"),
+            Label(_function),
+            Instruction("addiu", self.rsp, self.rsp, "-4"),
+            Instruction("sw", self.rr, "0($sp)"),
+            *_method,
+            Instruction("lw", self.rr, "0($sp)"),
+            Instruction("addiu", self.rsp, self.rsp, 4),
+            Instruction("jr", self.rr),
+        ]
+        return obj
     
     def __get_class_parents(self, _class: str):
         """
@@ -200,9 +249,8 @@ class MipsVisitor:
         self.vars_class = {}
     
     def unvisit_class(self, _class):
-        # TODO: request memory
         self.test_section_classes[_class.type] = {
-            "memory": self.class_memory,
+            "memory": self.class_memory+4,
             "attributes": self.attributes,
             "methods": self.test_section_methods,
         }

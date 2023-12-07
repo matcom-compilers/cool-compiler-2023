@@ -47,7 +47,7 @@ class String(Object):
         ]
         mips_visitor.add_data(data)
         obj = [
-            Instruction("la", mips_visitor.register_store_results, str_name)
+            Instruction("la", mips_visitor.rsr, str_name)
         ]
         return obj
     

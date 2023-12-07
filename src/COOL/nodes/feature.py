@@ -76,22 +76,22 @@ class AttributeDeclaration(Attribute):
         if self.type == "Int" or self.type == "String":
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.register_store_results, "0"),
-                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("la", mips_visitor.rsr, "0"),
+                Instruction("sw", mips_visitor.rsr, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
             ]
         elif self.type == "Bool":
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.register_store_results, FALSE),
-                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("la", mips_visitor.rsr, FALSE),
+                Instruction("sw", mips_visitor.rsr, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
             ]
         else:
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.register_store_results, NULL),
-                Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+                Instruction("la", mips_visitor.rsr, NULL),
+                Instruction("sw", mips_visitor.rsr, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
             ]
         mips_visitor.add_attribute(obj)
@@ -120,7 +120,7 @@ class AttributeInicialization(Attribute):
             *expr,
             Instruction("lw", "$v0", "0($sp)"),
             Instruction("addiu", "$sp", "$sp", "4"),
-            Instruction("sw", mips_visitor.register_store_results, "0($v0)"),
+            Instruction("sw", mips_visitor.rsr, "0($v0)"),
             Instruction("addiu", "$v0", "$v0", "4"),
         ]
         mips_visitor.add_attribute(obj)

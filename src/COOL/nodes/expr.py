@@ -159,7 +159,7 @@ class New(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         obj = (
             f"    jal {self.type}\n"
-            f"    move {mips_visitor.register_store_results}, $v0\n"
+            f"    move {mips_visitor.rsr}, $v0\n"
         )
         return obj
 
@@ -181,7 +181,7 @@ class Isvoid(Node):
         expr = self.expr.codegen(mips_visitor)
         obj = (
             expr +
-            f"    move {mips_visitor.register_store_results}, $t0\n"
+            f"    move {mips_visitor.rsr}, $t0\n"
             f"    la  $t1, {NULL}\n"
             f"    seq $t0, $t0, $t1\n"
         )
