@@ -21,7 +21,18 @@ class Method(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
-        mips_visitor.add_expression(expr)
+        obj = [
+            Comment(f"Create function {self.id} from class {mips_visitor.current_class}"),
+            Label(mips_visitor.get_method_name(mips_visitor.current_class, self.id)),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
+            Instruction("sw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            *expr,
+            Instruction("lw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, 4),
+            # FIX: clear the stack of the method
+            Instruction("jr", mips_visitor.rr),
+        ]
+        mips_visitor.add_method(obj)
         mips_visitor.unvisit_method(self)
 
     def check(self, visitor):
@@ -46,13 +57,17 @@ class ExecuteMethod(Node):
                     Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
                 ]
             )
+        n_stack = len(self.exprs) * 4
         obj = [
             Comment(f"EXECUTE_METHOD_{mips_visitor.current_state}"),
             Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
-            Instruction("sw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
+            # FIX: save in stack the self
+            Instruction(),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "4"),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
             *exprs,
             # FIX
-            Instruction("sw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, f"{n_stack}"),
             Instruction("jal", mips_visitor.get_class_method()),
             Instruction("lw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
             Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "4"),

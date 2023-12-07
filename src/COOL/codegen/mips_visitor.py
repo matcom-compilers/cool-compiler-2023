@@ -18,13 +18,12 @@ class MipsVisitor:
         self.current_state = 0
 
         # global data
+        self.test_section = []
         self.data_secction = []
         self.test_section_classes = {}
-        self.test_section_methods = {}
 
         # local data
         self.attributes = []
-        self.expressions = []
         
         # memory
         self.class_memory = 0
@@ -86,7 +85,6 @@ class MipsVisitor:
         for _cls in self.test_section_classes.keys():
             attributes = self.test_section_classes[_cls]["attributes"]
             memory = self.test_section_classes[_cls]["memory"]
-            methods = self.test_section_classes[_cls]["methods"]
             text_section += "\n".join(map(
                 str,
                 self.create_class(
@@ -96,17 +94,7 @@ class MipsVisitor:
                     )
                 )
             )
-            # TODO: clean the stack
-            for _method in methods.keys():
-                text_section += "\n".join(map(
-                str,
-                self.create_function(
-                        _function=_method,
-                        _class=_cls,
-                        _method=methods[_method]
-                    )
-                )
-            )
+            text_section += "\n".join(map(str,self.test_section))
         for _function in FUNCTIONS:
             text_section += _function
         
@@ -195,10 +183,11 @@ class MipsVisitor:
             Comment(f"Create function {_function} from class {_class}"),
             Label(_function),
             Instruction("addiu", self.rsp, self.rsp, "-4"),
-            Instruction("sw", self.rr, "0($sp)"),
+            Instruction("sw", self.rr, f"0({self.rsp})"),
             *_method,
-            Instruction("lw", self.rr, "0($sp)"),
+            Instruction("lw", self.rr, f"0({self.rsp})"),
             Instruction("addiu", self.rsp, self.rsp, 4),
+            # FIX: clear the stack of the method
             Instruction("jr", self.rr),
         ]
         return obj
@@ -230,6 +219,24 @@ class MipsVisitor:
             Instruction("sw", self.rmr, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
             Instruction("j", "exit"),
+        ]
+        return obj
+
+    def allocate_stack(self, _size: int):
+        """
+        Allocate stack.
+        """
+        obj = [
+            Instruction("addiu", self.rsp, self.rsp, f"-{_size}"),
+        ]
+        return obj
+    
+    def deallocate_stack(self, _size: int):
+        """
+        Deallocate stack.
+        """
+        obj = [
+            Instruction("addiu", self.rsp, self.rsp, f"{_size}"),
         ]
         return obj
     
@@ -284,11 +291,11 @@ class MipsVisitor:
     def add_attribute(self, _attribute: List[Instruction]):
         self.attributes.extend(_attribute)
     
+    def add_method(self, _method: List[Instruction]):
+        self.test_section.extend(_method)
+    
     def add_memory(self, _memory: int):
         self.class_memory = _memory
-
-    def add_expression(self, _expression: List[Instruction]):
-        self.expressions.extend(_expression)
 
     # VISIT
     def visit_program(self, _program):
@@ -310,9 +317,7 @@ class MipsVisitor:
         self.test_section_classes[_class.type] = {
             "memory": self.class_memory+4,
             "attributes": self.attributes,
-            "methods": self.test_section_methods,
         }
-        self.test_section_methods = {}
         self.attributes = []
         self.current_class = None
         self.class_memory = 0
@@ -326,13 +331,14 @@ class MipsVisitor:
 
     def visit_method(self, _method):
         self.current_method = self.get_method_name(self.current_class, _method.id)
-        self.expressions = []
-        self.vars_method = {f.id: f"{i*4}($v0)" for f, i in enumerate(_method.formals)}
+        self.vars_method = {
+            "self": f"0({self.rsp})",
+            **{f.id: f"{(i+1)*4}({self.rsp})" for f, i in enumerate(_method.formals)},
+        }
     
     def unvisit_method(self, _method):
-        self.test_section_methods[self.current_method] = self.expressions
+        # self.test_section_methods[self.current_method] = self.expressions
         self.current_method = None
-        self.expressions = []
         self.vars_method = {}
 
     def visit_object(self, _expression):
