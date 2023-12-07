@@ -1,5 +1,6 @@
 from typing import List
 
+from COOL.codegen.utils import Data
 from COOL.codegen.utils import Instruction
 
 from COOL.codegen.utils import DATA_SECTION
@@ -31,6 +32,7 @@ class MipsVisitor:
         self.current_method = None
         self.current_attribute = None
         self.current_expression = None
+        self.current_return_type = None
         
         # scope
         self.vars_method = {}
@@ -45,21 +47,23 @@ class MipsVisitor:
         }
         self.class_methods = {
             "Object": [
-                "Object_abort",
-                "Object_type_name",
-                "Object_copy",
+                "abort",
+                "type_name",
+                "copy",
             ],
             "IO": [
-                "IO_out_string",
-                "IO_out_int",
-                "IO_in_string",
-                "IO_in_int",
+                "out_string",
+                "out_int",
+                "in_string",
+                "in_int",
             ],
             "String": [
-                "String_length",
-                "String_concat",
-                "String_substr",
+                "length",
+                "concat",
+                "substr",
             ],
+            "Int": [],
+            "Bool": [],
         }
     
     def generate_mips(self) -> str:
@@ -69,9 +73,12 @@ class MipsVisitor:
         Return:
             str: mips code.
         """
-        data_section = DATA_SECTION
-        for _data in self.data_secction:
-            data_section += _data
+        data_section =(
+            DATA_SECTION +
+            "\n".join(map(str, self.data_secction)) +
+            "\n" +
+            "\n".join(map(str, self.generate_data_classes))
+        )
 
         text_section = TEXT_SECTION
         for _cls in self.test_section_classes.keys():
@@ -119,6 +126,33 @@ class MipsVisitor:
     @property
     def register_store_results(self):
         return "$t0"
+    
+    @property
+    def generate_data_classes(self):
+        """
+        Generate the classes with his method labels in .data
+        """
+        data = {}
+        for _cls in self.inheritance.keys():
+            data[_cls] = {}
+            for _current_cls in reversed(self.__get_class_parents(_cls)):
+                data[_cls].update({_method: _current_cls for _method in self.class_methods[_current_cls]})
+        data_section = [
+            Data(_cls, ".word", *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
+            for _cls in data.keys() if data[_cls]
+        ]
+        return data_section
+    
+    def __get_class_parents(self, _class: str):
+        """
+        Get the class parents.
+        """
+        parents = []
+        while _class:
+            parents.append(_class)
+            _class = self.inheritance[_class]
+        return parents
+
 
     def get_class_method(self, _class: str, _method: str):
         """
@@ -143,11 +177,11 @@ class MipsVisitor:
         scope.update(self.vars_method)
         return scope.get(_variable.id)
     
-    def add_data(self, _data: str):
+    def add_data(self, _data: List[Data]):
         """
         Add data to the data section.
         """
-        self.data_secction.append(_data)
+        self.data_secction.extend(_data)
 
     def visit_program(self, _program):
         for _cls in _program.classes:

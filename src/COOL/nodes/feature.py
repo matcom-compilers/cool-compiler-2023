@@ -44,6 +44,7 @@ class ExecuteMethod(Node):
             Instruction("addiu", "$sp", "$sp", "-4"),
             Instruction("sw", "$v0", "0($sp)"),
             *exprs,
+            #FIX
             Instruction("jal", mips_visitor.get_class_method()),
         ]
         mips_visitor.unvisit_execute_method(self)

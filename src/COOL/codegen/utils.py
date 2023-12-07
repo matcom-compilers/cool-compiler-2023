@@ -34,6 +34,19 @@ class Comment:
         return str(self)
 
 
+class Data:
+    def __init__(self, name, type, *args):
+        self.name = name
+        self.type = type
+        self.args = args
+
+    def __str__(self):
+        return f"{self.name}:  {self.type} {', '.join(self.args)}"
+    
+    def __repr__(self):
+        return str(self)
+
+
 NULL = "null"
 
 TRUE = "true"

@@ -6,6 +6,7 @@ from COOL.nodes import Node
 from COOL.codegen.utils import Instruction
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
+from COOL.codegen.utils import Data
 from COOL.codegen.utils import TRUE
 from COOL.codegen.utils import FALSE
 
@@ -41,9 +42,10 @@ class String(Object):
     
     def codegen(self, mips_visitor: MipsVisitor):
         str_name = "str_" + str(len(mips_visitor.data_secction))
-        mips_visitor.add_data(
-            f"{str_name}:  .asciiz \"{self.value}\"\n"
-        )
+        data = [
+            Data(str_name, ".asciiz", self.value)
+        ]
+        mips_visitor.add_data(data)
         obj = [
             Instruction("la", mips_visitor.register_store_results, str_name)
         ]

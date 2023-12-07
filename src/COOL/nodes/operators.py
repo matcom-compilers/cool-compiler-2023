@@ -6,8 +6,6 @@ from COOL.codegen.utils import Instruction
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
 from COOL.codegen.mips_visitor import MipsVisitor
-from COOL.codegen.codegen_rules import PUSH_STACK
-from COOL.codegen.codegen_rules import POP_STACK
 
 
 class UnaryOperator(Node):
@@ -20,7 +18,7 @@ class UnaryOperator(Node):
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr = self.expr.codegen(mips_visitor)
-        operation = self.operation()
+        operation = self.operation(mips_visitor)
         result = [
             *expr,
             *operation
@@ -28,7 +26,7 @@ class UnaryOperator(Node):
         return result
 
     @abstractmethod
-    def operation(self) -> str:
+    def operation(self, mips_visitor: MipsVisitor) -> str:
         pass
 
     def check(self, visitor):
@@ -47,7 +45,7 @@ class Operator(Node):
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr1 = self.expr1.codegen(mips_visitor)
         expr2 = self.expr2.codegen(mips_visitor)
-        operation = self.operation()
+        operation = self.operation(mips_visitor)
         result =[
             *expr1,
             Instruction("addiu", "$sp", "$sp", "-4"),
@@ -60,7 +58,7 @@ class Operator(Node):
         return result
 
     @abstractmethod
-    def operation(self) -> str:
+    def operation(self, mips_visitor: MipsVisitor) -> str:
         pass
 
     def check(self,visitor):
@@ -70,7 +68,7 @@ class Add(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '+')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("add", "$t0", "$t0", "$t1"),
         ]
@@ -81,7 +79,7 @@ class Sub(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '-')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("sub", "$t0", "$t0", "$t1"),
         ]
@@ -92,7 +90,7 @@ class Div(Operator):
     def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '/')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("div", "$t0", "$t0", "$t1"),
         ]
@@ -105,7 +103,7 @@ class Times(Operator):
         self.return_type = 'Int'
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '*')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("mul", "$t0", "$t0", "$t1"),
         ]
@@ -118,7 +116,7 @@ class Less(Operator):
         self.return_type = 'Bool'
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("slt", "$t0", "$t0", "$t1"),
             Instruction("jal", "set_bool")
@@ -131,7 +129,7 @@ class LessEqual(Operator):
 
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<=')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("sgt", "$t2", "$t0", "$t1"),
             Instruction("seq", "$t3", "$t0", "$t1"),
@@ -146,7 +144,7 @@ class Equal(Operator):
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("seq", "$t0", "$t0", "$t1"),
             Instruction("jal", "set_bool")
@@ -158,7 +156,7 @@ class Not(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Bool'],'Bool', 'not')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("xori", "$t0", "$t0", "1"),
         ]
@@ -169,7 +167,7 @@ class Bitwise(UnaryOperator):
     def __init__(self, line: int, column: int, expr: Node) -> None:
         super().__init__(line, column, expr, ['Int'],'Int', '~')
 
-    def operation(self):
+    def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("and", "$t0", "$t0", "$t1"),
         ]
