@@ -93,13 +93,13 @@ String_concat:
     lw $t0, 4($sp)
     addiu $sp, $sp, -4
     sw $t0, 0($sp)
-    jal length
+    jal String_length
     add $t3, $t3, $v0
     # calculate other str length
     lw $t0, 8($sp)
     addiu $sp, $sp, -4
     sw $t0, 0($sp)
-    jal length
+    jal String_length
     add $t3, $t3, $v0
     # allocate memory
     lw $ra, 0($sp)
@@ -135,83 +135,48 @@ String_concat:
     jr $ra
 """
 
-
-STR_DATA_TO_STACK=\
+IN_INT=\
 """
-str_stack_in:
-    li $t1, 0
-    li $t2, 0
+# Function for read int
+IO_in_int:
 
-str_stack_in_len:
-    lb $t2, 0($t0)
-    beq $t2, $zero, str_stack_in_len_end
-    addi $t1, $t1, 1
-    addi $t0, $t0, 1
-    j str_stack_in_len
-
-    str_stack_in_len_end:
-    addi $t0, $t0, -1
-
-str_stack_in_loop:
-    lb $t2, 0($t0)
-    beq $t1, $zero, str_stack_in_loop_end
-    addiu $sp, $sp, -1
-    sb $t2, 0($sp)
-    addi $t0, $t0, -1
-    addi $t1, $t1, -1
-    j str_stack_in_loop
-
-    str_stack_in_loop_end:
-    jr $ra
 """
 
-
-STR_STACK_TO_HEAP=\
+IN_STRING=\
 """
-str_heap_in:
-    li $t1, 0
-    li $t2, 0
+# Function for read string
+IO_in_string:
 
-str_heap_in_loop:
-    lb $t2, 0($sp)
-    beq $t2, $zero, str_heap_in_loop_end
-    addi $sp, $sp, 1
-    sb $t2, 0($v0)
-    addi $t1, $t1, 1
-    addi $v0, $v0, 1
-    j str_heap_in_loop
-
-    str_heap_in_loop_end:
-    sub $v0, $v0, $t1
-    jr $ra
 """
 
-
-STR_HEAP_TO_STACK=\
+OBJECT_COPY=\
 """
-str_heap_out:
-    li $t1, 0
-    li $t2, 0
+# Function for object copy
+Object_copy:
 
-str_heap_out_len:
-    lb $t2, 0($v0)
-    addi $t1, $t1, 1
-    addi $v0, $v0, 1
-    beq $t2, $zero, str_heap_out_loop
-    j str_heap_out_len
-
-str_heap_out_loop:
-    lb $t2, 0($v0)
-    addi $sp, $sp, -1
-    sb $t2, 0($sp)
-    addi $v0, $v0, -1
-    beq $t1, $zero, str_heap_out_loop_end
-    addi $t1, $t1, -1
-    j str_heap_out_loop
-
-    str_heap_out_loop_end:
-    jr $ra
 """
+
+OBJECT_TYPE_NAME=\
+"""
+# Function for object type name
+Object_type_name:
+
+"""
+
+OBJECT_ABORT=\
+"""
+# Function for object abort
+Object_abort:
+
+"""
+
+STRING_SUBSTR=\
+"""
+# Function for string substr
+String_substr:
+
+"""
+
 
 
 FUNCTIONS = [
@@ -220,8 +185,11 @@ FUNCTIONS = [
     STR_CONCAT,
     OUT_INT,
     OUT_STRING,
-    # STR_DATA_TO_STACK,
-    # STR_STACK_TO_HEAP,
-    # STR_HEAP_TO_STACK,
+    IN_INT,
+    IN_STRING,
+    OBJECT_COPY,
+    OBJECT_TYPE_NAME,
+    OBJECT_ABORT,
+    STRING_SUBSTR,
     EXIT,
 ]

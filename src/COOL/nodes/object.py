@@ -43,7 +43,7 @@ class String(Object):
     def codegen(self, mips_visitor: MipsVisitor):
         str_name = "str_" + str(len(mips_visitor.data_secction))
         data = [
-            Data(str_name, ".asciiz", self.value)
+            Data(str_name, ".asciiz", f"\"{self.value}\"")
         ]
         mips_visitor.add_data(data)
         obj = [

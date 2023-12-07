@@ -76,6 +76,7 @@ class MipsVisitor:
         """
         data_section =(
             "\n".join(map(str, self.create_data())) +
+            "\n" +
             "\n".join(map(str, self.data_secction)) +
             "\n" +
             "\n".join(map(str, self.generate_data_classes))
@@ -85,6 +86,7 @@ class MipsVisitor:
         for _cls in self.test_section_classes.keys():
             attributes = self.test_section_classes[_cls]["attributes"]
             memory = self.test_section_classes[_cls]["memory"]
+            
             text_section += "\n".join(map(
                 str,
                 self.create_class(
@@ -95,6 +97,7 @@ class MipsVisitor:
                 )
             )
             text_section += "\n".join(map(str,self.test_section))
+        
         for _function in FUNCTIONS:
             text_section += _function
         
@@ -177,20 +180,6 @@ class MipsVisitor:
             Instruction("addiu", self.rsp, self.rsp, 4),
         ]
         return obj
-
-    def create_function(self, _function: str, _class: str, _method: List[Instruction]):
-        obj = [
-            Comment(f"Create function {_function} from class {_class}"),
-            Label(_function),
-            Instruction("addiu", self.rsp, self.rsp, "-4"),
-            Instruction("sw", self.rr, f"0({self.rsp})"),
-            *_method,
-            Instruction("lw", self.rr, f"0({self.rsp})"),
-            Instruction("addiu", self.rsp, self.rsp, 4),
-            # FIX: clear the stack of the method
-            Instruction("jr", self.rr),
-        ]
-        return obj
     
     def create_data(self):
         """
@@ -199,7 +188,7 @@ class MipsVisitor:
         obj = [
             Comment("Data section"),
             Section("data"),
-            Data("newline", ".asciiz", "\\n"),
+            Data("newline", ".asciiz", "\"\\n\""),
             Data("null", ".word", "0"),
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
@@ -279,7 +268,12 @@ class MipsVisitor:
         scope = {}
         scope.update(self.vars_class)
         scope.update(self.vars_method)
-        return scope.get(_variable.id)
+        return scope.get(_variable)
+    
+    def get_function(self, _class: str, _function: str, register: str):
+        data = self.generate_classes
+        data = {value[0]: f"{i*4}({register})" for i, value in enumerate(data[_class].items())}
+        return data[_function]
     
     # ADD
     def add_data(self, _data: List[Data]):
@@ -301,8 +295,8 @@ class MipsVisitor:
     def visit_program(self, _program):
         for _cls in _program.classes:
             self.inheritance[_cls.type] =\
-                _cls.inherits_instance.type\
-                if _cls.inherits_instance else "Object"
+                _cls.inherits\
+                if _cls.inherits else "Object"
             self.class_methods[_cls.type] = [f.id for f in _cls.methods]
 
     def unvisit_program(self, _program):
@@ -324,6 +318,7 @@ class MipsVisitor:
         self.vars_class = {}
     
     def visit_attribute(self, _attribute):
+        # FIX
         self.vars_class.update({_attribute.id: f"{self.class_memory}($v0))"})
 
     def unvisit_attribute(self, _attribute):
@@ -332,14 +327,20 @@ class MipsVisitor:
     def visit_method(self, _method):
         self.current_method = self.get_method_name(self.current_class, _method.id)
         self.vars_method = {
-            "self": f"0({self.rsp})",
-            **{f.id: f"{(i+1)*4}({self.rsp})" for f, i in enumerate(_method.formals)},
+            "return": f"0({self.rsp})",
+            "self": f"4({self.rsp})",
+            **{f.id: f"{(i+2)*4}({self.rsp})" for i, f in enumerate(_method.formals)},
         }
     
     def unvisit_method(self, _method):
-        # self.test_section_methods[self.current_method] = self.expressions
         self.current_method = None
         self.vars_method = {}
+    
+    def visit_execute_method(self, _execute_method):
+        pass
+
+    def unvisit_execute_method(self, _execute_method):
+        pass
 
     def visit_object(self, _expression):
         pass

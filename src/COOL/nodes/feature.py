@@ -21,15 +21,17 @@ class Method(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
+        # FIX
+        expr = expr if expr else []
+        n_stack = len(self.formals) * 4 + 8
         obj = [
             Comment(f"Create function {self.id} from class {mips_visitor.current_class}"),
             Label(mips_visitor.get_method_name(mips_visitor.current_class, self.id)),
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
+            *mips_visitor.allocate_stack(4),
             Instruction("sw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
             *expr,
             Instruction("lw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, 4),
-            # FIX: clear the stack of the method
+            *mips_visitor.deallocate_stack(n_stack),
             Instruction("jr", mips_visitor.rr),
         ]
         mips_visitor.add_method(obj)
@@ -49,28 +51,23 @@ class ExecuteMethod(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         exprs = []
-        for expr in self.exprs:
+        for i, expr in enumerate(self.exprs):
             exprs.extend(
                 expr.codegen(mips_visitor) +
                 [
-                    Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
-                    Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+                    Instruction("sw", "$t0", f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4
+        n_stack = len(self.exprs) * 4 + 4
         obj = [
             Comment(f"EXECUTE_METHOD_{mips_visitor.current_state}"),
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
-            # FIX: save in stack the self
-            Instruction(),
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "4"),
-            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rsr, mips_visitor.get_variable("self")),
+            *mips_visitor.allocate_stack(n_stack),
+            Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
             *exprs,
-            # FIX
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, f"{n_stack}"),
-            Instruction("jal", mips_visitor.get_class_method()),
-            Instruction("lw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
-            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "4"),
+            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rsr)),
+            Instruction("jal", mips_visitor.rsr),
         ]
         mips_visitor.unvisit_execute_method(self)
 
