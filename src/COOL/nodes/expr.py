@@ -30,7 +30,7 @@ class CodeBlock(Node):
         super().__init__(line, column)
 
     def first_elem(self):
-        return self.exprs[0]
+        return self.column
     
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
