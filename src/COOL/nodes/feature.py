@@ -58,15 +58,15 @@ class ExecuteMethod(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
-        offset = 8+n_stack
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
             *exprs,       
-            # save self reference
+            # get function label
             Instruction("lw", mips_visitor.rsr, f"{n_stack+4}({mips_visitor.rsp})"),
             Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
+            # save self reference
             Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
             # load the method to jump
             Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rsr)),

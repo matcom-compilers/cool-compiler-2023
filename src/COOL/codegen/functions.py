@@ -10,6 +10,7 @@ exit:
 
 SET_BOOL=\
 """
+# Function for set bool
 set_bool:
     lw $t0, 0($sp)
     addiu $sp, $sp, 4
@@ -26,8 +27,28 @@ set_bool:
 
 STR_LEN=\
 """
-# Function fot string length
+# Function fotrstring length
 String_length:
+    lw $t0, 4($sp)
+    li $t1, 0
+    li $t2, 0
+
+  String_length_loop:
+    lb $t1, 0($t0)
+    beq $t1, $zero, String_length_loop_end
+    addi $t0, $t0, 1
+    addi $t2, $t2, 1
+    j String_length_loop
+
+  String_length_loop_end:
+    move $v0, $t2
+    jr $ra
+"""
+
+LEN=\
+"""
+# Function for length
+length:
     lw $t0, 0($sp)
     addiu $sp, $sp, 4
     li $t1, 0
@@ -44,14 +65,13 @@ String_length:
     move $v0, $t2
     jr $ra
 """
-
+    
 OUT_INT=\
 """
 # Function for print int
 IO_out_int:
     # load int
-    lw $a0, 0($sp)
-    addiu $sp, $sp, 4
+    lw $a0, 4($sp)
     # print int
     li  $v0, 1
     syscall
@@ -80,6 +100,7 @@ IO_out_string:
     jr $ra
 """
 
+# FIX
 STR_CONCAT=\
 """
 # Function for string concat
@@ -134,6 +155,7 @@ String_concat:
     jr $ra
 """
 
+#TODO
 IN_INT=\
 """
 # Function for read int
@@ -141,6 +163,7 @@ IO_in_int:
 
 """
 
+#TODO
 IN_STRING=\
 """
 # Function for read string
@@ -148,6 +171,7 @@ IO_in_string:
 
 """
 
+#TODO
 OBJECT_COPY=\
 """
 # Function for object copy
@@ -155,6 +179,7 @@ Object_copy:
 
 """
 
+#TODO
 OBJECT_TYPE_NAME=\
 """
 # Function for object type name
@@ -162,6 +187,7 @@ Object_type_name:
 
 """
 
+#TODO
 OBJECT_ABORT=\
 """
 # Function for object abort
@@ -169,6 +195,7 @@ Object_abort:
 
 """
 
+#TODO
 STRING_SUBSTR=\
 """
 # Function for string substr
@@ -181,6 +208,7 @@ String_substr:
 FUNCTIONS = [
     SET_BOOL,
     STR_LEN,
+    LEN,
     STR_CONCAT,
     OUT_INT,
     OUT_STRING,
