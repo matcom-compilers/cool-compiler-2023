@@ -26,3 +26,6 @@ class Node(ABC):
     @abstractmethod
     def check(self):
         pass
+
+    def first_elem(self):
+        return self.column

@@ -7,13 +7,16 @@ from COOL.codegen.codegen_rules import NULL
 
 
 class Method(Node):
-    def __init__(self, line: int, column: int, id: str, type: str, expr: Node, formals: List[Node]) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str, expr: Node, formals: List[Node]) -> None:
         self.type: str = type
         self.expr: Node = expr
         self.id = id
         self.formals: List[Node] = formals
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+    
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
@@ -25,11 +28,14 @@ class Method(Node):
 
 
 class ExecuteMethod(Node):
-    def __init__(self, line: int, column: int, id: str, exprs: List[Node]) -> None:
+    def __init__(self, line: int, column: dict, id: str, exprs: List[Node]) -> None:
         self.exprs: List[Node] = exprs
         self.expr: Node = None
         self.id = id
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.column
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
@@ -40,21 +46,27 @@ class ExecuteMethod(Node):
 
 
 class Attribute(Node):
-    def __init__(self, line: int, column: int, id: str) -> None:
+    def __init__(self, line: int, column: dict, id: str) -> None:
         self.id = id
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.column
 
     def check(self, visitor):
         visitor.visit_attribute(self)
 
 
 class AttributeDeclaration(Attribute):
-    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
         self.dynamic_type = 'void'
 
         super().__init__(line, column, id)
+
+    def first_elem(self):
+        return self.column
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
@@ -72,13 +84,16 @@ class AttributeDeclaration(Attribute):
 
 
 class AttributeInicialization(Attribute):
-    def __init__(self, line: int, column: int, id: str, type: str = None, expr: Node = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None, expr: Node = None) -> None:
         self.type = type
         self.expr = expr
         self.id = id
         self.dynamic_type = type
         super().__init__(line, column, id)
     
+    def first_elem(self):
+        return self.column
+
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         expr = self.expr.codegen(mips_visitor)
@@ -99,10 +114,13 @@ class AttributeInicialization(Attribute):
 
 
 class Formal(Node):
-    def __init__(self, line: int, column: int, id: str, type: str = None) -> None:
+    def __init__(self, line: int, column: dict, id: str, type: str = None) -> None:
         self.type = type
         self.id = id
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.column
 
     def codegen(self):
         pass
