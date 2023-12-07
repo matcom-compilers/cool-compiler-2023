@@ -82,7 +82,7 @@ class MipsVisitor:
             "\n".join(map(str, self.generate_data_classes))
         )
 
-        text_section = "\n".join(map(str, self.create_text()))
+        text_section = "\n".join(map(str, self.create_text())) + "\n"
         for _cls in self.test_section_classes.keys():
             attributes = self.test_section_classes[_cls]["attributes"]
             memory = self.test_section_classes[_cls]["memory"]
@@ -96,7 +96,7 @@ class MipsVisitor:
                     )
                 )
             )
-            text_section += "\n".join(map(str,self.test_section))
+            text_section += "\n" + "\n".join(map(str,self.test_section))
         
         for _function in FUNCTIONS:
             text_section += _function
@@ -165,19 +165,32 @@ class MipsVisitor:
     # CREATE
     def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
         obj = [
-            Comment(f"Create class {_class}"),
+            Comment(f"Create class {_class}", indent=""),
             Label(self.get_class_name(_class)),
+            # Allocate memory
             Instruction("li", self.rsi, memory),
             Instruction("li", self.rmr, 9),
             Instruction("syscall"),
+            # Save the type reference
             Instruction("la", self.rsr, _class),
             Instruction("sw", self.rsr, f"0({self.rmr})"),
-            Instruction("addiu", self.rmr, self.rmr, 4),
-            Instruction("addiu", self.rsp, self.rsp, "-4"),
+            # Save the self reference
+            *self.allocate_memory(4),
+            # save allocated memory in stack to dont lose it
+            *self.allocate_stack(4),
             Instruction("sw", self.rmr, f"0({self.rsp})"),
+            # save $ra reference
+            *self.allocate_stack(4),
+            Instruction("sw", self.rr, f"0({self.rsp})"),
             *attributes,
+            # load $ra reference
+            Instruction("lw", self.rr, f"0({self.rsp})"),
+            *self.deallocate_stack(4),
+            # load self
             Instruction("lw", self.rmr, f"0({self.rsp})"),
-            Instruction("addiu", self.rsp, self.rsp, 4),
+            *self.deallocate_stack(4),
+            *self.deallocate_memory(memory),
+            Instruction("jr", self.rr),
         ]
         return obj
     
@@ -204,10 +217,29 @@ class MipsVisitor:
             Section("text"),
             Label("main"),
             Instruction("jal", self.get_class_name("Main")),
-            Instruction("addiu", self.rsp, self.rsp, 4),
+            *self.allocate_stack(4),
             Instruction("sw", self.rmr, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
             Instruction("j", "exit"),
+        ]
+        return obj
+
+    # ALLOCATE
+    def allocate_memory(self, _size: int):
+        """
+        Allocate memory.
+        """
+        obj = [
+            Instruction("addiu", self.rmr, self.rmr, f"{_size}"),
+        ]
+        return obj
+    
+    def deallocate_memory(self, _size: int):
+        """
+        Deallocate memory.
+        """
+        obj = [
+            Instruction("addiu", self.rmr, self.rmr, f"-{_size}"),
         ]
         return obj
 

@@ -22,11 +22,12 @@ class Label:
         return str(self)
 
 class Comment:
-    def __init__(self, comment):
+    def __init__(self, comment, indent: str="    "):
         self.comment = comment
+        self.indent = indent
 
     def __str__(self):
-        return f"{INDENT}{COMMENT.format(comment=self.comment)}"
+        return f"{self.indent}# {self.comment}"
     
     def __repr__(self):
         return str(self)
@@ -62,5 +63,3 @@ FALSE = "false"
 NEWLINE = "\\n"
 
 INDENT = "    "
-
-COMMENT = "# {comment}\n"

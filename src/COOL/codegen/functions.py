@@ -66,8 +66,7 @@ IO_out_int:
 OUT_STRING=\
 """
 IO_out_string:
-    lw $t0, 0($sp)
-    addiu $sp, $sp, 4
+    lw $t0, 4($sp)
 
   out_string_loop:
     lb $a0, 0($t0)

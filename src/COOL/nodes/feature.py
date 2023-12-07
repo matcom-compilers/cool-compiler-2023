@@ -21,17 +21,16 @@ class Method(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
-        # FIX
-        expr = expr if expr else []
-        n_stack = len(self.formals) * 4 + 8
         obj = [
-            Comment(f"Create function {self.id} from class {mips_visitor.current_class}"),
+            Comment(f"Create function {self.id} from class {mips_visitor.current_class}", indent=""),
             Label(mips_visitor.get_method_name(mips_visitor.current_class, self.id)),
+            # save $ra reference
             *mips_visitor.allocate_stack(4),
             Instruction("sw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
             *expr,
+            # load $ra reference
             Instruction("lw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
-            *mips_visitor.deallocate_stack(n_stack),
+            *mips_visitor.deallocate_stack(4),
             Instruction("jr", mips_visitor.rr),
         ]
         mips_visitor.add_method(obj)
@@ -59,17 +58,24 @@ class ExecuteMethod(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
+        offset = 8+n_stack
         obj = [
-            Comment(f"EXECUTE_METHOD_{mips_visitor.current_state}"),
-            Instruction("lw", mips_visitor.rsr, mips_visitor.get_variable("self")),
+            Comment(f"execute method {self.id}"),
+            # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
+            *exprs,       
+            # save self reference
+            Instruction("lw", mips_visitor.rsr, f"{n_stack+4}({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
             Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
-            *exprs,
-            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            # load the method to jump
             Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rsr)),
             Instruction("jal", mips_visitor.rsr),
+            # deallocate stack
+            *mips_visitor.deallocate_stack(n_stack),
         ]
         mips_visitor.unvisit_execute_method(self)
+        return obj
 
     def check(self,visitor):
         visitor.visit_execute_method(node = self)
