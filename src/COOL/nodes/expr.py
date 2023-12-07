@@ -79,8 +79,7 @@ class Let(Node):
         self.expr: Node = expr
         super().__init__(line, column)
             
-    # def first_elem(self):
-    #     return self.let_list[0]
+
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()

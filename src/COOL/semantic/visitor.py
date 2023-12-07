@@ -289,7 +289,7 @@ class Visitor_Class:
                     if attrb.type not in lineage:
                         raise SemError(
                             attrb.line,
-                            self.get_first_token(attrb.expr),#attrb.expr.column['LET'],#self.get_first_token(attrb.expr),#attrb.column,
+                            self.get_first_token(attrb.expr),
                             'TypeError',
                             f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
                     else: 
@@ -297,7 +297,7 @@ class Visitor_Class:
                         return type
                 raise SemError(
                     attrb.line,
-                    self.get_first_token(attrb.expr),# attrb.expr.column['LET'],# self.get_first_token(attrb.expr),# attrb.expr.column['LET'],
+                    self.get_first_token(attrb.expr),
                     'TypeError',
                     f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
         return None
@@ -316,7 +316,7 @@ class Visitor_Class:
         if not self.all_types.get(node.type):
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Dispatch on undefined class {node.type}.')
 
@@ -326,7 +326,7 @@ class Visitor_Class:
         if not static_type in self.all_types.keys():
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Dispatch on undefined class {static_type}.')
 
@@ -353,7 +353,7 @@ class Visitor_Class:
                 #TODO search this error
                 raise SemError(
                     node.line,
-                    node.column,
+                    node.column,#TODO
                     'TypeError',
                     f'Dispatch on undefined class {expr_type}.')
 
@@ -418,7 +418,7 @@ class Visitor_Class:
         if  (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Undefined return type {type} in method {node.id}.')
         
@@ -518,7 +518,7 @@ class Visitor_Class:
         if not type1:
             raise SemError(
                 node.line,
-                self.get_first_token(ex1),#node.column[self.operators_symbols[node.symbol]] + 1,
+                self.get_first_token(ex1),
                 'TypeError',
                 f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
 
@@ -527,7 +527,7 @@ class Visitor_Class:
         if not (type1 in possible_types):
             raise SemError(
                 node.line,
-                self.get_first_token(ex1),#node.column[self.operators_symbols[node.symbol]] + len(node.symbol)+1,
+                self.get_first_token(ex1),
                 'TypeError',
                 f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
         return node.return_type
@@ -580,7 +580,7 @@ class Visitor_Class:
         if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Undefined return type {type} in method {node.id}.')
 
@@ -607,7 +607,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Case on void.')
 
@@ -618,7 +618,7 @@ class Visitor_Class:
             if case.id in self.keywords:
                 raise SemError(
                     node.line,
-                    node.column,
+                    node.column,#TODO
                     'SemanticError',
                     f'Identifier \'{case.id}\' bound in \'case\'.')
             
@@ -706,7 +706,7 @@ class Visitor_Class:
         if (not type in self.all_types.keys() )and (not type in self.basic_types.keys()):
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Undefined return type {type} in method {node.id}.')
 
@@ -722,7 +722,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                node.column,
+                node.column,#TODO
                 'TypeError',
                 f'Undefined return type {type} in method {node.id}.')
                 
@@ -731,7 +731,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                self.get_first_token(node.expr),#node.column,
+                self.get_first_token(node.expr),
                 'TypeError',
                 f'Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.')
 
