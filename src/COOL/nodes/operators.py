@@ -15,6 +15,9 @@ class UnaryOperator(Node):
         self.symbol = symbol
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.expr
+
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr = self.expr.codegen(mips_visitor)
         operation = self.operation()
@@ -40,6 +43,9 @@ class Operator(Node):
         self.return_type = return_type
         self.symbol = symbol
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.expr1
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr1 = self.expr1.codegen(mips_visitor)

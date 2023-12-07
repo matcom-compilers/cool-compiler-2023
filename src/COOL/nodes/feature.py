@@ -14,6 +14,9 @@ class Method(Node):
         self.formals: List[Node] = formals
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+    
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_method(self)
         expr = self.expr.codegen(mips_visitor)
@@ -31,6 +34,9 @@ class ExecuteMethod(Node):
         self.id = id
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
@@ -44,6 +50,9 @@ class Attribute(Node):
         self.id = id
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+
     def check(self, visitor):
         visitor.visit_attribute(self)
 
@@ -55,6 +64,9 @@ class AttributeDeclaration(Attribute):
         self.dynamic_type = 'void'
 
         super().__init__(line, column, id)
+
+    def first_elem(self):
+        return self.column
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
@@ -79,6 +91,9 @@ class AttributeInicialization(Attribute):
         self.dynamic_type = type
         super().__init__(line, column, id)
     
+    def first_elem(self):
+        return self.column
+
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         expr = self.expr.codegen(mips_visitor)
@@ -103,6 +118,9 @@ class Formal(Node):
         self.type = type
         self.id = id
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.column
 
     def codegen(self):
         pass

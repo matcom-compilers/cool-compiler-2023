@@ -23,7 +23,7 @@ class Visitor_Program:
             if self.types[temp_class].inherits in lineage:
                 raise SemError(
                     node.line,
-                    node.column,
+                    node.column['TYPE1'],
                     'SemanticError',
                     f'Class {class_}, or an ancestor of {class_}, is involved in an inheritance cycle.')
 
@@ -79,14 +79,14 @@ class Visitor_Program:
             if  i.type in self.basic_types.keys():
                 raise SemError(
                     i.line,
-                    i.column,
+                    i.column['TYPE'],
                     'SemanticError',
                     f'Redefinition of basic class {i.type}.')
 
             elif i.type in self.types.keys():
                 raise SemError(
                     i.line,
-                    i.column,
+                    i.column['TYPE'],
                     'SemanticError',
                     f'Classes may not be redefined.')
             self.types[i.type] = i
@@ -97,13 +97,13 @@ class Visitor_Program:
                     if cls.inherits in self.basic_types:
                         raise SemError(
                             cls.line,
-                            cls.column,
+                            cls.column['TYPE1'],
                             'SemanticError',
                             f'Class {cls.type} cannot inherit class {cls.inherits}. ')
                     else :
                         raise SemError(
                             cls.line,
-                            cls.column,
+                            cls.column['TYPE1'],
                             'TypeError',
                             f'Class {cls.type} inherits from an undefined class {cls.inherits}.')
                 self.tree[cls.type] = cls.inherits
@@ -115,14 +115,14 @@ class Visitor_Program:
             if meth.id in meth_node:
                 raise SemError(
                     meth.line,
-                    meth.column,
+                    meth.column['ID'],
                     'SemanticError',
                     f'Method {meth.id} is multiply defined.')
 
             if meth.type not in self.types.keys() and not (meth.type in self.basic_types.keys()):
                 raise SemError(
                     meth.line,
-                    meth.column,
+                    meth.column['TYPE'],
                     'TypeError',
                     f'Undefined return type {meth.type} in method test.')
 
@@ -132,14 +132,14 @@ class Visitor_Program:
                 if formal.type not in self.types.keys() and not (formal.type in self.basic_types.keys()):
                     raise SemError(
                         formal.line,
-                        formal.column,
+                        formal.column['TYPE'],
                         'TypeError',
                         f'Class {formal.type} of formal parameter {formal.id} is undefined.')
                 
                 if formal.id in meth_formals_name:
                     raise SemError(
                         formal.line,
-                        formal.column,
+                        formal.column['ID'],
                         'SemanticError',
                         f'Formal parameter {formal.id} is multiply defined.')
                 meth_formals_name.add(formal.id)
@@ -151,14 +151,14 @@ class Visitor_Program:
             if attrb.id in attrib_node:
                 raise SemError(
                     attrb.line,
-                    attrb.column,
+                    attrb.column['ID'],
                     'SemanticError',
                     f'Attribute {attrb.id} is multiply defined in class.')
 
             if attrb.type not in self.types.keys() and not (attrb.type in self.basic_types.keys()):
                 raise SemError(
                     attrb.line,
-                    attrb.column,
+                    attrb.column['TYPE'],
                     'TypeError',
                     f'Class {attrb.type} of attribute {attrb.id} is undefined.')
 
@@ -176,7 +176,7 @@ class Visitor_Program:
             if len(equals_attrbs) > 0:
                 raise SemError(
                     attrb.line,
-                    attrb.column,
+                    attrb.column['ID'],
                     'SemanticError',
                     f'Attribute {attrb.id} is an attribute of an inherited class.')
 
@@ -188,7 +188,7 @@ class Visitor_Program:
                 if len(meth.formals) != len(equal_meth.formals):
                     raise SemError(
                         meth.line,
-                        meth.column,    
+                        meth.column['ID'],    
                         'SemanticError',
                         f'Incompatible number of formal parameters in redefined method {meth.id}.')
 
@@ -196,14 +196,14 @@ class Visitor_Program:
                     if meth.formals[j].type != equal_meth.formals[j].type:
                         raise SemError(
                             meth.line,
-                            meth.column,
+                            meth.formals[j].column['ID'],
                             'SemanticError',
                             f'In redefined method {meth.id}, parameter type {meth.formals[j].type} is different from original type {equal_meth.formals[j].type}.')
                 
                 if meth.type != equal_meth.type:
                     raise SemError(
                         meth.line,
-                        meth.column,
+                        meth.column['TYPE'],
                         'SemanticError',
                         f'In redefined method {meth.id}, return type {meth.type} is different from original return type {equal_meth.type}.')
             
@@ -259,14 +259,21 @@ class Visitor_Class:
             'Object':'OBJECT',
             'IO':'IO',
         }
-        self.keywords = {'self'}
+        self.keywords = {'self', 'void', 'new', 'self_type' }
+
+    def get_first_token(self, node):
+        first = node.first_elem()
+        if isinstance(first, dict):
+            return list(first.values())[0]
+        return self.get_first_token(first)
+
 
     def visit_attribute_initialization(self, node):
         attrb = node
         if attrb.id in self.keywords:
             raise SemError(
                 attrb.line,
-                attrb.column,
+                attrb.column['ID'],
                 'SemanticError',
                 f'\'{attrb.id}\' cannot be the name of an attribute.')
 
@@ -282,7 +289,7 @@ class Visitor_Class:
                     if attrb.type not in lineage:
                         raise SemError(
                             attrb.line,
-                            attrb.column,
+                            self.get_first_token(attrb.expr),#attrb.expr.column['LET'],#self.get_first_token(attrb.expr),#attrb.column,
                             'TypeError',
                             f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
                     else: 
@@ -290,7 +297,7 @@ class Visitor_Class:
                         return type
                 raise SemError(
                     attrb.line,
-                    attrb.column,#.expr.column['LET'],
+                    self.get_first_token(attrb.expr),# attrb.expr.column['LET'],# self.get_first_token(attrb.expr),# attrb.expr.column['LET'],
                     'TypeError',
                     f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
         return None
@@ -329,7 +336,7 @@ class Visitor_Class:
         if not node.id in static_type.methods_dict.keys() or not node.id in disp_type.methods_dict.keys():
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(node.expr),
                 'TypeError',
                 f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.')
 
@@ -355,7 +362,7 @@ class Visitor_Class:
             if not node.id in class_meths.keys():
                 raise SemError(
                     node.line,
-                    node.column,
+                    node.column['ID'],
                     'AttributeError',
                     f'Dispatch to undefined method {node.id}.')
 
@@ -363,7 +370,7 @@ class Visitor_Class:
                 #TODO search this error    
                 raise SemError(
                     node.line,
-                    node.column,
+                    node.column['ID'],
                     'SemanticError',
                     f'Method {node.id} called with wrong number of arguments.')
             
@@ -377,7 +384,7 @@ class Visitor_Class:
                         #TODO search this error
                             raise SemError(
                                 node.line,
-                                node.column,
+                                self.get_first_token(node.exprs[i]),
                                 'TypeError',
                                 f'In call of method {node.id}, type {type.type} of parameter {formal.id} does not conform to declared type {formal.type}.')
 
@@ -387,7 +394,7 @@ class Visitor_Class:
         if not self.scope['methods'].get(node.id):
             raise SemError(
                 node.line,
-                node.column,
+                node.column['ID'],
                 'AttributeError',
                 f'Dispatch to undefined method {node.id}.')
 
@@ -399,7 +406,7 @@ class Visitor_Class:
             if i.id in self.keywords :
                 raise SemError(
                     node.line,
-                    node.column,
+                    i.column['ID'],
                     'SemanticError',
                     f'\'{i.id}\' cannot be the name of a formal parameter.')
 
@@ -420,7 +427,7 @@ class Visitor_Class:
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(node.expr),
                 'TypeError',
                 f'Inferred return type {type} of method {node.id} does not conform to declared return type {node.type}.')
         
@@ -464,7 +471,7 @@ class Visitor_Class:
         if not type1 or not type2:
             raise SemError(
                 node.line,
-                node.column,#[self.operators_symbols[node.symbol]],
+                node.column[self.operators_symbols[node.symbol]],
                 'TypeError',
                 f'non-Int arguments: {type1} {node.symbol} {type2}')
 
@@ -478,14 +485,14 @@ class Visitor_Class:
                 if type1_basic and type2_basic:
                     raise SemError(
                         node.line,
-                        node.column,
+                        node.column['EQUAL'],
                         'TypeError',
                         f'Illegal comparison with a basic type.')
 
                 if type1_basic or type2_basic:
                     raise SemError(
                         node.line,
-                        node.column,
+                        node.column['EQUAL'],
                         'TypeError',
                         f'Illegal comparison with a basic type.')
            
@@ -493,7 +500,7 @@ class Visitor_Class:
         elif not (type1 in possible_types and type2 in possible_types):
             raise SemError(
                 node.line,
-                node.column,#[self.operators_symbols[node.symbol]],
+                node.column[self.operators_symbols[node.symbol]],
                 'TypeError',
                 f'non-Int arguments: {type1} {node.symbol} {type2}')
 
@@ -511,7 +518,7 @@ class Visitor_Class:
         if not type1:
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(ex1),#node.column[self.operators_symbols[node.symbol]] + 1,
                 'TypeError',
                 f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
 
@@ -520,7 +527,7 @@ class Visitor_Class:
         if not (type1 in possible_types):
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(ex1),#node.column[self.operators_symbols[node.symbol]] + len(node.symbol)+1,
                 'TypeError',
                 f'Argument of \'{node.symbol}\' has type {type1} instead of {node.return_type}.')
         return node.return_type
@@ -530,7 +537,7 @@ class Visitor_Class:
             new_ ='\'new\''
             raise SemError(
                 node.line,
-                node.column,
+                node.column['TYPE'],
                 'TypeError',
                 f'{new_} used with undefined class {node.type}.')
 
@@ -549,7 +556,7 @@ class Visitor_Class:
                 return self.scope['type']
             raise SemError(
                 node.line,
-                node.column,
+                node.column['ID'],
                 'NameError',
                 f'Undeclared identifier {node.id}.')
         
@@ -559,7 +566,7 @@ class Visitor_Class:
             if i.id in self.keywords:
                 raise SemError(
                     node.line,
-                    node.column,
+                    self.get_first_token(i),
                     'SemanticError',
                     f'\'{i.id}\' cannot be bound in a \'let\' expression.')
 
@@ -624,14 +631,14 @@ class Visitor_Class:
             if not type in self.basic_types.keys() and not type in self.all_types.keys():
                 raise SemError(
                     case.line,
-                    case.column,
+                    case.column['TYPE'],
                     'TypeError',
                     f'Class {type} of case branch is undefined.')
 
             if type in types:
                 raise SemError(
                     case.line,
-                    case.column,
+                    case.column['TYPE'],
                     'SemanticError',
                     f'Duplicate branch {type} in case statement.')
 
@@ -639,8 +646,10 @@ class Visitor_Class:
 
         comm_type = 'Object'
         for i in range(len(return_types)-1):
-            type1 = self.all_types.get(return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
-            type2 = self.all_types.get(return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
+            type1 = self.all_types.get(
+                return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
+            type2 = self.all_types.get(
+                return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
             comm_type = self._search_min_common_type(type1,type2)
             return_types[i] = comm_type
         return comm_type
@@ -656,7 +665,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(node.if_expr),
                 'TypeError',
                 f'Predicate of \'if\' does not have type Bool.')
 
@@ -677,7 +686,7 @@ class Visitor_Class:
         if not predicate_type == 'Bool':
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(node.while_expr),
                 'TypeError',
                 f'Loop condition does not have type Bool.') 
         return 'Object'
@@ -687,7 +696,7 @@ class Visitor_Class:
         if node.id in self.keywords:
             raise SemError(
                 node.line,
-                node.column,
+                node.column['ASSIGN'],
                 'SemanticError',
                 f'Cannot assign to \'{node.id}\'.')
 
@@ -722,7 +731,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                node.column,
+                self.get_first_token(node.expr),#node.column,
                 'TypeError',
                 f'Inferred type {type} of initialization of {node.id} does not conform to identifier\'s declared type {node.type}.')
 
@@ -735,7 +744,7 @@ class Visitor_Class:
             #TODO search this error
             raise SemError(
                 node.line,
-                node.column,
+                node.column['TYPE'],
                 'TypeError',
                 f'Class {node.type} of let-bound identifier {node.id} is undefined.'
             )
