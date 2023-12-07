@@ -137,13 +137,6 @@ class MipsVisitor:
         """
         return "$v0"
     
-    # @property
-    # def rcr(self):
-    #     """
-    #     Register class return
-    #     """
-    #     return "$t7"
-    
     @property
     def rsr(self):
         """
@@ -152,28 +145,40 @@ class MipsVisitor:
         return "$t0"
     
     @property
-    def generate_data_classes(self):
+    def generate_classes(self):
         """
-        Generate the classes with his method labels in .data
+        Generate the classes with his methods
         """
         data = {}
         for _cls in self.inheritance.keys():
             data[_cls] = {}
             for _current_cls in reversed(self.__get_class_parents(_cls)):
                 data[_cls].update({_method: _current_cls for _method in self.class_methods[_current_cls]})
+        return data
+
+    @property
+    def generate_data_classes(self):
+        """
+        Generate the classes with his method labels in .data
+        """
+        data = self.generate_classes
         data_section = [
             Data(_cls, ".word", *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
             for _cls in data.keys() if data[_cls]
         ]
         return data_section
 
+    # CREATE
     def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
         obj = [
             Comment(f"Create class {_class}"),
-            Label(_class),
+            Label(self.get_class_name(_class)),
             Instruction("li", self.rsi, memory),
             Instruction("li", self.rmr, 9),
             Instruction("syscall"),
+            Instruction("la", self.rsr, _class),
+            Instruction("sw", self.rmr, "0($v0)"),
+            Instruction("addiu", self.rmr, self.rmr, 4),
             *attributes,
         ]
         return obj
@@ -191,6 +196,7 @@ class MipsVisitor:
         ]
         return obj
     
+    # GET
     def __get_class_parents(self, _class: str):
         """
         Get the class parents.
@@ -215,6 +221,12 @@ class MipsVisitor:
         Get the method name.
         """
         return f"{_class}_{_method}"
+    
+    def get_class_name(self, _class: str):
+        """
+        Get the class name.
+        """
+        return f"{_class}_class"
 
     def get_variable(self, _variable: str):
         """
@@ -225,12 +237,23 @@ class MipsVisitor:
         scope.update(self.vars_method)
         return scope.get(_variable.id)
     
+    # ADD
     def add_data(self, _data: List[Data]):
         """
         Add data to the data section.
         """
         self.data_secction.extend(_data)
+    
+    def add_attribute(self, _attribute: List[Instruction]):
+        self.attributes.extend(_attribute)
+    
+    def add_memory(self, _memory: int):
+        self.class_memory = _memory
 
+    def add_expression(self, _expression: List[Instruction]):
+        self.expressions.extend(_expression)
+
+    # VISIT
     def visit_program(self, _program):
         for _cls in _program.classes:
             self.inheritance[_cls.type] =\
@@ -238,7 +261,6 @@ class MipsVisitor:
                 if _cls.inherits_instance else "Object"
             self.class_methods[_cls.type] = [f.id for f in _cls.methods]
 
-    
     def unvisit_program(self, _program):
         pass
 
@@ -262,14 +284,8 @@ class MipsVisitor:
     def visit_attribute(self, _attribute):
         self.vars_class.update({_attribute.id: f"{self.class_memory}($v0))"})
 
-    def add_attribute(self, _attribute: List[Instruction]):
-        self.attributes.extend(_attribute)
-
     def unvisit_attribute(self, _attribute):
         self.class_memory += 4
-    
-    def add_memory(self, _memory: int):
-        self.class_memory = _memory
 
     def visit_method(self, _method):
         self.current_method = self.get_method_name(self.current_class, _method.id)
@@ -287,9 +303,6 @@ class MipsVisitor:
     
     def unvisit_object(self, _expression):
         self.current_expression = None
-
-    def add_expression(self, _expression: List[Instruction]):
-        self.expressions.extend(_expression)
     
     def visit_if(self, _if):
         pass

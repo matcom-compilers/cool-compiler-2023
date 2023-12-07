@@ -77,7 +77,7 @@ TEXT_SECTION =\
 
 .globl main
 main:
-    jal Main
+    jal Main_class
     jal Main_main
 
     j exit

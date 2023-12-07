@@ -35,17 +35,27 @@ class ExecuteMethod(Node):
         self.id = id
         super().__init__(line, column)
 
-    # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
-        exprs = [expr.codegen(mips_visitor) for expr in self.exprs]
+        exprs = []
+        for expr in self.exprs:
+            exprs.extend(
+                expr.codegen(mips_visitor) +
+                [
+                    Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
+                    Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+                ]
+            )
         obj = [
             Comment(f"EXECUTE_METHOD_{mips_visitor.current_state}"),
-            Instruction("addiu", "$sp", "$sp", "-4"),
-            Instruction("sw", "$v0", "0($sp)"),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "-4"),
+            Instruction("sw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
             *exprs,
-            #FIX
+            # FIX
+            Instruction("sw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
             Instruction("jal", mips_visitor.get_class_method()),
+            Instruction("lw", mips_visitor.rmr, f"0({mips_visitor.rsp})"),
+            Instruction("addiu", mips_visitor.rsp, mips_visitor.rsp, "4"),
         ]
         mips_visitor.unvisit_execute_method(self)
 
@@ -70,7 +80,6 @@ class AttributeDeclaration(Attribute):
 
         super().__init__(line, column, id)
 
-    # FIX: initializations, "", 0, false
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
         if self.type == "Int" or self.type == "String":
