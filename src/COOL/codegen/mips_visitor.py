@@ -3,12 +3,15 @@ from typing import List
 from COOL.codegen.utils import Data
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
+from COOL.codegen.utils import Section
 from COOL.codegen.utils import Instruction
 
-from COOL.codegen.utils import DATA_SECTION
-from COOL.codegen.utils import TEXT_SECTION
 from COOL.codegen.functions import FUNCTIONS
 
+
+# NOTE: class memory first value is the type reference
+# NOTE: method stack first value is the return value
+# NOTE: method stack second value is current self reference
 
 class MipsVisitor:
     def __init__(self) -> None:
@@ -73,13 +76,13 @@ class MipsVisitor:
             str: mips code.
         """
         data_section =(
-            DATA_SECTION +
+            "\n".join(map(str, self.create_data())) +
             "\n".join(map(str, self.data_secction)) +
             "\n" +
             "\n".join(map(str, self.generate_data_classes))
         )
 
-        text_section = TEXT_SECTION
+        text_section = "\n".join(map(str, self.create_text()))
         for _cls in self.test_section_classes.keys():
             attributes = self.test_section_classes[_cls]["attributes"]
             memory = self.test_section_classes[_cls]["memory"]
@@ -107,7 +110,7 @@ class MipsVisitor:
         for _function in FUNCTIONS:
             text_section += _function
         
-        return data_section + text_section
+        return data_section + "\n" + text_section
 
     @property
     def rr(self):
@@ -177,9 +180,13 @@ class MipsVisitor:
             Instruction("li", self.rmr, 9),
             Instruction("syscall"),
             Instruction("la", self.rsr, _class),
-            Instruction("sw", self.rmr, "0($v0)"),
+            Instruction("sw", self.rsr, f"0({self.rmr})"),
             Instruction("addiu", self.rmr, self.rmr, 4),
+            Instruction("addiu", self.rsp, self.rsp, "-4"),
+            Instruction("sw", self.rmr, f"0({self.rsp})"),
             *attributes,
+            Instruction("lw", self.rmr, f"0({self.rsp})"),
+            Instruction("addiu", self.rsp, self.rsp, 4),
         ]
         return obj
 
@@ -193,6 +200,36 @@ class MipsVisitor:
             Instruction("lw", self.rr, "0($sp)"),
             Instruction("addiu", self.rsp, self.rsp, 4),
             Instruction("jr", self.rr),
+        ]
+        return obj
+    
+    def create_data(self):
+        """
+        Create the data section.
+        """
+        obj = [
+            Comment("Data section"),
+            Section("data"),
+            Data("newline", ".asciiz", "\\n"),
+            Data("null", ".word", "0"),
+            Data("true", ".word", "1"),
+            Data("false", ".word", "0"),
+        ]
+        return obj
+    
+    def create_text(self):
+        """
+        Create the text section.
+        """
+        obj = [
+            Comment("Text section"),
+            Section("text"),
+            Label("main"),
+            Instruction("jal", self.get_class_name("Main")),
+            Instruction("addiu", self.rsp, self.rsp, 4),
+            Instruction("sw", self.rmr, f"0({self.rsp})"),
+            Instruction("jal", self.get_method_name("Main", "main")),
+            Instruction("j", "exit"),
         ]
         return obj
     
