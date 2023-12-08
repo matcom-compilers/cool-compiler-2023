@@ -54,6 +54,8 @@ class Section:
     def __repr__(self):
         return str(self)
 
+WORD = 4
+
 NULL = "null"
 
 TRUE = "true"
@@ -63,3 +65,40 @@ FALSE = "false"
 NEWLINE = "\\n"
 
 INDENT = "    "
+
+INHERIANCE = {
+    "Object": None,
+    "IO": "Object",
+    "Int": "Object",
+    "String": "Object",
+    "Bool": "Object",
+}
+
+CLASS_METHODS = {
+    "Object":{
+        "abort": "Object",
+        "type_name": "String",
+        "copy": "SELF_TYPE",
+    },
+    "IO": {
+        "out_string": "SELF_TYPE",
+        "out_int": "SELF_TYPE",
+        "in_string": "String",
+        "in_int": "Int",
+    },
+    "String": {
+        "length": "Int",
+        "concat": "String",
+        "substr": "String",
+    },
+    "Int":{},
+    "Bool":{}
+}
+
+CLASS_VARS = {
+    "Object":{},
+    "IO":{},
+    "String":{},
+    "Int":{},
+    "Bool":{}
+}

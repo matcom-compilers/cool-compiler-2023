@@ -29,12 +29,13 @@ class Method(Node):
             Label(mips_visitor.get_method_name(mips_visitor.current_class, self.id)),
             # save $ra reference
             *mips_visitor.allocate_stack(4),
-            Instruction("sw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            Instruction("sw", mips_visitor.rra, f"0({mips_visitor.rsp})"),
             *expr,
             # load $ra reference
-            Instruction("lw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rra, f"0({mips_visitor.rsp})"),
             *mips_visitor.deallocate_stack(4),
-            Instruction("jr", mips_visitor.rr),
+            Instruction("jr", mips_visitor.rra),
+            "\n",
         ]
         mips_visitor.add_method(obj)
         mips_visitor.unvisit_method(self)
@@ -56,35 +57,41 @@ class ExecuteMethod(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         exprs = []
-        for i, expr in enumerate(self.exprs):
+        for i, _expr in enumerate(self.exprs):
             exprs.extend(
-                expr.codegen(mips_visitor) +
                 [
+                    *_expr.codegen(mips_visitor),
                     Instruction("sw", "$t0", f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
+        # mips_visitor.set_offset(n_stack)
         obj = [
-            Comment(f"execute method {self.id}"),
+            Comment(f"execute class method {self.id}"),
             # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
             *exprs,       
             # get function label
-            Instruction("lw", mips_visitor.rsr, f"{n_stack+4}({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
+            Instruction("lw", mips_visitor.rt, f"{n_stack+4}({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # save self reference
-            Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
             # load the method to jump
-            Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rsr)),
-            Instruction("jal", mips_visitor.rsr),
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(mips_visitor.current_class, self.id)}({mips_visitor.rt})"),
+            Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            "\n",
         ]
+        # mips_visitor.set_offset(-n_stack)
         mips_visitor.unvisit_execute_method(self)
         return obj
 
     def check(self,visitor):
         visitor.visit_execute_method(node = self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
 
 
 class Attribute(Node):
@@ -115,23 +122,26 @@ class AttributeDeclaration(Attribute):
         if self.type == "Int" or self.type == "String":
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, "0"),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
+                Instruction("la", mips_visitor.rt, "0"),
+                Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         elif self.type == "Bool":
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, FALSE),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
+                Instruction("la", mips_visitor.rt, FALSE),
+                Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         else:
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, NULL),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
+                Instruction("la", mips_visitor.rt, NULL),
+                Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
@@ -162,8 +172,9 @@ class AttributeInicialization(Attribute):
             *expr,
             Instruction("lw", "$v0", "0($sp)"),
             Instruction("addiu", "$sp", "$sp", "4"),
-            Instruction("sw", mips_visitor.rsr, "0($v0)"),
+            Instruction("sw", mips_visitor.rt, "0($v0)"),
             Instruction("addiu", "$v0", "$v0", "4"),
+            "\n",
         ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
