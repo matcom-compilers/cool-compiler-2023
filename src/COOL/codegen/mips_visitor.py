@@ -1,5 +1,6 @@
 from typing import List
 
+from COOL.codegen.utils import WORD
 from COOL.codegen.utils import TRUE
 from COOL.codegen.utils import FALSE
 from COOL.codegen.utils import Data
@@ -117,23 +118,30 @@ class MipsVisitor:
         return "$t0"
     
     @property
-    def generate_classes(self):
+    def inheriance_class_methods(self):
         """
-        Generate the classes with his methods
+        Return all the class methods with including the inheritance and his types.
         """
-        data = {}
-        for _cls in self.inheritance.keys():
-            data[_cls] = {}
-            for _current_cls in reversed(self.get_class_parents(_cls)):
-                data[_cls].update({_method: _current_cls for _method in self.class_methods[_current_cls].keys()})
-        return data
+        class_methods = self.class_methods.copy()
+        for _cls in self.class_methods.keys():
+            for _cls_hierarchy in self.get_class_parents(_cls):
+                class_methods[_cls].update(
+                    {
+                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
+                    }
+                )
+        return class_methods
 
     @property
     def generate_data_classes(self):
         """
         Generate the classes with his method labels in .data
         """
-        data = self.generate_classes
+        data = {}
+        for _cls in self.inheritance.keys():
+            data[_cls] = {}
+            for _current_cls in self.get_class_parents(_cls):
+                data[_cls].update({f: _current_cls for f in self.class_methods[_current_cls].keys()})
         data_section = [
             Data(_cls, ".word", *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
             for _cls in data.keys() if data[_cls]
@@ -296,14 +304,14 @@ class MipsVisitor:
         scope.update(self.vars_method)
         return scope.get(_variable)
     
-    def get_function(self, _class: str, _function: str, register: str):
+    def get_function(self, _class: str, _function: str):
         """
         Get the function from the class.
         """
         if _class == "SELF_TYPE":
             _class = self.current_class
-        data = self.generate_classes
-        data = {value[0]: f"{i*4}({register})" for i, value in enumerate(data[_class].items())}
+        data = self.inheriance_class_methods
+        data = {value[0]: i*WORD for i, value in enumerate(data[_class].items())}
         return data[_function]
     
     # ADD
@@ -336,20 +344,6 @@ class MipsVisitor:
         for _cls in _program.classes:
             self.inheritance[_cls.type] =_cls.inherits if _cls.inherits else "Object"
             self.class_methods[_cls.type] = {f.id: f.type for f in _cls.methods}
-        for _cls in self.class_methods.keys():
-            for _cls_hierarchy in self.get_class_parents(_cls):
-                self.class_methods[_cls].update(
-                    {
-                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
-                    }
-                )
-        for _cls in _program.classes:
-            for _cls_hierarchy in self.get_class_parents(_cls.type):
-                self.class_methods[_cls.type].update(
-                    {
-                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
-                    }
-                )
 
     def unvisit_program(self, _program):
         pass

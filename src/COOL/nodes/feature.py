@@ -69,7 +69,7 @@ class ExecuteMethod(Node):
             # save self reference
             Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
             # load the method to jump
-            Instruction("lw", mips_visitor.rt, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rt)),
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(mips_visitor.current_class, self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
@@ -81,7 +81,7 @@ class ExecuteMethod(Node):
         visitor.visit_execute_method(node = self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return mips_visitor.class_methods[mips_visitor.current_class][self.id]
+        return mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
 
 
 class Attribute(Node):

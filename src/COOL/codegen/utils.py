@@ -54,6 +54,8 @@ class Section:
     def __repr__(self):
         return str(self)
 
+WORD = 4
+
 NULL = "null"
 
 TRUE = "true"

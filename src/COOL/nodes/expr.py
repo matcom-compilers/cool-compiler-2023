@@ -48,7 +48,7 @@ class Dispatch(Node):
             Instruction("lw", mips_visitor.rt, f"-4({mips_visitor.rsp})"),
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # FIX
-            Instruction("lw", mips_visitor.rt, mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id, mips_visitor.rt)),
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
@@ -60,7 +60,7 @@ class Dispatch(Node):
         if self.type:
             return self.type
         _type = self.expr.get_return(mips_visitor)
-        return mips_visitor.class_methods[_type][self.id]
+        return mips_visitor.inheriance_class_methods[_type][self.id]
 
 
 class CodeBlock(Node):
