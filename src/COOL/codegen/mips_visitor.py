@@ -1,11 +1,15 @@
 from typing import List
 
+from COOL.codegen.utils import TRUE
+from COOL.codegen.utils import FALSE
 from COOL.codegen.utils import Data
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
 from COOL.codegen.utils import Section
 from COOL.codegen.utils import Instruction
 
+from COOL.codegen.utils import INHERIANCE
+from COOL.codegen.utils import CLASS_METHODS
 from COOL.codegen.functions import FUNCTIONS
 
 
@@ -30,42 +34,17 @@ class MipsVisitor:
 
         # current
         self.current_class = None
-        self.current_method = None
-        self.current_attribute = None
-        self.current_expression = None
-        self.current_return_type = None
+        # self.current_method = None
+        # self.current_attribute = None
+        # self.current_expression = None
         
         # scope
         self.vars_method = {}
         self.vars_class = {}
 
-        self.inheritance = {
-            "Object": None,
-            "IO": None,
-            "Int": None,
-            "String": None,
-            "Bool": None,
-        }
-        self.class_methods = {
-            "Object": [
-                "abort",
-                "type_name",
-                "copy",
-            ],
-            "IO": [
-                "out_string",
-                "out_int",
-                "in_string",
-                "in_int",
-            ],
-            "String": [
-                "length",
-                "concat",
-                "substr",
-            ],
-            "Int": [],
-            "Bool": [],
-        }
+        self.inheritance = INHERIANCE
+        self.class_methods = CLASS_METHODS
+        
     
     def generate_mips(self) -> str:
         """
@@ -146,8 +125,8 @@ class MipsVisitor:
         data = {}
         for _cls in self.inheritance.keys():
             data[_cls] = {}
-            for _current_cls in reversed(self.__get_class_parents(_cls)):
-                data[_cls].update({_method: _current_cls for _method in self.class_methods[_current_cls]})
+            for _current_cls in reversed(self.get_class_parents(_cls)):
+                data[_cls].update({_method: _current_cls for _method in self.class_methods[_current_cls].keys()})
         return data
 
     @property
@@ -175,7 +154,7 @@ class MipsVisitor:
             Instruction("la", self.rsr, _class),
             Instruction("sw", self.rsr, f"0({self.rmr})"),
             # Save the self reference
-            *self.allocate_memory(4),
+            *self.allocate_heap(4),
             # save allocated memory in stack to dont lose it
             *self.allocate_stack(4),
             Instruction("sw", self.rmr, f"0({self.rsp})"),
@@ -189,7 +168,7 @@ class MipsVisitor:
             # load self
             Instruction("lw", self.rmr, f"0({self.rsp})"),
             *self.deallocate_stack(4),
-            *self.deallocate_memory(memory),
+            *self.deallocate_heap(memory),
             Instruction("jr", self.rr),
         ]
         return obj
@@ -199,7 +178,7 @@ class MipsVisitor:
         Create the data section.
         """
         obj = [
-            Comment("Data section"),
+            Comment("Data section", indent=""),
             Section("data"),
             Data("newline", ".asciiz", "\"\\n\""),
             Data("null", ".word", "0"),
@@ -213,7 +192,7 @@ class MipsVisitor:
         Create the text section.
         """
         obj = [
-            Comment("Text section"),
+            Comment("Text section", indent=""),
             Section("text"),
             Label("main"),
             Instruction("jal", self.get_class_name("Main")),
@@ -225,7 +204,7 @@ class MipsVisitor:
         return obj
 
     # ALLOCATE
-    def allocate_memory(self, _size: int):
+    def allocate_heap(self, _size: int):
         """
         Allocate memory.
         """
@@ -234,7 +213,7 @@ class MipsVisitor:
         ]
         return obj
     
-    def deallocate_memory(self, _size: int):
+    def deallocate_heap(self, _size: int):
         """
         Deallocate memory.
         """
@@ -260,9 +239,34 @@ class MipsVisitor:
             Instruction("addiu", self.rsp, self.rsp, f"{_size}"),
         ]
         return obj
+
+    def allocate_memory(self, _size: int):
+        """
+        Allocate memory.
+        """
+        obj = [
+            Instruction("li", self.rsi, _size),
+            Instruction("li", self.rmr, 9),
+            Instruction("syscall"),
+        ]
+        return obj
+
+    def allocate_object(self, _type: str, _obj: List[Instruction]):
+        """
+        Allocate object.
+        """
+        obj = [
+            *self.allocate_memory(8),
+            Instruction("la", self.rsr, "Int"),
+            Instruction("sw", self.rsr, f"0({self.rmr})"),
+            *_obj,
+            Instruction("sw", self.rsr, f"4({self.rmr})"),
+            Instruction("move", self.rsr, {self.rmr}),
+        ]
+        return obj
     
     # GET
-    def __get_class_parents(self, _class: str):
+    def get_class_parents(self, _class: str):
         """
         Get the class parents.
         """
@@ -277,7 +281,7 @@ class MipsVisitor:
         """
         Get the method from the class. Include the methods from the inheritance.
         """
-        if _method in self.class_methods[_class]:
+        if _method in self.class_methods[_class].keys():
             return self.get_method_name(_class, _method)
         return self.get_class_method(self.inheritance[_class], _method)
     
@@ -326,10 +330,22 @@ class MipsVisitor:
     # VISIT
     def visit_program(self, _program):
         for _cls in _program.classes:
-            self.inheritance[_cls.type] =\
-                _cls.inherits\
-                if _cls.inherits else "Object"
-            self.class_methods[_cls.type] = [f.id for f in _cls.methods]
+            self.inheritance[_cls.type] =_cls.inherits if _cls.inherits else "Object"
+            self.class_methods[_cls.type] = {f.id: f.type for f in _cls.methods}
+        for _cls in self.class_methods.keys():
+            for _cls_hierarchy in self.get_class_parents(_cls):
+                self.class_methods[_cls].update(
+                    {
+                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
+                    }
+                )
+        for _cls in _program.classes:
+            for _cls_hierarchy in self.get_class_parents(_cls.type):
+                self.class_methods[_cls.type].update(
+                    {
+                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
+                    }
+                )
 
     def unvisit_program(self, _program):
         pass
@@ -357,7 +373,6 @@ class MipsVisitor:
         self.class_memory += 4
 
     def visit_method(self, _method):
-        self.current_method = self.get_method_name(self.current_class, _method.id)
         self.vars_method = {
             "return": f"0({self.rsp})",
             "self": f"4({self.rsp})",
@@ -365,7 +380,7 @@ class MipsVisitor:
         }
     
     def unvisit_method(self, _method):
-        self.current_method = None
+        # self.current_method = None
         self.vars_method = {}
     
     def visit_execute_method(self, _execute_method):
@@ -378,7 +393,8 @@ class MipsVisitor:
         pass
     
     def unvisit_object(self, _expression):
-        self.current_expression = None
+        pass
+        # self.current_expression = None
     
     def visit_if(self, _if):
         pass

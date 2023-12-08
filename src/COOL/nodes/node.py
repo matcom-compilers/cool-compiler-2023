@@ -26,3 +26,6 @@ class Node(ABC):
     @abstractmethod
     def check(self):
         pass
+
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        pass

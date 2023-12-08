@@ -24,7 +24,43 @@ class Dispatch(Node):
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_execute_method(self)
+        expr = self.expr.codegen(mips_visitor)
+        exprs = []
+        for i, _expr in enumerate(self.exprs):
+            exprs.extend(
+                _expr.codegen(mips_visitor) +
+                [
+                    Instruction("sw", mips_visitor.rsr, f"{4*(i+1)}({mips_visitor.rsp})"),
+                ]
+            )
+        n_stack = len(self.exprs) * 4 + 8
+        obj = [
+            Comment(f"execute method {self.id}"),
+            # allocate the stack
+            *mips_visitor.allocate_stack(n_stack),
+            *expr,
+            # save the expr reference
+            Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            *mips_visitor.deallocate_stack(4),
+            *exprs,
+            # load the saved expr reference type
+            Instruction("lw", mips_visitor.rsr, f"-4({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
+            # FIX
+            Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id, mips_visitor.rsr)),
+            Instruction("jal", mips_visitor.rsr),
+            # deallocate stack
+            *mips_visitor.deallocate_stack(n_stack),
+        ]
+        mips_visitor.unvisit_execute_method(self)
+        return obj
+    
+    def get_return(self, mips_visitor: MipsVisitor):
+        if self.type:
+            return self.type
+        _type = self.expr.get_return(mips_visitor)
+        return mips_visitor.class_methods[_type][self.id]
 
 
 class CodeBlock(Node):
@@ -37,8 +73,11 @@ class CodeBlock(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        expr = "\n".join([expr.codegen(mips_visitor) for expr in self.exprs])
+        expr = [expr.codegen(mips_visitor) for expr in self.exprs]
         return expr
+    
+    def get_return(self, mips_visitor: MipsVisitor):
+        return self.exprs[-1].get_return(mips_visitor)
 
 
 class If(Node):
@@ -74,6 +113,8 @@ class If(Node):
     def check(self, visitor):
         return visitor.visit_conditionals(self)
 
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.then_expr.get_return(mips_visitor)
 
 class While(Node):
     def __init__(self, line: int, column: int, while_expr: Node, loop_expr: Node):
@@ -86,26 +127,25 @@ class While(Node):
         mips_visitor.visit_while(self)
         while_expr = self.while_expr.codegen(mips_visitor)
         loop_expr = self.loop_expr.codegen(mips_visitor)
-        obj = (
-            f"    # WHILE_{mips_visitor.current_state}\n"
-            f"    while_{mips_visitor.current_state}:\n"
-            f"    {while_expr}"
-            f"    la  $t0, {TRUE}\n"
-            f"    beq $t0, $t0, loop_{mips_visitor.current_state}\n"
-            f"    nop\n"
-            f"    end_while_{mips_visitor.current_state}:\n"
-            f"    j   end_while_{mips_visitor.current_state}\n"
-            f"    nop\n"
-            f"    loop_{mips_visitor.current_state}:\n"
-            f"    {loop_expr}"
-            f"    j   while_{mips_visitor.current_state}\n"
-            f"    nop\n"
-        )
+        obj = [
+            Comment(f"while_{mips_visitor.current_state}"),
+            Label(f"while_{mips_visitor.current_state}"),
+            *while_expr,
+            Instruction("la", mips_visitor.rsr, True),
+            Instruction("beq", mips_visitor.rsr, f"loop_{mips_visitor.current_state}"),
+            Instruction("nop"),
+            Label(f"end_while_{mips_visitor.current_state}"),
+            # FIX
+        ]
         mips_visitor.unvisit_while(self)
         return obj
 
     def check(self, visitor):
         return visitor.visit_loops(self)
+
+    # FIX
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.loop_expr.get_return(mips_visitor)
 
 
 class Let(Node):
@@ -120,6 +160,9 @@ class Let(Node):
     
     def check(self, visitor):
         return visitor.visit_let(self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.expr.get_return(mips_visitor)
 
 
 class Case(Node):
@@ -134,6 +177,10 @@ class Case(Node):
 
     def check(self, visitor):
         return visitor.visit_case(self)
+    
+    # FIX
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.cases[0].get_return(mips_visitor)
 
 
 class Case_expr(Node):
@@ -157,14 +204,17 @@ class New(Node):
     
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        obj = (
-            f"    jal {self.type}\n"
-            f"    move {mips_visitor.rsr}, $v0\n"
-        )
+        obj = [
+            Instruction("jal", mips_visitor.get_class_name(self.type)),
+            Instruction("move", mips_visitor.rsr, mips_visitor.rmr),
+        ]
         return obj
 
     def check(self,visitor:Visitor_Class):
         return visitor.visit_new(self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.type
 
 
 class Isvoid(Node):
@@ -179,10 +229,15 @@ class Isvoid(Node):
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
-        obj = (
-            expr +
-            f"    move {mips_visitor.rsr}, $t0\n"
-            f"    la  $t1, {NULL}\n"
-            f"    seq $t0, $t0, $t1\n"
-        )
-        raise NotImplementedError()
+        obj = [
+            *expr,
+            Instruction("la", "$t1", NULL),
+            Instruction("seq", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool")
+        ]
+        return obj
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return 'Bool'

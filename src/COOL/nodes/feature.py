@@ -79,6 +79,9 @@ class ExecuteMethod(Node):
 
     def check(self,visitor):
         visitor.visit_execute_method(node = self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return mips_visitor.class_methods[mips_visitor.current_class][self.id]
 
 
 class Attribute(Node):

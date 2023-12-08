@@ -204,6 +204,36 @@ String_substr:
 """
 
 
+ABORT=\
+"""
+abort:
+    la $t0, abort_label
+
+  abort_print_loop_0:
+    lb $a0, 0($t0)
+    addiu $t0, $t0, 1
+    beq $a0, $zero, abort_print_loop_0_end
+    li $v0, 11
+    syscall
+    j abort_print_loop_0
+
+  abort_print_loop_0_end:
+    lw $t0, 0($sp)
+    addiu $sp, $sp, 4
+
+  abort_print_loop_1:
+    lb $a0, 0($t0)
+    addiu $t0, $t0, 1
+    beq $a0, $zero, abort_print_loop_1_end
+    li $v0, 11
+    syscall
+    j abort_print_loop_1
+
+  abort_print_loop_1_end:
+    li  $v0, 10
+    syscall
+"""
+
 
 FUNCTIONS = [
     SET_BOOL,
