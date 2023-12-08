@@ -9,12 +9,15 @@ from COOL.codegen.mips_visitor import MipsVisitor
 
 
 class UnaryOperator(Node):
-    def __init__(self, line: int, column: int, expr: Node, possibles_types:list, return_type:str, symbol:str) -> None:
+    def __init__(self, line: int, column: dict, expr: Node, possibles_types:list, return_type:str, symbol:str) -> None:
         self.expr: Node = expr
         self.possibles_types = possibles_types
         self.return_type = return_type
         self.symbol = symbol
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.expr
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr = self.expr.codegen(mips_visitor)
@@ -34,13 +37,16 @@ class UnaryOperator(Node):
 
 
 class Operator(Node):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node, possibles_types:list, return_type:str, symbol:str) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node, possibles_types:list, return_type:str, symbol:str) -> None:
         self.expr1: Node = expr1
         self.expr2: Node = expr2
         self.possibles_types = possibles_types
         self.return_type = return_type
         self.symbol = symbol
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.expr1
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr1 = self.expr1.codegen(mips_visitor)
@@ -65,7 +71,7 @@ class Operator(Node):
         return visitor.visit_operator(self)
 
 class Add(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '+')
 
     def operation(self, mips_visitor: MipsVisitor):
@@ -76,7 +82,7 @@ class Add(Operator):
 
 
 class Sub(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '-')
 
     def operation(self, mips_visitor: MipsVisitor):
@@ -87,7 +93,7 @@ class Sub(Operator):
 
 
 class Div(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '/')
 
     def operation(self, mips_visitor: MipsVisitor):
@@ -98,7 +104,7 @@ class Div(Operator):
 
 
 class Times(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         self.possibles_types = ['Int']
         self.return_type = 'Int'
         super().__init__(line, column, expr1, expr2, ['Int'],'Int', '*')
@@ -111,7 +117,7 @@ class Times(Operator):
 
 
 class Less(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         self.possibles_types = ['Int']
         self.return_type = 'Bool'
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<')
@@ -125,7 +131,7 @@ class Less(Operator):
 
 
 class LessEqual(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
 
         super().__init__(line, column, expr1, expr2, ['Int'],'Bool', '<=')
 
@@ -140,7 +146,7 @@ class LessEqual(Operator):
 
 
 class Equal(Operator):
-    def __init__(self, line: int, column: int, expr1: Node, expr2: Node) -> None:
+    def __init__(self, line: int, column: dict, expr1: Node, expr2: Node) -> None:
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
@@ -153,7 +159,7 @@ class Equal(Operator):
 
 
 class Not(UnaryOperator):
-    def __init__(self, line: int, column: int, expr: Node) -> None:
+    def __init__(self, line: int, column: dict, expr: Node) -> None:
         super().__init__(line, column, expr, ['Bool'],'Bool', 'not')
 
     def operation(self, mips_visitor: MipsVisitor):
@@ -164,7 +170,7 @@ class Not(UnaryOperator):
 
 
 class Bitwise(UnaryOperator):
-    def __init__(self, line: int, column: int, expr: Node) -> None:
+    def __init__(self, line: int, column: dict, expr: Node) -> None:
         super().__init__(line, column, expr, ['Int'],'Int', '~')
 
     def operation(self, mips_visitor: MipsVisitor):

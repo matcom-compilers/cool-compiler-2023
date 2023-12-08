@@ -7,7 +7,7 @@ from COOL.codegen.utils import Label
 
 
 class GetVariable(Node):
-    def __init__(self, line: int, column: int, id:str) -> None:
+    def __init__(self, line: int, column: dict, id:str) -> None:
         self.id = id
         super().__init__(line, column)
 
@@ -23,7 +23,7 @@ class GetVariable(Node):
         return visitor.visit_get_variable(self)
 
 class Initialization(Node):
-    def __init__(self, line: int, column: int, id:str, type: str, expr: Node) -> None:
+    def __init__(self, line: int, column: dict, id:str, type: str, expr: Node) -> None:
         self.id = id
         self.type = type
         self.expr = expr
@@ -39,7 +39,7 @@ class Initialization(Node):
         return visitor.visit_initialization(self)
 
 class Declaration(Node):
-    def __init__(self, line: int, column: int, id:str, type:str) -> None:
+    def __init__(self, line: int, column: dict, id:str, type:str) -> None:
         self.id = id
         self.type = type
         self.dynamic_type = 'void'
@@ -54,7 +54,7 @@ class Declaration(Node):
         return visitor.visit_declaration(self)
     
 class Assign(Node):
-    def __init__(self, line: int, column: int, id: str, expr: Node) -> None:
+    def __init__(self, line: int, column: dict, id: str, expr: Node) -> None:
         self.expr: Node = expr
         self.id = id
         self.dynamic_type = 'void'
