@@ -27,7 +27,7 @@ class Interger(Object):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_object(self)
         obj = [
-            Instruction("li", mips_visitor.rsr, self.value),
+            Instruction("li", mips_visitor.rt, self.value),
         ]
         mips_visitor.unvisit_object(self)
         return obj
@@ -54,7 +54,7 @@ class String(Object):
             *mips_visitor.allocate_object(
                 8,
                 [
-                    Instruction("la", mips_visitor.rsr, str_name),
+                    Instruction("la", mips_visitor.rt, str_name),
                 ]
             ),
         ]

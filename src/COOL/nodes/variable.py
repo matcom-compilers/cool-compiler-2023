@@ -15,7 +15,7 @@ class GetVariable(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         var = mips_visitor.get_variable(self)
         obj = [
-            Instruction("move", mips_visitor.rsr, var)
+            Instruction("move", mips_visitor.rt, var)
         ]
         return obj
 
@@ -67,7 +67,7 @@ class Assign(Node):
         expr = self.expr.codegen(mips_visitor)
         obj = [
             *expr,
-            Instruction("move", var, mips_visitor.rsr)
+            Instruction("move", var, mips_visitor.rt)
         ]
         return obj
 

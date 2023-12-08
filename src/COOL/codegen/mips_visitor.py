@@ -19,32 +19,31 @@ from COOL.codegen.functions import FUNCTIONS
 
 class MipsVisitor:
     def __init__(self) -> None:
+        # number to generate labels
         self.current_state = 0
 
-        # global data
+        # GLOBAL DATA
         self.test_section = []
         self.data_secction = []
         self.test_section_classes = {}
 
-        # local data
+        # LOCAL DATA
         self.attributes = []
         
         # memory
         self.class_memory = 0
 
-        # current
+        # CURRENT
         self.current_class = None
-        # self.current_method = None
-        # self.current_attribute = None
-        # self.current_expression = None
         
-        # scope
+        # SCOPE
         self.vars_method = {}
         self.vars_class = {}
-
+        
+        # INHERITANCE
         self.inheritance = INHERIANCE
         self.class_methods = CLASS_METHODS
-        
+
     
     def generate_mips(self) -> str:
         """
@@ -75,7 +74,7 @@ class MipsVisitor:
                     )
                 )
             )
-            text_section += "\n" + "\n".join(map(str,self.test_section))
+        text_section += "\n" + "\n".join(map(str, self.test_section))
         
         for _function in FUNCTIONS:
             text_section += _function
@@ -83,7 +82,7 @@ class MipsVisitor:
         return data_section + "\n" + text_section
 
     @property
-    def rr(self):
+    def rra(self):
         """
         Register return
         """
@@ -97,21 +96,21 @@ class MipsVisitor:
         return "$sp"
     
     @property
-    def rsi(self):
+    def ra(self):
         """
         Register system input
         """
         return "$a0"
     
     @property
-    def rmr(self):
+    def rv(self):
         """
         Register method return
         """
         return "$v0"
     
     @property
-    def rsr(self):
+    def rt(self):
         """
         Register store results
         """
@@ -147,29 +146,29 @@ class MipsVisitor:
             Comment(f"Create class {_class}", indent=""),
             Label(self.get_class_name(_class)),
             # Allocate memory
-            Instruction("li", self.rsi, memory),
-            Instruction("li", self.rmr, 9),
+            Instruction("li", self.ra, memory),
+            Instruction("li", self.rv, 9),
             Instruction("syscall"),
             # Save the type reference
-            Instruction("la", self.rsr, _class),
-            Instruction("sw", self.rsr, f"0({self.rmr})"),
+            Instruction("la", self.rt, _class),
+            Instruction("sw", self.rt, f"0({self.rv})"),
             # Save the self reference
             *self.allocate_heap(4),
             # save allocated memory in stack to dont lose it
             *self.allocate_stack(4),
-            Instruction("sw", self.rmr, f"0({self.rsp})"),
+            Instruction("sw", self.rv, f"0({self.rsp})"),
             # save $ra reference
             *self.allocate_stack(4),
-            Instruction("sw", self.rr, f"0({self.rsp})"),
+            Instruction("sw", self.rra, f"0({self.rsp})"),
             *attributes,
             # load $ra reference
-            Instruction("lw", self.rr, f"0({self.rsp})"),
+            Instruction("lw", self.rra, f"0({self.rsp})"),
             *self.deallocate_stack(4),
             # load self
-            Instruction("lw", self.rmr, f"0({self.rsp})"),
+            Instruction("lw", self.rv, f"0({self.rsp})"),
             *self.deallocate_stack(4),
             *self.deallocate_heap(memory),
-            Instruction("jr", self.rr),
+            Instruction("jr", self.rra),
         ]
         return obj
     
@@ -197,7 +196,7 @@ class MipsVisitor:
             Label("main"),
             Instruction("jal", self.get_class_name("Main")),
             *self.allocate_stack(4),
-            Instruction("sw", self.rmr, f"0({self.rsp})"),
+            Instruction("sw", self.rv, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
             Instruction("j", "exit"),
         ]
@@ -209,7 +208,7 @@ class MipsVisitor:
         Allocate memory.
         """
         obj = [
-            Instruction("addiu", self.rmr, self.rmr, f"{_size}"),
+            Instruction("addiu", self.rv, self.rv, f"{_size}"),
         ]
         return obj
     
@@ -218,7 +217,7 @@ class MipsVisitor:
         Deallocate memory.
         """
         obj = [
-            Instruction("addiu", self.rmr, self.rmr, f"-{_size}"),
+            Instruction("addiu", self.rv, self.rv, f"-{_size}"),
         ]
         return obj
 
@@ -245,8 +244,8 @@ class MipsVisitor:
         Allocate memory.
         """
         obj = [
-            Instruction("li", self.rsi, _size),
-            Instruction("li", self.rmr, 9),
+            Instruction("li", self.ra, _size),
+            Instruction("li", self.rv, 9),
             Instruction("syscall"),
         ]
         return obj
@@ -257,11 +256,11 @@ class MipsVisitor:
         """
         obj = [
             *self.allocate_memory(8),
-            Instruction("la", self.rsr, "Int"),
-            Instruction("sw", self.rsr, f"0({self.rmr})"),
+            Instruction("la", self.rt, "Int"),
+            Instruction("sw", self.rt, f"0({self.rv})"),
             *_obj,
-            Instruction("sw", self.rsr, f"4({self.rmr})"),
-            Instruction("move", self.rsr, {self.rmr}),
+            Instruction("sw", self.rt, f"4({self.rv})"),
+            Instruction("move", self.rt, {self.rv}),
         ]
         return obj
     
@@ -275,15 +274,6 @@ class MipsVisitor:
             parents.append(_class)
             _class = self.inheritance[_class]
         return parents
-
-
-    def get_class_method(self, _class: str, _method: str):
-        """
-        Get the method from the class. Include the methods from the inheritance.
-        """
-        if _method in self.class_methods[_class].keys():
-            return self.get_method_name(_class, _method)
-        return self.get_class_method(self.inheritance[_class], _method)
     
     def get_method_name(self, _class: str, _method: str):
         """
@@ -307,6 +297,11 @@ class MipsVisitor:
         return scope.get(_variable)
     
     def get_function(self, _class: str, _function: str, register: str):
+        """
+        Get the function from the class.
+        """
+        if _class == "SELF_TYPE":
+            _class = self.current_class
         data = self.generate_classes
         data = {value[0]: f"{i*4}({register})" for i, value in enumerate(data[_class].items())}
         return data[_function]
@@ -319,12 +314,21 @@ class MipsVisitor:
         self.data_secction.extend(_data)
     
     def add_attribute(self, _attribute: List[Instruction]):
+        """
+        Add attribute to the class.
+        """
         self.attributes.extend(_attribute)
     
     def add_method(self, _method: List[Instruction]):
+        """
+        Add method to text section.
+        """
         self.test_section.extend(_method)
     
     def add_memory(self, _memory: int):
+        """
+        Add memory to the class.
+        """
         self.class_memory = _memory
 
     # VISIT

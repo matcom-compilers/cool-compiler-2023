@@ -29,9 +29,9 @@ class Dispatch(Node):
         exprs = []
         for i, _expr in enumerate(self.exprs):
             exprs.extend(
-                _expr.codegen(mips_visitor) +
                 [
-                    Instruction("sw", mips_visitor.rsr, f"{4*(i+1)}({mips_visitor.rsp})"),
+                    *_expr.codegen(mips_visitor),
+                    Instruction("sw", mips_visitor.rt, f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
         n_stack = len(self.exprs) * 4 + 8
@@ -41,15 +41,15 @@ class Dispatch(Node):
             *mips_visitor.allocate_stack(n_stack),
             *expr,
             # save the expr reference
-            Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
             *mips_visitor.deallocate_stack(4),
             *exprs,
             # load the saved expr reference type
-            Instruction("lw", mips_visitor.rsr, f"-4({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
+            Instruction("lw", mips_visitor.rt, f"-4({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # FIX
-            Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id, mips_visitor.rsr)),
-            Instruction("jal", mips_visitor.rsr),
+            Instruction("lw", mips_visitor.rt, mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id, mips_visitor.rt)),
+            Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
         ]
@@ -73,7 +73,9 @@ class CodeBlock(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        expr = [expr.codegen(mips_visitor) for expr in self.exprs]
+        expr = []
+        for _expr in self.exprs:
+            expr.extend(_expr.codegen(mips_visitor))
         return expr
     
     def get_return(self, mips_visitor: MipsVisitor):
@@ -131,8 +133,8 @@ class While(Node):
             Comment(f"while_{mips_visitor.current_state}"),
             Label(f"while_{mips_visitor.current_state}"),
             *while_expr,
-            Instruction("la", mips_visitor.rsr, True),
-            Instruction("beq", mips_visitor.rsr, f"loop_{mips_visitor.current_state}"),
+            Instruction("la", mips_visitor.rt, True),
+            Instruction("beq", mips_visitor.rt, f"loop_{mips_visitor.current_state}"),
             Instruction("nop"),
             Label(f"end_while_{mips_visitor.current_state}"),
             # FIX
@@ -206,7 +208,7 @@ class New(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("jal", mips_visitor.get_class_name(self.type)),
-            Instruction("move", mips_visitor.rsr, mips_visitor.rmr),
+            Instruction("move", mips_visitor.rt, mips_visitor.rv),
         ]
         return obj
 
