@@ -8,7 +8,7 @@ class BasicClass:
         self.inherits = inherits
         self.methods = [i for i in features if isinstance(i, Method)]
         self.attributes = [i for i in features if isinstance(i, Attribute)]
-        self.lineage = []
+        self.lineage = ['Object']
         self.methods_dict = {i.id:i for i in features if isinstance(i, Method)}
         self.attributes_dict = {i.id:i for i in features if isinstance(i, Attribute)}
 
@@ -24,6 +24,7 @@ class BasicObject(BasicClass):
             Method(line=0, column=0, id='copy', type='SELF_TYPE', expr=None, formals=[])
         ]
         self.inherits: str = None
+        self.lineage = []
         self.type: str = 'Object'
         
         super().__init__(self.features, self.type, self.inherits)
@@ -37,7 +38,7 @@ class BasicIO(BasicClass):
             Method(line=0, column=0, id='in_string', type='String', expr=None, formals=[]),
             Method(line=0, column=0, id='in_int', type='Int', expr=None, formals=[])
         ]
-        self.inherits: str = None
+        self.inherits: str = 'Object'
         self.type: str = 'IO'
         
         super().__init__(self.features, self.type, self.inherits)
@@ -45,7 +46,7 @@ class BasicIO(BasicClass):
 class BasicBool(BasicClass):
     def __init__(self) -> None:
         self.features:list = []
-        self.inherits: str = None
+        self.inherits: str = 'Object'
         self.type: str = 'Bool'
         
         super().__init__(self.features, self.type, self.inherits)
@@ -54,7 +55,7 @@ class BasicBool(BasicClass):
 class BasicInt(BasicClass):
     def __init__(self) -> None:
         self.features:list = []
-        self.inherits: str = None
+        self.inherits: str = 'Object'
         self.type: str = 'Int'
         
         super().__init__(self.features, self.type, self.inherits)
@@ -67,6 +68,6 @@ class BasicString(BasicClass):
                 Method(line=0, column=0, id='substr', type='String', expr=None, formals=[Formal(line=0, column=0, id='i', type='Int'),Formal(line=0, column=0, id='l', type='Int')])
         ]
       
-        self.inherits: str = None
+        self.inherits: str = 'Object'
         self.type: str = 'String'
         super().__init__(self.features, self.type, self.inherits)

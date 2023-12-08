@@ -239,6 +239,7 @@ class Visitor_Class:
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
+        self.temporal_scope = {}
         self.operators_symbols = {
             '+': "PLUS", 
             '-': "MINUS", 
