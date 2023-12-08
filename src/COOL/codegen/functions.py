@@ -87,6 +87,7 @@ OUT_STRING=\
 """
 IO_out_string:
     lw $t0, 4($sp)
+    lw $t0, 4($t0)
 
   out_string_loop:
     lb $a0, 0($t0)

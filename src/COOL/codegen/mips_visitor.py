@@ -75,6 +75,7 @@ class MipsVisitor:
                     )
                 )
             )
+        text_section += "\n" + "\n".join(map(str, self.create_base_class()))
         text_section += "\n" + "\n".join(map(str, self.test_section))
         
         for _function in FUNCTIONS:
@@ -180,6 +181,19 @@ class MipsVisitor:
         ]
         return obj
     
+    def create_base_class(self):
+        """
+        Create the base classes IO, Int, String, Bool.
+        """
+        obj = [
+            *self.create_class("Object", 4, []),
+            *self.create_class("IO", 4, []),
+            # *self.create_class("Int", 4, []),
+            # *self.create_class("String", 4, []),
+            # *self.create_class("Bool", 4, []),
+        ]
+        return obj
+    
     def create_data(self):
         """
         Create the data section.
@@ -216,7 +230,7 @@ class MipsVisitor:
         Allocate memory.
         """
         obj = [
-            Instruction("addiu", self.rv, self.rv, f"{_size}"),
+            Instruction("addiu", self.rv, self.rv, _size),
         ]
         return obj
     
@@ -243,7 +257,7 @@ class MipsVisitor:
         Deallocate stack.
         """
         obj = [
-            Instruction("addiu", self.rsp, self.rsp, f"{_size}"),
+            Instruction("addiu", self.rsp, self.rsp, _size),
         ]
         return obj
 
@@ -268,7 +282,7 @@ class MipsVisitor:
             Instruction("sw", self.rt, f"0({self.rv})"),
             *_obj,
             Instruction("sw", self.rt, f"4({self.rv})"),
-            Instruction("move", self.rt, {self.rv}),
+            Instruction("move", self.rt, self.rv),
         ]
         return obj
     
