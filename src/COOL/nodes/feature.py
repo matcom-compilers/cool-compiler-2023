@@ -41,7 +41,7 @@ class Method(Node):
         mips_visitor.unvisit_method(self)
 
     def check(self, visitor):
-        visitor.visit_method(self)
+        return visitor.visit_method(self)
 
 
 class ExecuteMethod(Node):
@@ -88,7 +88,7 @@ class ExecuteMethod(Node):
         return obj
 
     def check(self,visitor):
-        visitor.visit_execute_method(node = self)
+        return visitor.visit_execute_method(node = self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
         return mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
@@ -103,7 +103,7 @@ class Attribute(Node):
         return self.column
 
     def check(self, visitor):
-        visitor.visit_attribute(self)
+        return visitor.visit_attribute(self)
 
 
 class AttributeDeclaration(Attribute):
@@ -180,7 +180,7 @@ class AttributeInicialization(Attribute):
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
-        visitor.visit_attribute_initialization(self)
+        return visitor.visit_attribute_initialization(self)
 
 
 class Formal(Node):

@@ -52,5 +52,4 @@ class Program(Node):
 
         except Exception as e:
             return [e]
-            # self.visitor.errors += class_visitor.errors
-        # return self.visitor.errors
+        
