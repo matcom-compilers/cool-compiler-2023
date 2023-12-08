@@ -239,7 +239,7 @@ class Visitor_Class:
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
-        self.temporal_scope = {}
+        self.temporal_scope:dict = {}
         self.operators_symbols = {
             '+': "PLUS", 
             '-': "MINUS", 
@@ -410,10 +410,12 @@ class Visitor_Class:
                     i.column['ID'],
                     'SemanticError',
                     f'\'{i.id}\' cannot be the name of a formal parameter.')
-
-        self.temporal_scope = {i.id:i for i in node.formals}     
+        
+        last_temp_scope = {}
+        last_temp_scope.update(self.temporal_scope)
+        self.temporal_scope.update({i.id:i for i in node.formals})  
         type = node.expr.check(self)        
-        self.temporal_scope = {}
+        self.temporal_scope = last_temp_scope
         if not type:
             return None
         if  (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
@@ -509,7 +511,7 @@ class Visitor_Class:
         
     def visit_unary_operator(self, node):
         ex1 = node.expr
-        if not ex1.__dict__.get('id'):
+        if (not ex1.__dict__.get('id')) or ex1.__dict__.get('exprs'):
             type1 = ex1.check(self)
         else:
             type1 = self.search_variable_in_scope(ex1)
@@ -545,7 +547,7 @@ class Visitor_Class:
         return node.type 
     
     def visit_execute_method(self,node):
-        self.visit_dispatch_not_expr(node)
+        return self.visit_dispatch_not_expr(node)
 
     def visit_get_variable(self, node):
         if node.id in self.temporal_scope.keys():
@@ -573,9 +575,11 @@ class Visitor_Class:
 
         for i in node.let_list:
             i.check(self)
-        self.temporal_scope = {i.id:i for i in node.let_list}     
+        temp_scope = {}
+        temp_scope.update(self.temporal_scope)
+        self.temporal_scope.update({i.id:i for i in node.let_list})
         type = node.expr.check(self)        
-        self.temporal_scope = {}
+        self.temporal_scope = temp_scope
         if not type:
             return None
         if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
@@ -583,7 +587,7 @@ class Visitor_Class:
                 node.line,
                 node.column,#TODO
                 'TypeError',
-                f'Undefined return type {type} in method {node.id}.')
+                f'Undefined return type {type}.')
 
 
         return type
@@ -661,7 +665,7 @@ class Visitor_Class:
         then_expr = node.then_expr.check(self)
         else_expr = node.else_expr.check(self)
         if not if_expr or not then_expr or not else_expr:
-            return None,0
+            return None
         if not if_expr == 'Bool':
             #TODO search this error
             raise SemError(
