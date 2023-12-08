@@ -1,0 +1,15 @@
+.data
+str: .asciiz "Hello, World!\n"
+
+.text
+.globl main
+
+main:
+    # Imprimir el string
+    li $v0, 4
+    la $a0, str
+    syscall
+
+    # Salir del programa
+    li $v0, 10
+    syscall
