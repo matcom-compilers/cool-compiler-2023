@@ -26,6 +26,8 @@ Usted es libre de estructurar su reporte escrito como más conveniente le parezc
 ### Arquitectura del compilador
 
 Todo el código del compilador se encuentra en la carpeta COOL dentro de src, este se divide en 4 módulos principales:
+
+
  - coollexer: Se encarga de analizar el código fuente y dividirlo en tokens.
  - coolparser: Se encarga de analizar la estructura del código fuente y devolver un árbol de sintaxis abstracta (AST) que recoja la estructura del programa. 
  - semantic: Se encarga de realizar el chequeo semántico del AST recibido del parser y hacer la verificación de la correctitud de tipos.
@@ -36,9 +38,14 @@ Además se encuentran otros módulos auxiliares encargados de los errores en tie
 
 
 ### Fases del compilador
+
+
+
 El flujo de las fases de un compilador sigue un proceso secuencial que transforma el código fuente de un programa en un programa ejecutable. Nuestro compilador de COOL sigue el siguiente flujo de fases:
 
 #### Análisis léxico
+
+
 
 Esta fase se encarga de analizar el código fuente y dividirlo en unidades léxicas o tokens, como identificadores, palabras clave, operadores y símbolos.  Se generan los tokens que representan las unidades léxicas del programa.
 
@@ -48,6 +55,8 @@ Además de tokenizar la entrada el análisis léxico puede detectar tokens que n
 
 
 #### Análisis sintáctico
+
+
 
 El analizador sintáctico verifica la estructura del código fuente según las reglas gramaticales del lenguaje de programación COOL. Se construye un AST que representa la estructura jerárquica del programa. Este árbol se utiliza para analizar la corrección sintáctica verificando si las expresiones y declaraciones del programa cumplen con las reglas de la gramática. 
 
@@ -64,6 +73,9 @@ El análisis sintáctico verifica si las construcciones del código cumplen con 
  
 #### Análisis semántico 
 
+
+
+
 Durante esta fase, se realiza un análisis más profundo del programa para verificar la coherencia y consistencia semántica. Se comprueba si las variables están correctamente declaradas, si los tipos de datos son compatibles y si se cumplen las reglas semánticas del lenguaje. 
 
 
@@ -78,6 +90,7 @@ Esta fase es crucial para garantizar que el programa cumpla con las reglas y res
 
 
 #### Generación de código
+
 
 
 En esta última fase, se genera el código objeto o ejecutable final para la plataforma de destino específica. El compilador traduce el código intermedio optimizado a instrucciones de máquina comprensibles por el hardware objetivo, realizando asignaciones de registros, generando instrucciones de ensamblador y resolviendo referencias a memoria. 
