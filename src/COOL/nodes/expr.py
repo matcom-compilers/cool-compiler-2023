@@ -9,6 +9,7 @@ from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
 from COOL.codegen.utils import NULL
 from COOL.codegen.utils import TRUE
+from COOL.codegen.utils import FALSE
 
 
 class Dispatch(Node):
@@ -24,8 +25,7 @@ class Dispatch(Node):
 
     def first_elem(self):
         return self.expr
-    
-    # TODO
+
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         expr = self.expr.codegen(mips_visitor)
@@ -102,24 +102,20 @@ class If(Node):
     def first_elem(self):
         return self.column
     
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_if(self)
         if_expr = self.if_expr.codegen(mips_visitor)
         then_expr = self.then_expr.codegen(mips_visitor)
         else_expr = self.else_expr.codegen(mips_visitor)
         obj = [
+            Comment(f"if_{mips_visitor.current_state}"),
             *if_expr,
-            Comment(f"IF_{mips_visitor.current_state}"),
-            Instruction("la", "$t0", TRUE),
-            Instruction("beq", "$t0", "$t0", f"else_{mips_visitor.current_state}"),
-            Instruction("nop"),
+            Instruction("la", "$t1", TRUE),
+            Instruction("beq", "$t1", "$t0", f"then_{mips_visitor.current_state}"),
+            *else_expr,
+            Instruction("j", f"end_if_{mips_visitor.current_state}"),
             Label(f"then_{mips_visitor.current_state}"),
             *then_expr,
-            Instruction("j", f"end_if_{mips_visitor.current_state}"),
-            Instruction("nop"),
-            Label(f"else_{mips_visitor.current_state}"),
-            *else_expr,
             Label(f"end_if_{mips_visitor.current_state}"),
         ]
         mips_visitor.unvisit_if(self)
@@ -148,11 +144,11 @@ class While(Node):
             Comment(f"while_{mips_visitor.current_state}"),
             Label(f"while_{mips_visitor.current_state}"),
             *while_expr,
-            Instruction("la", mips_visitor.rt, True),
-            Instruction("beq", mips_visitor.rt, f"loop_{mips_visitor.current_state}"),
-            Instruction("nop"),
+            Instruction("la", "$t1", FALSE),
+            Instruction("beq", mips_visitor.rt, "$t1", f"loop_{mips_visitor.current_state}"),
+            *loop_expr,
+            Instruction("j", f"while_{mips_visitor.current_state}"),
             Label(f"end_while_{mips_visitor.current_state}"),
-            # FIX
         ]
         mips_visitor.unvisit_while(self)
         return obj
