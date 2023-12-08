@@ -37,6 +37,7 @@ class MipsVisitor:
 
         # CURRENT
         self.current_class = None
+        self.current_offset = 0
         
         # SCOPE
         self.vars_method = {}
@@ -55,32 +56,46 @@ class MipsVisitor:
             str: mips code.
         """
         data_section =(
+            "\n" +
             "\n".join(map(str, self.create_data())) +
             "\n" +
             "\n".join(map(str, self.data_secction)) +
             "\n" +
-            "\n".join(map(str, self.generate_data_classes))
+            "\n".join(map(str, self.generate_data_classes)) +
+            "\n"
         )
 
         text_section = "\n".join(map(str, self.create_text())) + "\n"
         for _cls in self.test_section_classes.keys():
-            attributes = self.test_section_classes[_cls]["attributes"]
-            memory = self.test_section_classes[_cls]["memory"]
+            current_class = _cls
+            inheriance = []
+            while current_class:
+                if self.test_section_classes.get(current_class) is None:
+                    break
+                inheriance.append(current_class)
+                current_class = self.inheritance[current_class]
+            
+            memory = 0
+            attributes = []
+            for current_class in reversed(inheriance):
+                attributes.extend(self.test_section_classes[current_class]["attributes"])
+                memory += self.test_section_classes[current_class]["memory"]
+                current_class = self.inheritance[current_class]
             
             text_section += "\n".join(map(
                 str,
                 self.create_class(
                         _class=_cls,
-                        memory=memory,
+                        memory=memory+4,
                         attributes=attributes
                     )
                 )
             )
-        text_section += "\n" + "\n".join(map(str, self.create_base_class()))
-        text_section += "\n" + "\n".join(map(str, self.test_section))
+        text_section += "\n".join(map(str, self.create_base_class()))
+        text_section += "\n".join(map(str, self.test_section))
         
         for _function in FUNCTIONS:
-            text_section += _function
+            text_section += "\n" + _function
         
         return data_section + "\n" + text_section
 
@@ -152,6 +167,19 @@ class MipsVisitor:
 
     # CREATE
     def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
+        _attributes = []
+        for attr in attributes:
+            _attributes.extend(
+                [
+                    *self.allocate_stack(4),
+                    Instruction("sw", self.rv, f"0({self.rsp})"),
+                    *attr,
+                    Instruction("lw", self.rv, f"0({self.rsp})"),
+                    *self.deallocate_stack(4),
+                    Instruction("sw", self.rt, f"0({self.rv})"),
+                    *self.allocate_heap(4),
+                ]
+            )
         obj = [
             Comment(f"Create class {_class}", indent=""),
             Label(self.get_class_name(_class)),
@@ -164,21 +192,17 @@ class MipsVisitor:
             Instruction("sw", self.rt, f"0({self.rv})"),
             # Save the self reference
             *self.allocate_heap(4),
-            # save allocated memory in stack to dont lose it
-            *self.allocate_stack(4),
-            Instruction("sw", self.rv, f"0({self.rsp})"),
             # save $ra reference
             *self.allocate_stack(4),
             Instruction("sw", self.rra, f"0({self.rsp})"),
-            *attributes,
+            *_attributes,
             # load $ra reference
             Instruction("lw", self.rra, f"0({self.rsp})"),
             *self.deallocate_stack(4),
             # load self
-            Instruction("lw", self.rv, f"0({self.rsp})"),
-            *self.deallocate_stack(4),
             *self.deallocate_heap(memory),
             Instruction("jr", self.rra),
+            "\n",
         ]
         return obj
     
@@ -226,6 +250,12 @@ class MipsVisitor:
         return obj
 
     # ALLOCATE
+    def set_offset(self, _offset: int):
+        """
+        Allocate offset.
+        """
+        self.current_offset += _offset
+
     def allocate_heap(self, _size: int):
         """
         Allocate memory.
@@ -347,7 +377,7 @@ class MipsVisitor:
         """
         Add attribute to the class.
         """
-        self.attributes.extend(_attribute)
+        self.attributes.append(_attribute)
     
     def add_method(self, _method: List[Instruction]):
         """
@@ -377,7 +407,7 @@ class MipsVisitor:
     
     def unvisit_class(self, _class):
         self.test_section_classes[_class.type] = {
-            "memory": self.class_memory+4,
+            "memory": self.class_memory,#+4,
             "attributes": self.attributes,
         }
         self.attributes = []

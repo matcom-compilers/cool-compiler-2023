@@ -34,7 +34,8 @@ class Dispatch(Node):
                     Instruction("sw", mips_visitor.rt, f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4 + 8
+        n_stack = len(self.exprs) * 4 + 4
+        mips_visitor.set_offset(n_stack)
         return_type = self.expr.get_return(mips_visitor)
         obj = [
             Comment(f"execute method {self.id}"),
@@ -43,17 +44,19 @@ class Dispatch(Node):
             *expr,
             # save the expr reference
             Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
-            *mips_visitor.deallocate_stack(4),
             *exprs,
-            # load the saved expr reference type
-            Instruction("lw", mips_visitor.rt, f"-4({mips_visitor.rsp})"),
+            # load the saved expr reference
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+            # load the type reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
-            # FIX
+            # load the label reference
             Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(return_type, self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            "\n",
         ]
+        mips_visitor.set_offset(-n_stack)
         mips_visitor.unvisit_execute_method(self)
         return obj
     

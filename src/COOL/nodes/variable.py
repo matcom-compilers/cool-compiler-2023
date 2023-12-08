@@ -13,9 +13,10 @@ class GetVariable(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var = mips_visitor.get_variable(self.id)["memory"]
+        var_index = mips_visitor.get_variable(self.id)["memory"]
         obj = [
-            Instruction("lw", mips_visitor.rt, f"{var}({mips_visitor.rsp})")
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.current_offset + 4}({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rt, f"{var_index}({mips_visitor.rt})")
         ]
         return obj
 

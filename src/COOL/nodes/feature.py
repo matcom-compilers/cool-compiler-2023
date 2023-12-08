@@ -32,6 +32,7 @@ class Method(Node):
             Instruction("lw", mips_visitor.rra, f"0({mips_visitor.rsp})"),
             *mips_visitor.deallocate_stack(4),
             Instruction("jr", mips_visitor.rra),
+            "\n",
         ]
         mips_visitor.add_method(obj)
         mips_visitor.unvisit_method(self)
@@ -58,6 +59,7 @@ class ExecuteMethod(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
+        # mips_visitor.set_offset(n_stack)
         obj = [
             Comment(f"execute class method {self.id}"),
             # allocate the stack
@@ -73,7 +75,9 @@ class ExecuteMethod(Node):
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            "\n",
         ]
+        # mips_visitor.set_offset(-n_stack)
         mips_visitor.unvisit_execute_method(self)
         return obj
 
@@ -109,6 +113,7 @@ class AttributeDeclaration(Attribute):
                 Instruction("la", mips_visitor.rt, "0"),
                 Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         elif self.type == "Bool":
             obj = [
@@ -116,6 +121,7 @@ class AttributeDeclaration(Attribute):
                 Instruction("la", mips_visitor.rt, FALSE),
                 Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         else:
             obj = [
@@ -123,6 +129,7 @@ class AttributeDeclaration(Attribute):
                 Instruction("la", mips_visitor.rt, NULL),
                 Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
             ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
@@ -152,6 +159,7 @@ class AttributeInicialization(Attribute):
             Instruction("addiu", "$sp", "$sp", "4"),
             Instruction("sw", mips_visitor.rt, "0($v0)"),
             Instruction("addiu", "$v0", "$v0", "4"),
+            "\n",
         ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
