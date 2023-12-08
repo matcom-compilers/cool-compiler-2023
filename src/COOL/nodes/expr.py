@@ -35,6 +35,7 @@ class Dispatch(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 8
+        return_type = self.expr.get_return(mips_visitor)
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
@@ -48,7 +49,7 @@ class Dispatch(Node):
             Instruction("lw", mips_visitor.rt, f"-4({mips_visitor.rsp})"),
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # FIX
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(self.expr.get_return(mips_visitor), self.id)}({mips_visitor.rt})"),
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(return_type, self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),

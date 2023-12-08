@@ -10,6 +10,7 @@ from COOL.codegen.utils import Section
 from COOL.codegen.utils import Instruction
 
 from COOL.codegen.utils import INHERIANCE
+from COOL.codegen.utils import CLASS_VARS
 from COOL.codegen.utils import CLASS_METHODS
 from COOL.codegen.functions import FUNCTIONS
 
@@ -39,7 +40,7 @@ class MipsVisitor:
         
         # SCOPE
         self.vars_method = {}
-        self.vars_class = {}
+        self.vars_class = CLASS_VARS
         
         # INHERITANCE
         self.inheritance = INHERIANCE
@@ -282,6 +283,7 @@ class MipsVisitor:
             Instruction("sw", self.rt, f"0({self.rv})"),
             *_obj,
             Instruction("sw", self.rt, f"4({self.rv})"),
+            # FIX
             Instruction("move", self.rt, self.rv),
         ]
         return obj
@@ -309,12 +311,18 @@ class MipsVisitor:
         """
         return f"{_class}_class"
 
+    # FIX
     def get_variable(self, _variable: str):
         """
         Get the variable from the current scope.
         """
         scope = {}
-        scope.update(self.vars_class)
+        vars_class = {}
+        _cls = self.current_class
+        while _cls:
+            vars_class.update(self.vars_class[_cls])
+            _cls = self.inheritance[_cls]
+        scope.update(vars_class)
         scope.update(self.vars_method)
         return scope.get(_variable)
     
@@ -365,7 +373,7 @@ class MipsVisitor:
     def visit_class(self, _class):
         self.current_class = _class.type
         self.class_memory = 0
-        self.vars_class = {}
+        self.vars_class[self.current_class] = {}
     
     def unvisit_class(self, _class):
         self.test_section_classes[_class.type] = {
@@ -375,20 +383,27 @@ class MipsVisitor:
         self.attributes = []
         self.current_class = None
         self.class_memory = 0
-        self.vars_class = {}
     
     def visit_attribute(self, _attribute):
-        # FIX
-        self.vars_class.update({_attribute.id: f"{self.class_memory}($v0))"})
+        attr = {
+            _attribute.id: {
+                "memory": self.class_memory,
+                "type": _attribute.type,
+            }
+        }
+        self.vars_class[self.current_class].update(attr)
 
     def unvisit_attribute(self, _attribute):
         self.class_memory += 4
 
     def visit_method(self, _method):
         self.vars_method = {
-            "return": f"0({self.rsp})",
-            "self": f"4({self.rsp})",
-            **{f.id: f"{(i+2)*4}({self.rsp})" for i, f in enumerate(_method.formals)},
+            # "return": f"0({self.rsp})",
+            "self": {
+                "memory": 4,
+                "type": self.current_class,
+            },
+            **{f.id: {"memory": f"{(i+2)*4}({self.rsp})", "type": f.type} for i, f in enumerate(_method.formals)},
         }
     
     def unvisit_method(self, _method):

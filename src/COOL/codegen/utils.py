@@ -94,3 +94,11 @@ CLASS_METHODS = {
     "Int":{},
     "Bool":{}
 }
+
+CLASS_VARS = {
+    "Object":{},
+    "IO":{},
+    "String":{},
+    "Int":{},
+    "Bool":{}
+}

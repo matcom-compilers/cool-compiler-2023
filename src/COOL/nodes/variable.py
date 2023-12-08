@@ -13,14 +13,17 @@ class GetVariable(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var = mips_visitor.get_variable(self)
+        var = mips_visitor.get_variable(self.id)["memory"]
         obj = [
-            Instruction("move", mips_visitor.rt, var)
+            Instruction("lw", mips_visitor.rt, f"{var}({mips_visitor.rsp})")
         ]
         return obj
 
     def check(self, visitor):
         return visitor.visit_get_variable(self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return mips_visitor.get_variable(self.id)["type"]
 
 class Initialization(Node):
     def __init__(self, line: int, column: int, id:str, type: str, expr: Node) -> None:
@@ -63,11 +66,11 @@ class Assign(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var = mips_visitor.get_variable(self)
+        var = mips_visitor.get_variable(self.id)["memory"]
         expr = self.expr.codegen(mips_visitor)
         obj = [
             *expr,
-            Instruction("move", var, mips_visitor.rt)
+            Instruction("sw", mips_visitor.rt, f"{var}({mips_visitor.rsp})")
         ]
         return obj
 
