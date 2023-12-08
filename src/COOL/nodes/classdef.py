@@ -13,7 +13,7 @@ class Class(Node):
     def __init__(
         self,
         line: int,
-        column: int,
+        column: dict,
         features: List[Method | Attribute],
         type: str,
         inherits: str = None

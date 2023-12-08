@@ -12,7 +12,7 @@ from COOL.codegen.utils import FALSE
 
 
 class Object(Node):
-    def __init__(self, line: int, column: int, value: Any) -> None:
+    def __init__(self, line: int, column: dict, value: Any) -> None:
         self.value = value
         super().__init__(line, column)
 
@@ -21,7 +21,7 @@ class Object(Node):
 
 
 class Interger(Object):
-    def __init__(self, line: int, column: int, value: Any) -> None:
+    def __init__(self, line: int, column: dict, value: Any) -> None:
         super().__init__(line, column, value)
     
     def codegen(self, mips_visitor: MipsVisitor):
@@ -41,7 +41,7 @@ class Interger(Object):
 
 
 class String(Object):
-    def __init__(self, line: int, column: int, value: Any) -> None:
+    def __init__(self, line: int, column: dict, value: Any) -> None:
         super().__init__(line, column, value)
     
     def codegen(self, mips_visitor: MipsVisitor):
@@ -68,7 +68,7 @@ class String(Object):
 
 
 class Boolean(Object):
-    def __init__(self, line: int, column: int, value: Any) -> None:
+    def __init__(self, line: int, column: dict, value: Any) -> None:
         super().__init__(line, column, value)
     
     def codegen(self, mips_visitor: MipsVisitor):

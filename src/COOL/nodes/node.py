@@ -29,3 +29,7 @@ class Node(ABC):
 
     def get_return(self, mips_visitor: MipsVisitor) -> str:
         pass
+
+    def first_elem(self):
+        return self.column
+

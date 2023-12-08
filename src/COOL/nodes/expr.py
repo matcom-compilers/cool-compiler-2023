@@ -22,6 +22,9 @@ class Dispatch(Node):
     def check(self, visitor:Visitor_Class):
         return visitor.visit_dispatch(self)
 
+    def first_elem(self):
+        return self.expr
+    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
@@ -72,6 +75,9 @@ class CodeBlock(Node):
         self.exprs: List[Node] = exprs
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+    
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
 
@@ -93,6 +99,9 @@ class If(Node):
         self.else_expr: Node = else_expr
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
+    
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_if(self)
@@ -128,6 +137,8 @@ class While(Node):
         self.loop_expr: Node = loop_expr
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.while_expr
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_while(self)
@@ -159,7 +170,6 @@ class Let(Node):
         self.let_list: List[Node] = let_list
         self.expr: Node = expr
         super().__init__(line, column)
-    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
@@ -177,6 +187,8 @@ class Case(Node):
         self.cases: List[Node] = cases
         super().__init__(line, column)
 
+    def first_elem(self):
+        return self.column
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
@@ -195,6 +207,9 @@ class Case_expr(Node):
         self.type = type
         self.expr = expr
         super().__init__(line, column)
+
+    def first_elem(self):
+        return self.expr
     
     def codegen(self):
         raise NotImplementedError()
@@ -208,6 +223,8 @@ class New(Node):
         self.type: str = type
         super().__init__(line, column)
     
+    def first_elem(self):
+        return self.column
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
@@ -228,7 +245,9 @@ class Isvoid(Node):
         self.expr: Node = expr
         super().__init__(line, column)
 
-
+    def first_elem(self):
+        return self.column
+    
     def check(self, visitor):
         return visitor.visit_isvoid(self)
 
