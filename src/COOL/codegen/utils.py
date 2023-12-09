@@ -12,11 +12,12 @@ class Instruction:
         return str(self)
 
 class Label:
-    def __init__(self, name):
+    def __init__(self, name, indent: str=""):
         self.name = name
+        self.indent = indent
 
     def __str__(self):
-        return f"{self.name}:"
+        return f"{self.indent}{self.name}:"
     
     def __repr__(self):
         return str(self)

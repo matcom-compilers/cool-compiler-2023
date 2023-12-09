@@ -15,18 +15,28 @@ class GetVariable(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var_index = mips_visitor.get_variable(self.id)["memory"]
-        obj = [
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.current_offset + 4}({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rt, f"{var_index}({mips_visitor.rt})")
-        ]
+        var = mips_visitor.get_variable(self.id)
+        if var["stored"] == "class":
+            obj = [
+                Comment(f"get variable {self.id}"),
+                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
+                Instruction("lw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Comment(f"end get variable {self.id}"),
+            ]
+        else:
+            obj = [
+                Comment(f"get variable {self.id}"),
+                Instruction("lw", mips_visitor.rt, f"{var['memory'] + mips_visitor.current_offset - var['offset']}({mips_visitor.rsp})"),
+                Comment(f"end get variable {self.id}"),
+            ]
         return obj
 
     def check(self, visitor):
         return visitor.visit_get_variable(self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return mips_visitor.get_variable(self.id)["type"]
+        _type = mips_visitor.get_variable(self.id)["type"]
+        return _type if _type != "SELF_TYPE" else mips_visitor.current_class
 
 class Initialization(Node):
     def __init__(self, line: int, column: dict, id:str, type: str, expr: Node) -> None:
@@ -41,8 +51,6 @@ class Initialization(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
             *self.expr.codegen(mips_visitor),
-            *mips_visitor.allocate_stack(4),
-            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
         ]
         return obj
 
@@ -67,6 +75,7 @@ class Declaration(Node):
             type = [
                 *mips_visitor.allocate_object(
                     8,
+                    "String",
                     [
                         Instruction("li", mips_visitor.rt, 0),
                     ]
@@ -81,9 +90,7 @@ class Declaration(Node):
                 Instruction("la", mips_visitor.rt, NULL),
             ]
         obj = [
-            *mips_visitor.allocate_stack(4),
             *type,
-            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
         ]
         return obj
 
@@ -100,12 +107,23 @@ class Assign(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var = mips_visitor.get_variable(self.id)["memory"]
         expr = self.expr.codegen(mips_visitor)
-        obj = [
-            *expr,
-            Instruction("sw", mips_visitor.rt, f"{var}({mips_visitor.rsp})")
-        ]
+        var = mips_visitor.get_variable(self.id)
+        if var["stored"] == "class":
+            obj = [
+                Comment(f"assign variable {self.id}"),
+                *expr,
+                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
+                Instruction("sw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Comment(f"end assign variable {self.id}"),
+            ]
+        else:
+            obj = [
+                Comment(f"assign variable {self.id}"),
+                *expr,
+                Instruction("sw", mips_visitor.rt, f"{var['memory'] + mips_visitor.current_offset - var['offset']}({mips_visitor.rsp})"),
+                Comment(f"end assign variable {self.id}"),
+            ]
         return obj
 
     def check(self, visitor):

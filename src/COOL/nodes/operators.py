@@ -125,6 +125,8 @@ class Less(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("slt", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
             Instruction("jal", "set_bool")
         ]
         return obj
@@ -140,6 +142,8 @@ class LessEqual(Operator):
             Instruction("sgt", "$t2", "$t0", "$t1"),
             Instruction("seq", "$t3", "$t0", "$t1"),
             Instruction("or", "$t0", "$t2", "$t3"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
             Instruction("jal", "set_bool")
         ]
         return obj
@@ -153,6 +157,8 @@ class Equal(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("seq", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
             Instruction("jal", "set_bool")
         ]
         return obj

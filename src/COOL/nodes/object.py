@@ -53,6 +53,7 @@ class String(Object):
         obj = [
             *mips_visitor.allocate_object(
                 8,
+                "String",
                 [
                     Instruction("la", mips_visitor.rt, str_name),
                 ]
@@ -73,7 +74,7 @@ class Boolean(Object):
     
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("la", "$t0", {TRUE if self.value else FALSE}),
+            Instruction("la", "$t0", TRUE if self.value else FALSE),
         ]
         return obj
 

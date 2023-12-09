@@ -306,17 +306,16 @@ class MipsVisitor:
         ]
         return obj
 
-    def allocate_object(self, _type: str, _obj: List[Instruction]):
+    def allocate_object(self, memory: int, _type: str, _obj: List[Instruction]):
         """
         Allocate object.
         """
         obj = [
-            *self.allocate_memory(8),
-            Instruction("la", self.rt, "Int"),
+            *self.allocate_memory(memory),
+            Instruction("la", self.rt, _type),
             Instruction("sw", self.rt, f"0({self.rv})"),
             *_obj,
             Instruction("sw", self.rt, f"4({self.rv})"),
-            # FIX
             Instruction("move", self.rt, self.rv),
         ]
         return obj
@@ -424,6 +423,8 @@ class MipsVisitor:
             _attribute.id: {
                 "memory": self.class_memory,
                 "type": _attribute.type,
+                "stored": "class",
+                "offset": 0,
             }
         }
         self.vars_class[self.current_class].update(attr)
@@ -432,31 +433,40 @@ class MipsVisitor:
         self.class_memory += WORD
 
     def visit_method(self, _method):
+        self.set_offset(len(_method.formals)*WORD+4)
         self.vars_method = {
-            # "return": f"0({self.rsp})",
             "self": {
                 "memory": 4,
                 "type": self.current_class,
+                "stored": "method",
+                "offset": self.current_offset,
             },
-            **{f.id: {"memory": f"{(i+2)*WORD}({self.rsp})", "type": f.type} for i, f in enumerate(_method.formals)},
+            **{
+                f.id: {
+                    "memory": (i+2)*WORD ,
+                    "type": f.type,
+                    "stored": "method",
+                    "offset": self.current_offset,
+                }
+                for i, f in enumerate(_method.formals)
+            },
         }
     
     def unvisit_method(self, _method):
-        # self.current_method = None
+        self.set_offset(-len(_method.formals)*WORD-4)
         self.vars_method = {}
     
     def visit_execute_method(self, _execute_method):
-        pass
+        self.set_offset(len(_execute_method.exprs)*WORD+4)
 
     def unvisit_execute_method(self, _execute_method):
-        pass
+        self.set_offset(-len(_execute_method.exprs)*WORD-4)
 
     def visit_object(self, _expression):
         pass
     
     def unvisit_object(self, _expression):
         pass
-        # self.current_expression = None
     
     def visit_if(self, _if):
         pass
@@ -473,6 +483,7 @@ class MipsVisitor:
     def visit_let(self, _let):
         self.current_let = f"let_{self.current_state}"
         self.let_queue.append(self.current_let)
+        self.set_offset(len(_let.let_list)*WORD)
         self.vars_let[self.current_let] = {}
         for i, arg in enumerate(_let.let_list):
             self.vars_let[self.current_let].update(
@@ -480,10 +491,13 @@ class MipsVisitor:
                     arg.id: {
                         "memory": (i)*WORD,
                         "type": arg.type,
+                        "stored": "let",
+                        "offset": self.current_offset,
                     }
                 }
             )
 
     def unvisit_let(self, _let):
         self.current_state += 1
+        self.set_offset(-len(_let.let_list)*WORD)
         self.current_let = self.let_queue.pop(-1) if self.let_queue else None
