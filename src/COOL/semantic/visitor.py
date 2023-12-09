@@ -555,7 +555,7 @@ class Visitor_Class:
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:
-            if node.id in self.keywords:
+            if node.id == 'self':
                 return self.scope['type']
             raise SemError(
                 node.line,
@@ -761,5 +761,5 @@ class Visitor_Class:
         return self.type
 
     def visit_isvoid(self, node):
-        node.expr.check(self)
+        type_ = node.expr.check(self)
         return 'Bool'
