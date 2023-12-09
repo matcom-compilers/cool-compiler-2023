@@ -426,7 +426,8 @@ class Visitor_Class:
                 f'Undefined return type {type} in method {node.id}.')
         
         type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
-        
+        if type in self.basic_types.keys():
+            type_lineage = self.basic_types[type].lineage
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
             raise SemError(
                 node.line,
@@ -626,8 +627,15 @@ class Visitor_Class:
                     node.column,#TODO
                     'SemanticError',
                     f'Identifier \'{case.id}\' bound in \'case\'.')
-            
+            #FIX 
+            #BUG
+            #NOTE 
+            node.expr.type = node.expr.check(self)
+            self.temporal_scope[case.id] = node.expr#.check(self)
             return_type = case.check(self)
+            self.temporal_scope.pop(case.id)
+
+
             if not return_type:
                 return None            
             return_types.append(return_type)
