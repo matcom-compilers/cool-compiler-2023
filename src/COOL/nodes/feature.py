@@ -119,10 +119,18 @@ class AttributeDeclaration(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        if self.type == "Int" or self.type == "String":
+        if self.type == "Int":
             obj = [
                 Comment(f"attribute {self.id}: {self.type}"),
                 Instruction("la", mips_visitor.rt, "0"),
+                Instruction("sw", mips_visitor.rt, "0($v0)"),
+                Instruction("addiu", "$v0", "$v0", "4"),
+                "\n",
+            ]
+        elif self.type == "String":
+            obj = [
+                Comment(f"attribute {self.id}: {self.type}"),
+                *mips_visitor.allocate_object(8, [Instruction("la", mips_visitor.rt, 0),]),
                 Instruction("sw", mips_visitor.rt, "0($v0)"),
                 Instruction("addiu", "$v0", "$v0", "4"),
                 "\n",

@@ -166,9 +166,28 @@ class Let(Node):
         self.let_list: List[Node] = let_list
         self.expr: Node = expr
         super().__init__(line, column)
+    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_let(self)
+        let_list = []
+        for _let in self.let_list:
+            let_list.extend(_let.codegen(mips_visitor))
+        expr = self.expr.codegen(mips_visitor)
+        n_stack = len(self.let_list) * 4 
+        mips_visitor.set_offset(n_stack)
+        obj = [
+            Comment(f"let_{mips_visitor.current_state}"),
+            # allocate the stack
+            *let_list,
+            *expr,
+            # deallocate stack
+            *mips_visitor.deallocate_stack(n_stack),
+            "\n",
+        ]
+        mips_visitor.set_offset(-n_stack)
+        mips_visitor.unvisit_let(self)
+        return obj
     
     def check(self, visitor):
         return visitor.visit_let(self)
@@ -187,7 +206,7 @@ class Case(Node):
         return self.column
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        return []
 
     def check(self, visitor):
         return visitor.visit_case(self)

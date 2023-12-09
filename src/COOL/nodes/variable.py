@@ -4,6 +4,8 @@ from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.codegen.utils import Instruction
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
+from COOL.codegen.utils import NULL
+from COOL.codegen.utils import FALSE
 
 
 class GetVariable(Node):
@@ -37,7 +39,12 @@ class Initialization(Node):
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        obj = [
+            *self.expr.codegen(mips_visitor),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+        ]
+        return obj
 
     def check(self, visitor):
         return visitor.visit_initialization(self)
@@ -52,7 +59,33 @@ class Declaration(Node):
     
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        if self.type == "Int":
+            type = [
+                Instruction("la", mips_visitor.rt, "0"),
+            ]
+        elif self.type == "String":
+            type = [
+                *mips_visitor.allocate_object(
+                    8,
+                    [
+                        Instruction("li", mips_visitor.rt, 0),
+                    ]
+                ),
+            ]
+        elif self.type == "Bool":
+            type = [
+                Instruction("la", mips_visitor.rt, FALSE),
+            ]
+        else:
+            type = [
+                Instruction("la", mips_visitor.rt, NULL),
+            ]
+        obj = [
+            *mips_visitor.allocate_stack(4),
+            *type,
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+        ]
+        return obj
 
     def check(self, visitor):
         return visitor.visit_declaration(self)
