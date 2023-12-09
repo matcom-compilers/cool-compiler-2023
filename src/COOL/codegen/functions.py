@@ -161,7 +161,7 @@ IN_INT=\
 """
 # Function for read int
 IO_in_int:
-
+    jr $ra
 """
 
 #TODO
@@ -169,7 +169,7 @@ IN_STRING=\
 """
 # Function for read string
 IO_in_string:
-
+    jr $ra
 """
 
 #TODO
@@ -177,7 +177,7 @@ OBJECT_COPY=\
 """
 # Function for object copy
 Object_copy:
-
+    jr $ra
 """
 
 #TODO
@@ -185,7 +185,7 @@ OBJECT_TYPE_NAME=\
 """
 # Function for object type name
 Object_type_name:
-
+    jr $ra
 """
 
 #TODO
@@ -193,7 +193,7 @@ OBJECT_ABORT=\
 """
 # Function for object abort
 Object_abort:
-
+    jr $ra
 """
 
 #TODO
@@ -201,7 +201,7 @@ STRING_SUBSTR=\
 """
 # Function for string substr
 String_substr:
-
+    jr $ra
 """
 
 
