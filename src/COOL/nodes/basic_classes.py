@@ -1,20 +1,6 @@
 from typing import List
 from COOL.nodes.feature import Method, Formal, Attribute
 
-# class BasicClass:
-#     def __init__(self,features: list=[], type: str = 'Object', inherits: str = None) -> None:
-#         self.features = features
-#         self.type = type
-#         self.inherits = inherits
-#         self.methods = [i for i in features if isinstance(i, Method)]
-#         self.attributes = [i for i in features if isinstance(i, Attribute)]
-#         self.lineage = ['Object']
-#         self.methods_dict = {i.id:i for i in features if isinstance(i, Method)}
-#         self.attributes_dict = {i.id:i for i in features if isinstance(i, Attribute)}
-
-#     def check(self, visitor):
-#         return self.type
-
 
 class BasicObject:
     def __init__(self, features:list = [], type:str = 'Object', inherits:str = None, lineage:list = []) -> None:
@@ -31,7 +17,6 @@ class BasicObject:
         self.methods_dict = {i.id:i for i in self.features if isinstance(i, Method)}
         self.attributes_dict = {i.id:i for i in self.features if isinstance(i, Attribute)}
 
-        # super().__init__(self.features)#, self.type, self.inherits)
 
     def check(self, visitor):
         return self.type
@@ -81,4 +66,3 @@ class BasicInt(BasicObject):
         self.lineage = ['Object']
         super().__init__(features, self.type, self.inherits, self.lineage)
 
-        # super().__init__(self.features, self.type, self.inherits)
