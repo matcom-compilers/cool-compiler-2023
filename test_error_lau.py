@@ -64,8 +64,8 @@ if __name__ == "__main__":
     # Testing lexer, parser and semantic
     # folder = "./tests/semantic/"
     folder = "./tests/lauren/passed/"
-    # folder = "./tests/lauren/now/"
-    folder = "./tests/lauren/yet/"
+    folder = "./tests/lauren/now/"
+    # folder = "./tests/lauren/yet/"
     # folder = "./tests/semantic/"
 
     # folder = "./tests/codegen/"
