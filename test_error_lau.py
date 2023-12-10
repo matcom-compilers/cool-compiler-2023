@@ -63,12 +63,12 @@ def test_codegen(cls, out, inp):
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
     # folder = "./tests/semantic/"
-    folder = "./tests/lauren/passed/"
-    folder = "./tests/lauren/now/"
+    # folder = "./tests/lauren/passed/"
+    # folder = "./tests/lauren/now/"
     # folder = "./tests/lauren/yet/"
     # folder = "./tests/semantic/"
 
-    # folder = "./tests/codegen/"
+    folder = "./tests/codegen/"
 
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]

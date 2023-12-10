@@ -236,6 +236,7 @@ class Visitor_Class:
         self.scope = scope
         self.errors = []
         self.all_types = scope['all_types']
+        self.all_types['dynamic_type'] = 'dynamic_type'
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
@@ -296,6 +297,18 @@ class Visitor_Class:
                     else: 
                         node.dynamic_type = type
                         return type
+                elif self.basic_types.get(type):
+                    lineage = self.basic_types[type].lineage
+                    if attrb.type not in lineage:
+                        raise SemError(
+                            attrb.line,
+                            self.get_first_token(attrb.expr),
+                            'TypeError',
+                            f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
+                    else: 
+                        node.dynamic_type = type
+                        return type
+
                 raise SemError(
                     attrb.line,
                     self.get_first_token(attrb.expr),
@@ -344,7 +357,7 @@ class Visitor_Class:
         
         node.expr = disp_type.type
         node.type = None
-        node.check(self)
+        return node.check(self)
 
 
     def visit_dispatch_expr(self,node):
@@ -357,6 +370,9 @@ class Visitor_Class:
                     node.column,#TODO
                     'TypeError',
                     f'Dispatch on undefined class {expr_type}.')
+
+            if expr_type == 'dynamic_type':
+                return 'dynamic_type'
 
             class_meths = self.all_types[expr_type] if self.all_types.get(expr_type) else self.basic_types.get(expr_type)
             class_meths = class_meths.methods_dict
@@ -454,6 +470,8 @@ class Visitor_Class:
 
 
     def visit_operator(self, node):
+        if node.line == 31:
+            a=1
         ex1 = node.expr1
         ex2 = node.expr2
         type1 = type2 = None
@@ -608,14 +626,14 @@ class Visitor_Class:
 
 
     def visit_case(self, node):
-        dynamic_type = node.expr.check(self)
-        if not dynamic_type or dynamic_type =='void':
-            #TODO search this error
-            raise SemError(
-                node.line,
-                node.column,#TODO
-                'TypeError',
-                f'Case on void.')
+        # dynamic_type = node.expr.check(self)
+        # if not dynamic_type or dynamic_type =='void':
+        #     #TODO search this error
+        #     raise SemError(
+        #         node.line,
+        #         node.column,#TODO
+        #         'TypeError',
+        #         f'Case on void.')
 
         cases = node.cases
         return_types = []
@@ -630,7 +648,7 @@ class Visitor_Class:
             #FIX 
             #BUG
             #NOTE 
-            node.expr.type = node.expr.check(self)
+            node.expr.type = 'dynamic_type'
             self.temporal_scope[case.id] = node.expr#.check(self)
             return_type = case.check(self)
             self.temporal_scope.pop(case.id)
@@ -658,12 +676,29 @@ class Visitor_Class:
             types.append(type)
 
         comm_type = 'Object'
+        # specific_type = 'Object'
+        # for i in range (len(return_type)-1):
+        #     type1 = self.all_types.get(
+        #         return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
+        #     type2 = self.all_types.get(
+        #         return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
+        #     specific_type = type1 if len(type1.lineage)>len(type2.lineage) else type2
+        #     return_types[i] = specific_type
+        # return specific_type
+
         for i in range(len(return_types)-1):
             type1 = self.all_types.get(
                 return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
             type2 = self.all_types.get(
                 return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
-            comm_type = self._search_min_common_type(type1,type2)
+            if type1 == 'dynamic_type' and type2 == 'dynamic_type':
+                continue
+            elif type1 == 'dynamic_type':
+                comm_type = type2.type
+            elif type2 == 'dynamic_type':
+                comm_type = type1.type
+            else:
+                comm_type = self._search_min_common_type(type1,type2)
             return_types[i] = comm_type
         return comm_type
         
