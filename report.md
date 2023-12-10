@@ -79,11 +79,15 @@ El análisis sintáctico verifica si las construcciones del código cumplen con 
 Durante esta fase, se realiza un análisis más profundo del programa para verificar la coherencia y consistencia semántica. Se comprueba si las variables están correctamente declaradas, si los tipos de datos son compatibles y si se cumplen las reglas semánticas del lenguaje. 
 
 
-En el análisis semántico del lenguaje Cool (Classroom Object-Oriented Language), se realizan diversas tareas para verificar la coherencia y corrección del programa en términos de su significado y contexto.
+En el análisis semántico del lenguaje Cool, se realizan diversas tareas para verificar la coherencia y corrección del programa en términos de su significado y contexto. Está implementado utilizando el patrón visitor en dos momentos, donde cada uno de los nodos del AST es una clase que realiza su chequeo semántico llamando a su visitor correspondiente dentro de la clase visitor.
 
-El análisis semántico está implementado utilizando el patrón visitor en dos momentos, primero a la hora de la declaración de las clases y herencias, donde verifica que no existan errores de herencia, conflictos de nombres, que no se creen herencias cíclicas, que no se redefinan atributos y que los métodos se redefinan de forma correcta. 
+Los dos momentos del chequeo son: 
 
-En segundo lugar, se realiza el análisis semántico de las expresiones, donde se verifica que los tipos de las expresiones sean correctos, la consistencia de los tipos utilizados en las diferentes expresiones, que los tipos de los parámetros de los métodos sean correctos, que las variables estén declaradas y siempre se utilicen en su ámbito correspondiente, que no se realicen operaciones entre tipos incompatibles.
+
+- Primeramente a la hora de la declaración de las clases y herencias, donde verifica que no existan errores de herencia, conflictos de nombres, que no se creen herencias cíclicas, que no se redefinan atributos y que los métodos se redefinan de forma correcta. 
+
+- En segundo lugar, se realiza el chequeo de tipos de las expresiones, donde se verifica que los tipos de las expresiones sean correctos, la consistencia de los tipos utilizados en las diferentes expresiones, que los tipos de los argumentos en los llamados a métodos sean correctos, que las variables estén declaradas y siempre se utilicen en su ámbito correspondiente, que no se realicen operaciones entre tipos incompatibles, que los retornos de las funciones sean consecuentes con su tipo, además de la correcta utilización de cada uno de los recursos del lenguaje (condicionales, ciclos, let, case, etc...) cumpliendo las indicaciones del manual de COOL.
+
 
 Esta fase es crucial para garantizar que el programa cumpla con las reglas y restricciones del lenguaje, verificando la corrección de tipos, la coherencia en la herencia, entre otros aspectos fundamentales para el funcionamiento adecuado del programa.
 
