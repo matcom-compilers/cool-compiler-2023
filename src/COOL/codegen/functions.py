@@ -1,245 +1,377 @@
 # FUNCTIONS
+from COOL.codegen.utils import Comment
+from COOL.codegen.utils import Label
+from COOL.codegen.utils import Instruction
 
-EXIT=\
+
+EXIT=[
+    Comment("Function to exit program", indent=""),
+    Label("exit"),
+    Instruction("li", "$v0", "10"),
+    Instruction("syscall"),
+    "\n",
+]
+
+
+SET_BOOL=[
+    Comment("Function to set bool", indent=""),
+    Label("set_bool"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("addiu", "$sp", "$sp", "4"),
+    Instruction("lb", "$t1", "true"),
+    Instruction("beq", "$t0", "$t1", "set_bool_true"),
+    Instruction("la", "$t0", "false"),
+    Instruction("jr", "$ra"),
+    Label("set_bool_true", indent="  "),
+    Instruction("la", "$t0", "true"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+
+
+STR_LEN=[
+    Comment("Function to get string length", indent=""),
+    Label("String_length"),
+    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "4($t0)"),
+    Instruction("addi", "$t1", "$zero", "-1"),
+    Label("String_length_loop"),
+    Instruction("lb", "$t2", "0($t0)"),
+    Instruction("addi", "$t0", "$t0", "1"),
+    Instruction("addi", "$t1", "$t1", "1"),
+    Instruction("bnez", "$t2", "String_length_loop"),
+    Instruction("move", "$t0", "$t1"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "Int"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+
+
+OUT_INT=[
+    Comment("Function to print Int", indent=""),
+    Label("IO_out_int"),
+    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "4($t0)"),
+    Instruction("move", "$a0", "$t0"),
+    Instruction("li", "$v0", 1),
+    Instruction("syscall"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "0($t0)"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    # FIX type
+    Instruction("la", "$t1", "Int"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+
+
+OUT_STRING=[
+    Comment("Function to print String", indent=""),
+    Label("IO_out_string"),
+    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "4($t0)"),
+    Instruction("move", "$a0", "$t0"),
+    Instruction("li", "$v0", 4),
+    Instruction("syscall"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "0($t0)"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    # FIX type
+    Instruction("la", "$t1", "String"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+
+
+STR_CONCAT=[
+    Comment("Function to concat strings", indent=""),
+    Label("String_concat"),
+    Instruction("li", "$t3", 0),
+    Instruction("addiu", "$sp", "$sp", -4),
+    Instruction("sw", "$ra", "0($sp)"),
+    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("addiu", "$sp", "$sp", -4),
+    Instruction("sw", "$t0", "0($sp)"),
+    Instruction("jal", "String_length"),
+    Instruction("addiu", "$sp", "$sp", 4),
+    Instruction("add", "$t3", "$zero", "$t0"),
+    Instruction("lw", "$t0", "8($sp)"),
+    Instruction("addiu", "$sp", "$sp", -4),
+    Instruction("sw", "$t0", "0($sp)"),
+    Instruction("jal", "String_length"),
+    Instruction("addiu", "$sp", "$sp", 4),
+    Instruction("add", "$t3", "$t3", "$t0"),
+    Instruction("addiu", "$t3", "$t3", 1),
+    Instruction("lw", "$ra", "0($sp)"),
+    Instruction("addiu", "$sp", "$sp", 4),
+    Instruction("move", "$a0", "$t3"),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("move", "$t3", "$v0"),
+    Instruction("lw", "$t1", "0($sp)"),
+    Instruction("lw", "$t1", "4($t1)"),
+    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "4($t0)"),
+    Instruction("li", "$t2", 0),
+    Label("String_concat_string1"),
+    Instruction("lb", "$t2", "0($t0)"),
+    Instruction("beq", "$t2", "$0", "String_concat_string2"),
+    Instruction("sb", "$t2", "0($v0)"),
+    Instruction("addi", "$t0", "$t0", 1),
+    Instruction("addi", "$v0", "$v0", 1),
+    Instruction("j", "String_concat_string1"),
+    Label("String_concat_string2"),
+    Instruction("lb", "$t2", "0($t1)"),
+    Instruction("beq", "$t2", "$0", "String_concat_done"),
+    Instruction("sb", "$t2", "0($v0)"),
+    Instruction("addi", "$t1", "$t1", 1),
+    Instruction("addi", "$v0", "$v0", 1),
+    Instruction("j", "String_concat_string2"),
+    Label("String_concat_done"),
+    Instruction("addi", "$v0", "$v0", 1),
+    Instruction("sb", "$0", "0($v0)"),
+    Instruction("move", "$t0", "$t3"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "String"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
 """
-# Exit program
-exit:
-    li $v0, 10
-    syscall
-"""
-
-SET_BOOL=\
-"""
-# Function for set bool
-set_bool:
-    lw $t0, 0($sp)
-    addiu $sp, $sp, 4
-
-    lb  $t1, true
-    beq $t0, $t1, set_bool_true
-    la $t0, false
-    jr $ra
-
-    set_bool_true:
-    la $t0, true
-    jr $ra
-"""
-
-STR_LEN=\
-"""
-# Function fotrstring length
-String_length:
-    lw $t0, 4($sp)
-    li $t1, 0
-    li $t2, 0
-
-  String_length_loop:
-    lb $t1, 0($t0)
-    beq $t1, $zero, String_length_loop_end
-    addi $t0, $t0, 1
-    addi $t2, $t2, 1
-    j String_length_loop
-
-  String_length_loop_end:
-    move $v0, $t2
-    jr $ra
-"""
-
-LEN=\
-"""
-# Function for length
-length:
-    lw $t0, 0($sp)
-    addiu $sp, $sp, 4
-    li $t1, 0
-    li $t2, 0
-
-  length_loop:
-    lb $t1, 0($t0)
-    beq $t1, $zero, length_loop_end
-    addi $t0, $t0, 1
-    addi $t2, $t2, 1
-    j length_loop
-
-  length_loop_end:
-    move $v0, $t2
-    jr $ra
-"""
-    
-OUT_INT=\
-"""
-# Function for print int
-IO_out_int:
-    # load int
-    lw $a0, 4($sp)
-    # print int
-    li  $v0, 1
-    syscall
-    # print newline
-    la  $a0, newline
-    # print string
-    li  $v0, 4
-    syscall
-    jr $ra
-"""
-
-OUT_STRING=\
-"""
-IO_out_string:
-    lw $t0, 4($sp)
-    lw $t0, 4($t0)
-
-  out_string_loop:
-    lb $a0, 0($t0)
-    addiu $t0, $t0, 1
-    beq $a0, $zero, out_string_loop_end
-    li $v0, 11
-    syscall
-    j out_string_loop
-
-  out_string_loop_end:
-    jr $ra
-"""
-
-# FIX
-STR_CONCAT=\
-"""
-# Function for string concat
-String_concat:
+concat:
     li $t3, 0
+    
     # save return address
     addiu $sp, $sp, -4
     sw $ra, 0($sp)
+    
     # calculate str length
     lw $t0, 4($sp)
     addiu $sp, $sp, -4
     sw $t0, 0($sp)
     jal String_length
-    add $t3, $t3, $v0
+    addiu $sp, $sp, 4
+    add $t3, $zero, $t0
+    
     # calculate other str length
     lw $t0, 8($sp)
     addiu $sp, $sp, -4
     sw $t0, 0($sp)
     jal String_length
-    add $t3, $t3, $v0
-    # allocate memory
+    addiu $sp, $sp, 4
+    add $t3, $t3, $t0
+    addiu $t3, $t3, 1
+
+    # load return address
     lw $ra, 0($sp)
     addiu $sp, $sp, 4
-    lw $t1, 0($sp)
-    addiu $sp, $sp, 4
-    lw $t0, 0($sp)
-    addiu $sp, $sp, 4
+    
+    # allocate memory
     move $a0, $t3
     li $v0, 9
     syscall
-    li $t2, 0
     move $t3, $v0
+
+    lw $t1, 0($sp)
+    lw $t1, 4($t1)
+    lw $t0, 4($sp)
+    lw $t0, 4($t0)
+    li $t2, 0
 
   string1:
     lb $t2, 0($t0)
     beq $t2, $0, string2
-    sb $t2, 0($t3)
+    sb $t2, 0($v0)
     addi $t0, $t0, 1
-    addi $t3, $t3, 1
+    addi $v0, $v0, 1
     j string1
 
   string2:
     lb $t2, 0($t1)
     beq $t2, $0, done
-    sb $t2, 0($t3)
+    sb $t2, 0($v0)
     addi $t1, $t1, 1
-    addi $t3, $t3, 1
+    addi $v0, $v0, 1
     j string2
 
   done:
-    sb $0, 0($t3)
+    addi $v0, $v0, 1
+    sb $0, 0($v0)
+    move $t0, $t3
     jr $ra
-"""
+  """
+
+
+IN_INT=[
+    Comment("Function to read Int", indent=""),
+    Label("IO_in_int"),
+    Instruction("li", "$v0", 5),
+    Instruction("syscall"),
+    Instruction("move", "$t0", "$v0"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "Int"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+
+# TODO
+# FIX: return String object
+IN_STRING=[
+    Comment("Function to read String", indent=""),
+    Label("IO_in_string"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
 
 #TODO
-IN_INT=\
-"""
-# Function for read int
-IO_in_int:
-    jr $ra
-"""
-
-#TODO
-IN_STRING=\
-"""
-# Function for read string
-IO_in_string:
-    jr $ra
-"""
-
-#TODO
-OBJECT_COPY=\
-"""
-# Function for object copy
-Object_copy:
-    jr $ra
-"""
-
-#TODO
-OBJECT_TYPE_NAME=\
-"""
-# Function for object type name
-Object_type_name:
-    jr $ra
-"""
-
-#TODO
-OBJECT_ABORT=\
-"""
-# Function for object abort
-Object_abort:
-    jr $ra
-"""
-
-#TODO
-STRING_SUBSTR=\
-"""
-# Function for string substr
-String_substr:
-    jr $ra
-"""
+OBJECT_COPY=[
+    Comment("Function to copy object", indent=""),
+    Label("Object_copy"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
 
 
-ABORT=\
-"""
-abort:
-    la $t0, abort_label
+OBJECT_TYPE_NAME=[
+    Comment("Function to get type name", indent=""),
+    Label("Object_type_name"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "0($t0)"),
+    Instruction("lw", "$t0", "0($t0)"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "String"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
 
-  abort_print_loop_0:
-    lb $a0, 0($t0)
-    addiu $t0, $t0, 1
-    beq $a0, $zero, abort_print_loop_0_end
-    li $v0, 11
+
+OBJECT_ABORT=[
+    Comment("Function to abort", indent=""),
+    Label("Object_abort"),
+    Instruction("la", "$a0", "abort_label"),
+    Instruction("li", "$v0", 4),
+    Instruction("syscall"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "0($t0)"),
+    Instruction("lw", "$a0", "0($t0)"),
+    Instruction("li", "$v0", 4),
+    Instruction("syscall"),
+    Instruction("li", "$v0", 10),
+    Instruction("syscall"),
+    "\n",
+]
+
+
+
+STRING_SUBSTR=[
+    Comment("Function to get substring", indent=""),
+    Label("String_substr"),
+    Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "4($t0)"),
+    Instruction("lw", "$t1", "4($sp)"),
+    Instruction("lw", "$t1", "4($t1)"),
+    Instruction("lw", "$t2", "8($sp)"),
+    Instruction("lw", "$t2", "4($t2)"),
+    Instruction("addi", "$a0", "$t2", "1"),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("move", "$t3", "$v0"),
+    Instruction("add", "$t0", "$t0", "$t1"),
+    Label("String_substr_loop"),
+    Instruction("lb", "$t1", "0($t0)"),
+    Instruction("sb", "$t1", "0($v0)"),
+    Instruction("addi", "$t2", "$t2", "-1"),
+    Instruction("addi", "$t0", "$t0", "1"),
+    Instruction("addi", "$v0", "$v0", "1"),
+    Instruction("beq", "$t2", "$0", "String_substr_end"),
+    Instruction("j", "String_substr_loop"),
+    Label("String_substr_end"),
+    Instruction("li", "$t1", "0"),
+    Instruction("sb", "$t1", "0($v0)"),
+    Instruction("move", "$t0", "$t3"),
+    # allocate the type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "String"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$t1"),
+    Instruction("jr", "$ra"),
+    "\n",
+]
+"""
+substring:
+    lw $t0, 8($sp)
+    lw $t0, 4($t0)
+    lw $t1, 4($sp)
+    lw $t1, 4($t1)
+    lw $t2, 0($sp)
+    lw $t2, 4($t2)
+
+    addi $a0, $t2, 1
+    li $v0, 9
     syscall
-    j abort_print_loop_0
+    move $t3, $v0
+    add $t0, $t0, $t1
 
-  abort_print_loop_0_end:
-    lw $t0, 0($sp)
-    addiu $sp, $sp, 4
 
-  abort_print_loop_1:
-    lb $a0, 0($t0)
-    addiu $t0, $t0, 1
-    beq $a0, $zero, abort_print_loop_1_end
-    li $v0, 11
-    syscall
-    j abort_print_loop_1
+  substring_loop:
+    lb $t1 0($t0)
+    sb $t1 0($v0)
+    addi $t2 $t2 -1
+    addi $t0 $t0 1
+    addi $v0 $v0 1
+    beq $t2 $0 substring_end
+    j substring_loop
 
-  abort_print_loop_1_end:
-    li  $v0, 10
-    syscall
+  substring_end:
+    li $t1 0
+    sb $t1 0($v0)
+    move $t0 $t3
+    jr $ra
 """
 
 
 FUNCTIONS = [
     SET_BOOL,
     STR_LEN,
-    LEN,
     STR_CONCAT,
     OUT_INT,
     OUT_STRING,

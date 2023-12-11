@@ -102,6 +102,7 @@ class If(Node):
     def first_elem(self):
         return self.column
     
+    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_if(self)
         if_expr = self.if_expr.codegen(mips_visitor)
@@ -110,6 +111,7 @@ class If(Node):
         obj = [
             Comment(f"if_{mips_visitor.current_state}"),
             *if_expr,
+            Instruction("lw", "$t0", "4($t0)"),
             Instruction("la", "$t1", TRUE),
             Instruction("beq", "$t1", "$t0", f"then_{mips_visitor.current_state}"),
             *else_expr,
@@ -136,6 +138,7 @@ class While(Node):
 
     def first_elem(self):
         return self.while_expr
+    
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_while(self)
@@ -145,11 +148,12 @@ class While(Node):
             Comment(f"while_{mips_visitor.current_state}"),
             Label(f"while_{mips_visitor.current_state}", indent="  "),
             *while_expr,
+            Instruction("lw", "$t0", "4($t0)"),
             Instruction("la", "$t1", FALSE),
-            Instruction("beq", mips_visitor.rt, "$t1", f"end_while_{mips_visitor.current_state}"),
+            Instruction("beq", "$t0", "$t1", f"end_while_{mips_visitor.current_state}"),
             *loop_expr,
             Instruction("j", f"while_{mips_visitor.current_state}"),
-            Label(f"end while_{mips_visitor.current_state}", indent="  "),
+            Label(f"end_while_{mips_visitor.current_state}", indent="  "),
         ]
         mips_visitor.unvisit_while(self)
         return obj
@@ -168,7 +172,7 @@ class Let(Node):
         self.expr: Node = expr
         super().__init__(line, column)
     
-    # TODO
+    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_let(self)
         let_list = []
@@ -210,6 +214,7 @@ class Case(Node):
 
     def first_elem(self):
         return self.column
+    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
@@ -246,7 +251,7 @@ class New(Node):
     
     def first_elem(self):
         return self.column
-    # FIX
+
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("jal", mips_visitor.get_class_name(self.type)),
@@ -272,18 +277,22 @@ class Isvoid(Node):
     def check(self, visitor):
         return visitor.visit_isvoid(self)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
         obj = [
             *expr,
             Instruction("la", "$t1", NULL),
+            Instruction("lw", "$t0", "4($t0)"),
             Instruction("seq", "$t0", "$t0", "$t1"),
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool"),
             *mips_visitor.allocate_stack(4),
-            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
-            Instruction("jal", "set_bool")
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
     

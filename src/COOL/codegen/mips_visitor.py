@@ -19,6 +19,7 @@ from COOL.codegen.functions import FUNCTIONS
 # NOTE: method stack first value is the return value
 # NOTE: method stack second value is current self reference
 
+# TODO: Add str for SELF_TYPE ass first element of the class
 class MipsVisitor:
     def __init__(self) -> None:
         # number to generate labels
@@ -58,17 +59,13 @@ class MipsVisitor:
         Return:
             str: mips code.
         """
-        data_section =(
-            "\n" +
-            "\n".join(map(str, self.create_data())) +
-            "\n" +
-            "\n".join(map(str, self.data_secction)) +
-            "\n" +
-            "\n".join(map(str, self.generate_data_classes)) +
-            "\n"
-        )
+        data_section = [
+            *self.create_data(),
+            *self.data_secction,
+            *self.generate_data_classes,
+        ]
 
-        text_section = "\n".join(map(str, self.create_text())) + "\n"
+        class_test_section = []
         for _cls in self.test_section_classes.keys():
             current_class = _cls
             inheriance = []
@@ -85,22 +82,26 @@ class MipsVisitor:
                 memory += self.test_section_classes[current_class]["memory"]
                 current_class = self.inheritance[current_class]
             
-            text_section += "\n".join(map(
-                str,
+            class_test_section.extend(
                 self.create_class(
-                        _class=_cls,
-                        memory=memory+WORD,
-                        attributes=attributes
-                    )
+                    _class=_cls,
+                    memory=memory+WORD,
+                    attributes=attributes
                 )
             )
-        text_section += "\n".join(map(str, self.create_base_class()))
-        text_section += "\n".join(map(str, self.test_section))
-        
+        aux_functions_text_section = []
         for _function in FUNCTIONS:
-            text_section += "\n" + _function
+            aux_functions_text_section.extend(_function)
+
+        text_section = [
+            *self.create_text(),
+            *class_test_section,
+            *self.test_section,
+            *self.create_base_class(),
+            *aux_functions_text_section,
+        ]
         
-        return data_section + "\n" + text_section
+        return "\n".join(map(str, data_section + text_section))
 
     @property
     def rra(self):
@@ -163,8 +164,14 @@ class MipsVisitor:
             for _current_cls in self.get_class_parents(_cls):
                 data[_cls].update({f: _current_cls for f in self.class_methods[_current_cls].keys()})
         data_section = [
-            Data(_cls, ".word", *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
-            for _cls in data.keys() if data[_cls]
+            *[
+                Data(self.get_class_label(_cls), ".asciiz", f"\"{_cls}\\n\"")
+                for _cls in data.keys() if data[_cls]
+            ],
+            *[
+                Data(_cls, ".word", self.get_class_label(_cls), *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
+                for _cls in data.keys() if data[_cls]
+            ]
         ]
         return data_section
 
@@ -214,11 +221,27 @@ class MipsVisitor:
         Create the base classes IO, Int, String, Bool.
         """
         obj = [
-            *self.create_class("Object", WORD, []),
-            *self.create_class("IO", WORD, []),
-            # *self.create_class("Int", 4, []),
-            # *self.create_class("String", 4, []),
-            # *self.create_class("Bool", 4, []),
+            *self.create_class("Object", 2*WORD,
+                [
+                    [Instruction("la", self.rt, "null")]
+                ]
+            ),
+            *self.create_class("IO", 2*WORD, []),
+            *self.create_class("Int", 2*WORD,
+                [
+                    [Instruction("li", self.rt, 0)]
+                ]
+            ),
+            *self.create_class("String", 2*WORD,
+                [
+                    [Instruction("li", self.rt, 0)]
+                ]
+            ),
+            *self.create_class("Bool", 2*WORD,
+                [
+                    [Instruction("la", self.rt, "false")]
+                ]
+            ),
         ]
         return obj
     
@@ -233,6 +256,8 @@ class MipsVisitor:
             Data("null", ".word", "0"),
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
+            Data("abort_label", ".asciiz", "\"Abort called from class \""),
+
         ]
         return obj
     
@@ -258,6 +283,12 @@ class MipsVisitor:
         Allocate offset.
         """
         self.current_offset += _offset
+    
+    def unset_offset(self, _offset: int):
+        """
+        Deallocate offset.
+        """
+        self.current_offset -= _offset
 
     def allocate_heap(self, _size: int):
         """
@@ -321,6 +352,14 @@ class MipsVisitor:
         return obj
     
     # GET
+    def get_offset(self, _var=None):
+        """
+        Get the current offset.
+        """
+        if _var:
+            return _var['memory'] + self.current_offset - _var['offset']
+        return self.current_offset
+
     def get_class_parents(self, _class: str):
         """
         Get the class parents.
@@ -342,6 +381,12 @@ class MipsVisitor:
         Get the class name.
         """
         return f"{_class}_class"
+    
+    def get_class_label(self, _class: str):
+        """
+        Get the class label.
+        """
+        return f"{_class}_label"
 
     # FIX
     def get_variable(self, _variable: str):
@@ -367,7 +412,7 @@ class MipsVisitor:
         if _class == "SELF_TYPE":
             _class = self.current_class
         data = self.inheriance_class_methods
-        data = {value[0]: i*WORD for i, value in enumerate(data[_class].items())}
+        data = {value[0]: (i+1)*WORD for i, value in enumerate(data[_class].items())}
         return data[_function]
     
     # ADD
@@ -461,12 +506,6 @@ class MipsVisitor:
 
     def unvisit_execute_method(self, _execute_method):
         self.set_offset(-len(_execute_method.exprs)*WORD-4)
-
-    def visit_object(self, _expression):
-        pass
-    
-    def unvisit_object(self, _expression):
-        pass
     
     def visit_if(self, _if):
         pass

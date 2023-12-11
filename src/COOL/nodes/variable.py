@@ -13,20 +13,20 @@ class GetVariable(Node):
         self.id = id
         super().__init__(line, column)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         var = mips_visitor.get_variable(self.id)
+        self_var = mips_visitor.get_variable("self")
         if var["stored"] == "class":
             obj = [
                 Comment(f"get variable {self.id}"),
-                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
+                Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
                 Instruction("lw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
                 Comment(f"end get variable {self.id}"),
             ]
         else:
             obj = [
                 Comment(f"get variable {self.id}"),
-                Instruction("lw", mips_visitor.rt, f"{var['memory'] + mips_visitor.current_offset - var['offset']}({mips_visitor.rsp})"),
+                Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(var)}({mips_visitor.rsp})"),
                 Comment(f"end get variable {self.id}"),
             ]
         return obj
@@ -69,7 +69,7 @@ class Declaration(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         if self.type == "Int":
             type = [
-                Instruction("la", mips_visitor.rt, "0"),
+                Instruction("li", mips_visitor.rt, 0),
             ]
         elif self.type == "String":
             type = [
@@ -121,7 +121,7 @@ class Assign(Node):
             obj = [
                 Comment(f"assign variable {self.id}"),
                 *expr,
-                Instruction("sw", mips_visitor.rt, f"{var['memory'] + mips_visitor.current_offset - var['offset']}({mips_visitor.rsp})"),
+                Instruction("sw", mips_visitor.rt, f"{mips_visitor.get_offset(var)}({mips_visitor.rsp})"),
                 Comment(f"end assign variable {self.id}"),
             ]
         return obj
