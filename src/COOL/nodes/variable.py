@@ -109,12 +109,13 @@ class Assign(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
         var = mips_visitor.get_variable(self.id)
+        self_var = mips_visitor.get_variable("self")
         if var["stored"] == "class":
             obj = [
                 Comment(f"assign variable {self.id}"),
                 *expr,
-                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
-                Instruction("sw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Instruction("lw", "$t1", f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
+                Instruction("sw", mips_visitor.rt, f"{var['memory']}($t1)"),
                 Comment(f"end assign variable {self.id}"),
             ]
         else:

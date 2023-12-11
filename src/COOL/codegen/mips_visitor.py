@@ -272,6 +272,12 @@ class MipsVisitor:
         return obj
 
     # ALLOCATE
+    def set_id(self):
+        self.current_state += 1
+    
+    def get_id(self):
+        return self.current_state
+
     def set_offset(self, _offset: int):
         """
         Allocate offset.
@@ -503,18 +509,19 @@ class MipsVisitor:
         self.unset_offset(len(_execute_method.exprs)*WORD+4)
     
     def visit_if(self, _if):
-        pass
+        self.set_id()
 
     def unvisit_if(self, _if):
-        self.current_state += 1
+        pass
     
     def visit_while(self, _while):
-        pass
+        self.set_id()
 
     def unvisit_while(self, _while):
-        self.current_state += 1
+        pass
 
     def visit_let(self, _let):
+        self.set_id()
         self.current_let = f"let_{self.current_state}"
         self.let_queue.append(self.current_let)
         self.set_offset(len(_let.let_list)*WORD)
@@ -532,6 +539,5 @@ class MipsVisitor:
             )
 
     def unvisit_let(self, _let):
-        self.current_state += 1
         self.unset_offset(len(_let.let_list)*WORD)
         self.current_let = self.let_queue.pop(-1) if self.let_queue else None

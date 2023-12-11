@@ -32,7 +32,7 @@ SET_BOOL=[
 STR_LEN=[
     Comment("Function to get string length", indent=""),
     Label("String_length"),
-    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "0($sp)"),
     Instruction("lw", "$t0", "4($t0)"),
     Instruction("addi", "$t1", "$zero", "-1"),
     Label("String_length_loop"),
