@@ -416,6 +416,16 @@ class MipsVisitor:
         data = {value[0]: (i+1)*WORD for i, value in enumerate(data[_class].items())}
         return data[_function]
     
+    def get_return(self, _class: str, function: str):
+        """
+        Get the return type from the function.
+        """
+        inheriance = self.get_class_inheriance_list(_class)
+        for _class in inheriance:
+            if self.class_methods[_class].get(function):
+                return self.class_methods[_class][function]
+        return "Object"
+    
     # ADD
     def add_data(self, _data: List[Data]):
         """

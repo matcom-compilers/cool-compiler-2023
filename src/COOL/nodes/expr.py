@@ -38,7 +38,8 @@ class Dispatch(Node):
                     Instruction("sw", mips_visitor.rt, f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        return_type = self.expr.get_return(mips_visitor)
+        expr_type = self.expr.get_return(mips_visitor)
+        return_type = mips_visitor.get_return(expr_type, self.id)
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
@@ -52,7 +53,7 @@ class Dispatch(Node):
             # load the type reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the label reference
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(return_type, self.id)}({mips_visitor.rt})"),
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(self.get_return(mips_visitor), self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
@@ -65,9 +66,9 @@ class Dispatch(Node):
     def get_return(self, mips_visitor: MipsVisitor):
         if self.type:
             return self.type
-        _type = self.expr.get_return(mips_visitor)
-        _new_type = mips_visitor.inheriance_class_methods[_type][self.id]
-        return _new_type if _new_type != "SELF_TYPE" else _type
+        expr_type = self.expr.get_return(mips_visitor)
+        return_type = mips_visitor.get_return(expr_type, self.id)
+        return return_type if return_type != "SELF_TYPE" else expr_type
 
 
 class CodeBlock(Node):
@@ -162,7 +163,7 @@ class While(Node):
             Instruction("la", "$t1", FALSE),
             Instruction("beq", "$t0", "$t1", end_while_label),
             *loop_expr,
-            Instruction("j", end_while_label),
+            Instruction("j", while_label),
             Label(end_while_label, indent="  "),
         ]
         mips_visitor.unvisit_while(self)

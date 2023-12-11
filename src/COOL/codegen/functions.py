@@ -48,7 +48,7 @@ STR_LEN=[
     Instruction("la", "$t1", "Int"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -72,7 +72,7 @@ OUT_INT=[
     Instruction("la", "$t1", "Int"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -96,7 +96,7 @@ OUT_STRING=[
     Instruction("la", "$t1", "String"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -113,12 +113,14 @@ STR_CONCAT=[
     Instruction("sw", "$t0", "0($sp)"),
     Instruction("jal", "String_length"),
     Instruction("addiu", "$sp", "$sp", 4),
+    Instruction("lw", "$t0", "4($t0)"),
     Instruction("add", "$t3", "$zero", "$t0"),
     Instruction("lw", "$t0", "8($sp)"),
     Instruction("addiu", "$sp", "$sp", -4),
     Instruction("sw", "$t0", "0($sp)"),
     Instruction("jal", "String_length"),
     Instruction("addiu", "$sp", "$sp", 4),
+    Instruction("lw", "$t0", "4($t0)"),
     Instruction("add", "$t3", "$t3", "$t0"),
     Instruction("addiu", "$t3", "$t3", 1),
     Instruction("lw", "$ra", "0($sp)"),
@@ -127,9 +129,9 @@ STR_CONCAT=[
     Instruction("li", "$v0", 9),
     Instruction("syscall"),
     Instruction("move", "$t3", "$v0"),
-    Instruction("lw", "$t1", "0($sp)"),
+    Instruction("lw", "$t1", "4($sp)"),
     Instruction("lw", "$t1", "4($t1)"),
-    Instruction("lw", "$t0", "4($sp)"),
+    Instruction("lw", "$t0", "0($sp)"),
     Instruction("lw", "$t0", "4($t0)"),
     Instruction("li", "$t2", 0),
     Label("String_concat_string1"),
@@ -141,10 +143,10 @@ STR_CONCAT=[
     Instruction("j", "String_concat_string1"),
     Label("String_concat_string2"),
     Instruction("lb", "$t2", "0($t1)"),
-    Instruction("beq", "$t2", "$0", "String_concat_done"),
     Instruction("sb", "$t2", "0($v0)"),
     Instruction("addi", "$t1", "$t1", 1),
     Instruction("addi", "$v0", "$v0", 1),
+    Instruction("beq", "$t2", "$0", "String_concat_done"),
     Instruction("j", "String_concat_string2"),
     Label("String_concat_done"),
     Instruction("addi", "$v0", "$v0", 1),
@@ -157,7 +159,7 @@ STR_CONCAT=[
     Instruction("la", "$t1", "String"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -239,7 +241,7 @@ IN_INT=[
     Instruction("la", "$t1", "Int"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -275,7 +277,7 @@ OBJECT_TYPE_NAME=[
     Instruction("la", "$t1", "String"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
@@ -300,7 +302,7 @@ OBJECT_ABORT=[
 
 
 STRING_SUBSTR=[
-    Comment("Function to get substring", indent=""),
+    Comment("Function to get substr", indent=""),
     Label("String_substr"),
     Instruction("lw", "$t0", "0($sp)"),
     Instruction("lw", "$t0", "4($t0)"),
@@ -332,12 +334,12 @@ STRING_SUBSTR=[
     Instruction("la", "$t1", "String"),
     Instruction("sw", "$t1", "0($v0)"),
     Instruction("sw", "$t0", "4($v0)"),
-    Instruction("move", "$t0", "$t1"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]
 """
-substring:
+substr:
     lw $t0, 8($sp)
     lw $t0, 4($t0)
     lw $t1, 4($sp)
