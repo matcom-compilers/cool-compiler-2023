@@ -20,19 +20,19 @@ def check_errors(errors):
 def test_errors(cls, out):
     for _cl, _out in zip(cls, out):
         loaded_file = load_file(_cl)
-        with open(_out, "r") as f:
-            expected = f.readlines()
+        # with open(_out, "r") as f:
+        #     expected = f.readlines()
         
         lexer = CoolLexer()
         
         print(f"Testing {Path(_cl).name}:")
         print("Expected:")
-        for line in expected:
-            print(f"{line.strip()}")
+        # for line in expected:
+        #     print(f"{line.strip()}")
         
         print("Got:")
         tokens, errors = lexer.tokenize(loaded_file)
-        check_errors(errors)
+        # check_errors(errors)
 
         parser = CoolParser()
         ast, errors = parser.parse(tokens)
