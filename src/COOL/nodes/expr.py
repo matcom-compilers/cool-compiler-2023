@@ -12,6 +12,7 @@ from COOL.codegen.utils import TRUE
 from COOL.codegen.utils import FALSE
 
 
+# FIX use offset as I do for id?
 class Dispatch(Node):
     def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
         self.expr: Node = expr
@@ -40,6 +41,7 @@ class Dispatch(Node):
             )
         expr_type = self.expr.get_return(mips_visitor)
         return_type = mips_visitor.get_return(expr_type, self.id)
+        function_index = mips_visitor.get_function(return_type, self.id)
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
@@ -53,7 +55,7 @@ class Dispatch(Node):
             # load the type reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the label reference
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(self.get_return(mips_visitor), self.id)}({mips_visitor.rt})"),
+            Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),

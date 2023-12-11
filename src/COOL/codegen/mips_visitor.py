@@ -414,7 +414,8 @@ class MipsVisitor:
             _class = self.current_class
         data = self.inheriance_class_methods
         data = {value[0]: (i+1)*WORD for i, value in enumerate(data[_class].items())}
-        return data[_function]
+        data = data[_function] 
+        return data if data != "SELF_TYPE" else self.get_function(self.current_class, _function)
     
     def get_return(self, _class: str, function: str):
         """

@@ -66,6 +66,7 @@ class ExecuteMethod(Node):
                 ]
             )
         self_var = mips_visitor.get_variable('self')
+        function_index = mips_visitor.get_function(mips_visitor.current_class, self.id)
         obj = [
             Comment(f"execute class method {self.id}"),
             # allocate the stack
@@ -78,7 +79,7 @@ class ExecuteMethod(Node):
             # load the type reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the method to jump
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(mips_visitor.current_class, self.id)}({mips_visitor.rt})"),
+            Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
@@ -92,8 +93,9 @@ class ExecuteMethod(Node):
         return visitor.visit_execute_method(node = self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        _type = mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
-        return _type if _type != "SELF_TYPE" else mips_visitor.current_class
+        expr_type = mips_visitor.current_class
+        return_type = mips_visitor.get_return(expr_type, self.id)
+        return return_type if return_type != "SELF_TYPE" else expr_type
 
 
 class Attribute(Node):
