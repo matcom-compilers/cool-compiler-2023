@@ -1,4 +1,5 @@
 from typing import List
+from copy import deepcopy
 
 from COOL.codegen.utils import WORD
 from COOL.codegen.utils import TRUE
@@ -143,26 +144,19 @@ class MipsVisitor:
         """
         Return all the class methods with including the inheritance and his types.
         """
-        class_methods = self.class_methods.copy()
-        for _cls in self.class_methods.keys():
-            for _cls_hierarchy in self.get_class_parents(_cls):
-                class_methods[_cls].update(
-                    {
-                        f: t for f, t in self.class_methods[_cls_hierarchy].items()
-                    }
-                )
-        return class_methods
+        data = {}
+        for _cls in self.inheritance.keys():
+            data[_cls] = {}
+            for _current_cls in self.get_class_inheriance_list(_cls):
+                data[_cls].update({f: _current_cls for f in self.class_methods[_current_cls].keys()})
+        return data
 
     @property
     def generate_data_classes(self):
         """
         Generate the classes with his method labels in .data
         """
-        data = {}
-        for _cls in self.inheritance.keys():
-            data[_cls] = {}
-            for _current_cls in self.get_class_parents(_cls):
-                data[_cls].update({f: _current_cls for f in self.class_methods[_current_cls].keys()})
+        data = self.inheriance_class_methods
         data_section = [
             *[
                 Data(self.get_class_label(_cls), ".asciiz", f"\"{_cls}\\n\"")
@@ -178,16 +172,18 @@ class MipsVisitor:
     # CREATE
     def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
         _attributes = []
-        for attr in attributes:
+        for i, attr in enumerate(attributes):
             _attributes.extend(
-                [
+                [   
+                    # save the class instance while creating it
                     *self.allocate_stack(WORD),
                     Instruction("sw", self.rv, f"0({self.rsp})"),
                     *attr,
+                    # load the class instance
                     Instruction("lw", self.rv, f"0({self.rsp})"),
                     *self.deallocate_stack(WORD),
-                    Instruction("sw", self.rt, f"0({self.rv})"),
-                    *self.allocate_heap(WORD),
+                    # save the attribute and move the heap
+                    Instruction("sw", self.rt, f"{(i+1)*WORD}({self.rv})"),
                 ]
             )
         obj = [
@@ -200,8 +196,6 @@ class MipsVisitor:
             # Save the type reference
             Instruction("la", self.rt, _class),
             Instruction("sw", self.rt, f"0({self.rv})"),
-            # Save the self reference
-            *self.allocate_heap(WORD),
             # save $ra reference
             *self.allocate_stack(WORD),
             Instruction("sw", self.rra, f"0({self.rsp})"),
@@ -210,7 +204,7 @@ class MipsVisitor:
             Instruction("lw", self.rra, f"0({self.rsp})"),
             *self.deallocate_stack(WORD),
             # load self
-            *self.deallocate_heap(memory),
+            Instruction("move", self.rt, self.rv),
             Instruction("jr", self.rra),
             "\n",
         ]
@@ -360,7 +354,7 @@ class MipsVisitor:
             return _var['memory'] + self.current_offset - _var['offset']
         return self.current_offset
 
-    def get_class_parents(self, _class: str):
+    def get_class_inheriance_list(self, _class: str):
         """
         Get the class parents.
         """
@@ -368,6 +362,7 @@ class MipsVisitor:
         while _class:
             parents.append(_class)
             _class = self.inheritance[_class]
+        parents = list(reversed(parents))
         return parents
     
     def get_method_name(self, _class: str, _method: str):
@@ -466,7 +461,7 @@ class MipsVisitor:
     def visit_attribute(self, _attribute):
         attr = {
             _attribute.id: {
-                "memory": self.class_memory,
+                "memory": self.class_memory + 4,
                 "type": _attribute.type,
                 "stored": "class",
                 "offset": 0,
@@ -498,14 +493,14 @@ class MipsVisitor:
         }
     
     def unvisit_method(self, _method):
-        self.set_offset(-len(_method.formals)*WORD-4)
+        self.unset_offset(len(_method.formals)*WORD+4)
         self.vars_method = {}
     
     def visit_execute_method(self, _execute_method):
         self.set_offset(len(_execute_method.exprs)*WORD+4)
 
     def unvisit_execute_method(self, _execute_method):
-        self.set_offset(-len(_execute_method.exprs)*WORD-4)
+        self.unset_offset(len(_execute_method.exprs)*WORD+4)
     
     def visit_if(self, _if):
         pass
@@ -538,5 +533,5 @@ class MipsVisitor:
 
     def unvisit_let(self, _let):
         self.current_state += 1
-        self.set_offset(-len(_let.let_list)*WORD)
+        self.unset_offset(len(_let.let_list)*WORD)
         self.current_let = self.let_queue.pop(-1) if self.let_queue else None

@@ -53,7 +53,7 @@ class Operator(Node):
         expr1 = self.expr1.codegen(mips_visitor)
         mips_visitor.set_offset(4)
         expr2 = self.expr2.codegen(mips_visitor)
-        mips_visitor.set_offset(-4)
+        mips_visitor.unset_offset(4)
         operation = self.operation(mips_visitor)
         # FIX: se deberia sumar 4 al offset?
         result =[

@@ -56,6 +56,7 @@ class ExecuteMethod(Node):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
+        n_stack = len(self.exprs) * 4 + 4
         exprs = []
         for i, _expr in enumerate(self.exprs):
             exprs.extend(
@@ -64,7 +65,6 @@ class ExecuteMethod(Node):
                     Instruction("sw", "$t0", f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4 + 4
         self_var = mips_visitor.get_variable('self')
         obj = [
             Comment(f"execute class method {self.id}"),
@@ -132,16 +132,7 @@ class AttributeDeclaration(Attribute):
                 instructions = [Instruction("la", mips_visitor.rt, NULL)]
         obj = [
             Comment(f"attribute {self.id}: {self.type}"),
-            # save the class instance while creating it
-            *mips_visitor.allocate_stack(4),
-            Instruction("sw", "$v0", "0($sp)"),
             *mips_visitor.allocate_object(8, self.type, instructions),
-            # load the class instance
-            *mips_visitor.deallocate_stack(4),
-            Instruction("lw", "$v0", "0($sp)"),
-            # save the attribute in class and move the register
-            Instruction("sw", mips_visitor.rt, "0($v0)"),
-            *mips_visitor.allocate_heap(4),
             Comment(f"end attribute {self.id}: {self.type}"),
             "\n",
         ]
@@ -171,16 +162,7 @@ class AttributeInicialization(Attribute):
         expr = self.expr.codegen(mips_visitor)
         obj = [
             Comment(f"attribute {self.id}: {self.type}"),
-            # save the class instance while creating it
-            *mips_visitor.allocate_stack(4),
-            Instruction("sw", "$v0", "0($sp)"),
             *expr,
-            # load the class instance
-            *mips_visitor.deallocate_stack(4),
-            Instruction("lw", "$v0", "0($sp)"),
-            # save the attribute and move the register
-            Instruction("sw", mips_visitor.rt, "0($v0)"),
-            *mips_visitor.allocate_heap(4),
             Comment(f"end attribute {self.id}: {self.type}"),
             "\n",
         ]

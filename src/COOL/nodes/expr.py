@@ -29,6 +29,7 @@ class Dispatch(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         expr = self.expr.codegen(mips_visitor)
+        n_stack = len(self.exprs) * 4 + 4
         exprs = []
         for i, _expr in enumerate(self.exprs):
             exprs.extend(
@@ -37,7 +38,6 @@ class Dispatch(Node):
                     Instruction("sw", mips_visitor.rt, f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4 + 4
         return_type = self.expr.get_return(mips_visitor)
         obj = [
             Comment(f"execute method {self.id}"),
