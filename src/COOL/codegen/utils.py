@@ -2,8 +2,8 @@
 
 class Instruction:
     def __init__(self, opcode, *args):
-        self.opcode = opcode
         self.args = args
+        self.opcode = opcode
 
     def __str__(self):
         return f"{INDENT}{self.opcode} {' '.join(map(str, self.args))}"
