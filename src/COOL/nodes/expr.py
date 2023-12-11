@@ -9,6 +9,7 @@ from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
 from COOL.codegen.utils import NULL
 from COOL.codegen.utils import TRUE
+from COOL.codegen.utils import FALSE
 
 
 class Dispatch(Node):
@@ -24,8 +25,7 @@ class Dispatch(Node):
 
     def first_elem(self):
         return self.expr
-    
-    # TODO
+
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         expr = self.expr.codegen(mips_visitor)
@@ -38,7 +38,6 @@ class Dispatch(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
-        mips_visitor.set_offset(n_stack)
         return_type = self.expr.get_return(mips_visitor)
         obj = [
             Comment(f"execute method {self.id}"),
@@ -57,9 +56,9 @@ class Dispatch(Node):
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            Comment(f"end execute method {self.id}"),
             "\n",
         ]
-        mips_visitor.set_offset(-n_stack)
         mips_visitor.unvisit_execute_method(self)
         return obj
     
@@ -67,7 +66,8 @@ class Dispatch(Node):
         if self.type:
             return self.type
         _type = self.expr.get_return(mips_visitor)
-        return mips_visitor.inheriance_class_methods[_type][self.id]
+        _new_type = mips_visitor.inheriance_class_methods[_type][self.id]
+        return _new_type if _new_type != "SELF_TYPE" else _type
 
 
 class CodeBlock(Node):
@@ -109,18 +109,17 @@ class If(Node):
         then_expr = self.then_expr.codegen(mips_visitor)
         else_expr = self.else_expr.codegen(mips_visitor)
         obj = [
+            Comment(f"if_{mips_visitor.current_state}"),
             *if_expr,
-            Comment(f"IF_{mips_visitor.current_state}"),
-            Instruction("la", "$t0", TRUE),
-            Instruction("beq", "$t0", "$t0", f"else_{mips_visitor.current_state}"),
-            Instruction("nop"),
-            Label(f"then_{mips_visitor.current_state}"),
-            *then_expr,
-            Instruction("j", f"end_if_{mips_visitor.current_state}"),
-            Instruction("nop"),
-            Label(f"else_{mips_visitor.current_state}"),
+            Instruction("lw", "$t0", "4($t0)"),
+            Instruction("la", "$t1", TRUE),
+            Instruction("beq", "$t1", "$t0", f"then_{mips_visitor.current_state}"),
             *else_expr,
-            Label(f"end_if_{mips_visitor.current_state}"),
+            Instruction("j", f"end_if_{mips_visitor.current_state}"),
+            Label(f"then_{mips_visitor.current_state}", indent="  "),
+            *then_expr,
+            Label(f"end_if_{mips_visitor.current_state}", indent="  "),
+            Comment(f"end if_{mips_visitor.current_state}"),
         ]
         mips_visitor.unvisit_if(self)
         return obj
@@ -139,6 +138,7 @@ class While(Node):
 
     def first_elem(self):
         return self.while_expr
+    
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_while(self)
@@ -146,13 +146,14 @@ class While(Node):
         loop_expr = self.loop_expr.codegen(mips_visitor)
         obj = [
             Comment(f"while_{mips_visitor.current_state}"),
-            Label(f"while_{mips_visitor.current_state}"),
+            Label(f"while_{mips_visitor.current_state}", indent="  "),
             *while_expr,
-            Instruction("la", mips_visitor.rt, True),
-            Instruction("beq", mips_visitor.rt, f"loop_{mips_visitor.current_state}"),
-            Instruction("nop"),
-            Label(f"end_while_{mips_visitor.current_state}"),
-            # FIX
+            Instruction("lw", "$t0", "4($t0)"),
+            Instruction("la", "$t1", FALSE),
+            Instruction("beq", "$t0", "$t1", f"end_while_{mips_visitor.current_state}"),
+            *loop_expr,
+            Instruction("j", f"while_{mips_visitor.current_state}"),
+            Label(f"end_while_{mips_visitor.current_state}", indent="  "),
         ]
         mips_visitor.unvisit_while(self)
         return obj
@@ -170,9 +171,33 @@ class Let(Node):
         self.let_list: List[Node] = let_list
         self.expr: Node = expr
         super().__init__(line, column)
-    # TODO
+    
+    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_let(self)
+        let_list = []
+        for i, _let in enumerate(self.let_list):
+            let_list.extend(
+                [
+                    *_let.codegen(mips_visitor),
+                    Instruction("sw", mips_visitor.rt, f"{4*i}({mips_visitor.rsp})"),
+                ]
+            )
+        expr = self.expr.codegen(mips_visitor)
+        n_stack = len(self.let_list) * 4 
+        obj = [
+            Comment(f"let_{mips_visitor.current_state}"),
+            # allocate the stack
+            *mips_visitor.allocate_stack(n_stack),
+            *let_list,
+            *expr,
+            # deallocate stack
+            *mips_visitor.deallocate_stack(n_stack),
+            Comment(f"end let_{mips_visitor.current_state}"),
+            "\n",
+        ]
+        mips_visitor.unvisit_let(self)
+        return obj
     
     def check(self, visitor):
         return visitor.visit_let(self)
@@ -189,6 +214,7 @@ class Case(Node):
 
     def first_elem(self):
         return self.column
+    
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         raise NotImplementedError()
@@ -225,7 +251,7 @@ class New(Node):
     
     def first_elem(self):
         return self.column
-    # FIX
+
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("jal", mips_visitor.get_class_name(self.type)),
@@ -251,16 +277,22 @@ class Isvoid(Node):
     def check(self, visitor):
         return visitor.visit_isvoid(self)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
         obj = [
             *expr,
             Instruction("la", "$t1", NULL),
+            Instruction("lw", "$t0", "4($t0)"),
             Instruction("seq", "$t0", "$t0", "$t1"),
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
-            Instruction("jal", "set_bool")
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
     

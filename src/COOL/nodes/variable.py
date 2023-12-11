@@ -4,6 +4,8 @@ from COOL.codegen.mips_visitor import MipsVisitor
 from COOL.codegen.utils import Instruction
 from COOL.codegen.utils import Comment
 from COOL.codegen.utils import Label
+from COOL.codegen.utils import NULL
+from COOL.codegen.utils import FALSE
 
 
 class GetVariable(Node):
@@ -11,20 +13,30 @@ class GetVariable(Node):
         self.id = id
         super().__init__(line, column)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var_index = mips_visitor.get_variable(self.id)["memory"]
-        obj = [
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.current_offset + 4}({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rt, f"{var_index}({mips_visitor.rt})")
-        ]
+        var = mips_visitor.get_variable(self.id)
+        self_var = mips_visitor.get_variable("self")
+        if var["stored"] == "class":
+            obj = [
+                Comment(f"get variable {self.id}"),
+                Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
+                Instruction("lw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Comment(f"end get variable {self.id}"),
+            ]
+        else:
+            obj = [
+                Comment(f"get variable {self.id}"),
+                Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(var)}({mips_visitor.rsp})"),
+                Comment(f"end get variable {self.id}"),
+            ]
         return obj
 
     def check(self, visitor):
         return visitor.visit_get_variable(self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return mips_visitor.get_variable(self.id)["type"]
+        _type = mips_visitor.get_variable(self.id)["type"]
+        return _type if _type != "SELF_TYPE" else mips_visitor.current_class
 
 class Initialization(Node):
     def __init__(self, line: int, column: dict, id:str, type: str, expr: Node) -> None:
@@ -37,7 +49,10 @@ class Initialization(Node):
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        obj = [
+            *self.expr.codegen(mips_visitor),
+        ]
+        return obj
 
     def check(self, visitor):
         return visitor.visit_initialization(self)
@@ -52,7 +67,32 @@ class Declaration(Node):
     
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        if self.type == "Int":
+            type = [
+                Instruction("li", mips_visitor.rt, 0),
+            ]
+        elif self.type == "String":
+            type = [
+                *mips_visitor.allocate_object(
+                    8,
+                    "String",
+                    [
+                        Instruction("li", mips_visitor.rt, 0),
+                    ]
+                ),
+            ]
+        elif self.type == "Bool":
+            type = [
+                Instruction("la", mips_visitor.rt, FALSE),
+            ]
+        else:
+            type = [
+                Instruction("la", mips_visitor.rt, NULL),
+            ]
+        obj = [
+            *type,
+        ]
+        return obj
 
     def check(self, visitor):
         return visitor.visit_declaration(self)
@@ -67,12 +107,23 @@ class Assign(Node):
 
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
-        var = mips_visitor.get_variable(self.id)["memory"]
         expr = self.expr.codegen(mips_visitor)
-        obj = [
-            *expr,
-            Instruction("sw", mips_visitor.rt, f"{var}({mips_visitor.rsp})")
-        ]
+        var = mips_visitor.get_variable(self.id)
+        if var["stored"] == "class":
+            obj = [
+                Comment(f"assign variable {self.id}"),
+                *expr,
+                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
+                Instruction("sw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Comment(f"end assign variable {self.id}"),
+            ]
+        else:
+            obj = [
+                Comment(f"assign variable {self.id}"),
+                *expr,
+                Instruction("sw", mips_visitor.rt, f"{mips_visitor.get_offset(var)}({mips_visitor.rsp})"),
+                Comment(f"end assign variable {self.id}"),
+            ]
         return obj
 
     def check(self, visitor):

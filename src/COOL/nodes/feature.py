@@ -65,25 +65,26 @@ class ExecuteMethod(Node):
                 ]
             )
         n_stack = len(self.exprs) * 4 + 4
-        # mips_visitor.set_offset(n_stack)
+        self_var = mips_visitor.get_variable('self')
         obj = [
             Comment(f"execute class method {self.id}"),
             # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
             *exprs,       
-            # get function label
-            Instruction("lw", mips_visitor.rt, f"{n_stack+4}({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
+            # get self reference
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
             # save self reference
             Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+            # load the type reference
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the method to jump
             Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(mips_visitor.current_class, self.id)}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            Comment(f"end execute class method {self.id}"),
             "\n",
         ]
-        # mips_visitor.set_offset(-n_stack)
         mips_visitor.unvisit_execute_method(self)
         return obj
 
@@ -91,7 +92,8 @@ class ExecuteMethod(Node):
         return visitor.visit_execute_method(node = self)
     
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
+        _type = mips_visitor.inheriance_class_methods[mips_visitor.current_class][self.id]
+        return _type if _type != "SELF_TYPE" else mips_visitor.current_class
 
 
 class Attribute(Node):
@@ -119,30 +121,31 @@ class AttributeDeclaration(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        if self.type == "Int" or self.type == "String":
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rt, "0"),
-                Instruction("sw", mips_visitor.rt, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-                "\n",
-            ]
-        elif self.type == "Bool":
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rt, FALSE),
-                Instruction("sw", mips_visitor.rt, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-                "\n",
-            ]
-        else:
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rt, NULL),
-                Instruction("sw", mips_visitor.rt, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-                "\n",
-            ]
+        match self.type:
+            case "Int":
+                instructions = [Instruction("li", mips_visitor.rt, 0)]
+            case "String":
+                instructions = [Instruction("li", mips_visitor.rt, 0)]
+            case "Bool":
+                instructions = [Instruction("la", mips_visitor.rt, FALSE)]
+            case _:
+                instructions = [Instruction("la", mips_visitor.rt, NULL)]
+        obj = [
+            Comment(f"attribute {self.id}: {self.type}"),
+            # save the class instance while creating it
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$v0", "0($sp)"),
+            *mips_visitor.allocate_object(8, self.type, instructions),
+            # load the class instance
+            *mips_visitor.deallocate_stack(4),
+            Instruction("lw", "$v0", "0($sp)"),
+            # save the attribute in class and move the register
+            Instruction("sw", mips_visitor.rt, "0($v0)"),
+            *mips_visitor.allocate_heap(4),
+            Comment(f"end attribute {self.id}: {self.type}"),
+            "\n",
+        ]
+        
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
 
@@ -164,16 +167,21 @@ class AttributeInicialization(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
+        # FIX move offset?
         expr = self.expr.codegen(mips_visitor)
         obj = [
             Comment(f"attribute {self.id}: {self.type}"),
-            Instruction("addiu", "$sp", "$sp", "-4"),
+            # save the class instance while creating it
+            *mips_visitor.allocate_stack(4),
             Instruction("sw", "$v0", "0($sp)"),
             *expr,
+            # load the class instance
+            *mips_visitor.deallocate_stack(4),
             Instruction("lw", "$v0", "0($sp)"),
-            Instruction("addiu", "$sp", "$sp", "4"),
+            # save the attribute and move the register
             Instruction("sw", mips_visitor.rt, "0($v0)"),
-            Instruction("addiu", "$v0", "$v0", "4"),
+            *mips_visitor.allocate_heap(4),
+            Comment(f"end attribute {self.id}: {self.type}"),
             "\n",
         ]
         mips_visitor.add_attribute(obj)

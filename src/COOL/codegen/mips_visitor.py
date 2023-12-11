@@ -19,6 +19,7 @@ from COOL.codegen.functions import FUNCTIONS
 # NOTE: method stack first value is the return value
 # NOTE: method stack second value is current self reference
 
+# TODO: Add str for SELF_TYPE ass first element of the class
 class MipsVisitor:
     def __init__(self) -> None:
         # number to generate labels
@@ -37,11 +38,14 @@ class MipsVisitor:
 
         # CURRENT
         self.current_class = None
+        self.current_let = None
+        self.let_queue = []
         self.current_offset = 0
         
         # SCOPE
         self.vars_method = {}
         self.vars_class = CLASS_VARS
+        self.vars_let = {}
         
         # INHERITANCE
         self.inheritance = INHERIANCE
@@ -55,17 +59,13 @@ class MipsVisitor:
         Return:
             str: mips code.
         """
-        data_section =(
-            "\n" +
-            "\n".join(map(str, self.create_data())) +
-            "\n" +
-            "\n".join(map(str, self.data_secction)) +
-            "\n" +
-            "\n".join(map(str, self.generate_data_classes)) +
-            "\n"
-        )
+        data_section = [
+            *self.create_data(),
+            *self.data_secction,
+            *self.generate_data_classes,
+        ]
 
-        text_section = "\n".join(map(str, self.create_text())) + "\n"
+        class_test_section = []
         for _cls in self.test_section_classes.keys():
             current_class = _cls
             inheriance = []
@@ -82,22 +82,26 @@ class MipsVisitor:
                 memory += self.test_section_classes[current_class]["memory"]
                 current_class = self.inheritance[current_class]
             
-            text_section += "\n".join(map(
-                str,
+            class_test_section.extend(
                 self.create_class(
-                        _class=_cls,
-                        memory=memory+4,
-                        attributes=attributes
-                    )
+                    _class=_cls,
+                    memory=memory+WORD,
+                    attributes=attributes
                 )
             )
-        text_section += "\n".join(map(str, self.create_base_class()))
-        text_section += "\n".join(map(str, self.test_section))
-        
+        aux_functions_text_section = []
         for _function in FUNCTIONS:
-            text_section += "\n" + _function
+            aux_functions_text_section.extend(_function)
+
+        text_section = [
+            *self.create_text(),
+            *class_test_section,
+            *self.test_section,
+            *self.create_base_class(),
+            *aux_functions_text_section,
+        ]
         
-        return data_section + "\n" + text_section
+        return "\n".join(map(str, data_section + text_section))
 
     @property
     def rra(self):
@@ -160,8 +164,14 @@ class MipsVisitor:
             for _current_cls in self.get_class_parents(_cls):
                 data[_cls].update({f: _current_cls for f in self.class_methods[_current_cls].keys()})
         data_section = [
-            Data(_cls, ".word", *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
-            for _cls in data.keys() if data[_cls]
+            *[
+                Data(self.get_class_label(_cls), ".asciiz", f"\"{_cls}\\n\"")
+                for _cls in data.keys() if data[_cls]
+            ],
+            *[
+                Data(_cls, ".word", self.get_class_label(_cls), *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
+                for _cls in data.keys() if data[_cls]
+            ]
         ]
         return data_section
 
@@ -171,13 +181,13 @@ class MipsVisitor:
         for attr in attributes:
             _attributes.extend(
                 [
-                    *self.allocate_stack(4),
+                    *self.allocate_stack(WORD),
                     Instruction("sw", self.rv, f"0({self.rsp})"),
                     *attr,
                     Instruction("lw", self.rv, f"0({self.rsp})"),
-                    *self.deallocate_stack(4),
+                    *self.deallocate_stack(WORD),
                     Instruction("sw", self.rt, f"0({self.rv})"),
-                    *self.allocate_heap(4),
+                    *self.allocate_heap(WORD),
                 ]
             )
         obj = [
@@ -191,14 +201,14 @@ class MipsVisitor:
             Instruction("la", self.rt, _class),
             Instruction("sw", self.rt, f"0({self.rv})"),
             # Save the self reference
-            *self.allocate_heap(4),
+            *self.allocate_heap(WORD),
             # save $ra reference
-            *self.allocate_stack(4),
+            *self.allocate_stack(WORD),
             Instruction("sw", self.rra, f"0({self.rsp})"),
             *_attributes,
             # load $ra reference
             Instruction("lw", self.rra, f"0({self.rsp})"),
-            *self.deallocate_stack(4),
+            *self.deallocate_stack(WORD),
             # load self
             *self.deallocate_heap(memory),
             Instruction("jr", self.rra),
@@ -211,11 +221,27 @@ class MipsVisitor:
         Create the base classes IO, Int, String, Bool.
         """
         obj = [
-            *self.create_class("Object", 4, []),
-            *self.create_class("IO", 4, []),
-            # *self.create_class("Int", 4, []),
-            # *self.create_class("String", 4, []),
-            # *self.create_class("Bool", 4, []),
+            *self.create_class("Object", 2*WORD,
+                [
+                    [Instruction("la", self.rt, "null")]
+                ]
+            ),
+            *self.create_class("IO", 2*WORD, []),
+            *self.create_class("Int", 2*WORD,
+                [
+                    [Instruction("li", self.rt, 0)]
+                ]
+            ),
+            *self.create_class("String", 2*WORD,
+                [
+                    [Instruction("li", self.rt, 0)]
+                ]
+            ),
+            *self.create_class("Bool", 2*WORD,
+                [
+                    [Instruction("la", self.rt, "false")]
+                ]
+            ),
         ]
         return obj
     
@@ -230,6 +256,8 @@ class MipsVisitor:
             Data("null", ".word", "0"),
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
+            Data("abort_label", ".asciiz", "\"Abort called from class \""),
+
         ]
         return obj
     
@@ -242,7 +270,7 @@ class MipsVisitor:
             Section("text"),
             Label("main"),
             Instruction("jal", self.get_class_name("Main")),
-            *self.allocate_stack(4),
+            *self.allocate_stack(WORD),
             Instruction("sw", self.rv, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
             Instruction("j", "exit"),
@@ -255,6 +283,12 @@ class MipsVisitor:
         Allocate offset.
         """
         self.current_offset += _offset
+    
+    def unset_offset(self, _offset: int):
+        """
+        Deallocate offset.
+        """
+        self.current_offset -= _offset
 
     def allocate_heap(self, _size: int):
         """
@@ -303,22 +337,29 @@ class MipsVisitor:
         ]
         return obj
 
-    def allocate_object(self, _type: str, _obj: List[Instruction]):
+    def allocate_object(self, memory: int, _type: str, _obj: List[Instruction]):
         """
         Allocate object.
         """
         obj = [
-            *self.allocate_memory(8),
-            Instruction("la", self.rt, "Int"),
+            *self.allocate_memory(memory),
+            Instruction("la", self.rt, _type),
             Instruction("sw", self.rt, f"0({self.rv})"),
             *_obj,
             Instruction("sw", self.rt, f"4({self.rv})"),
-            # FIX
             Instruction("move", self.rt, self.rv),
         ]
         return obj
     
     # GET
+    def get_offset(self, _var=None):
+        """
+        Get the current offset.
+        """
+        if _var:
+            return _var['memory'] + self.current_offset - _var['offset']
+        return self.current_offset
+
     def get_class_parents(self, _class: str):
         """
         Get the class parents.
@@ -340,6 +381,12 @@ class MipsVisitor:
         Get the class name.
         """
         return f"{_class}_class"
+    
+    def get_class_label(self, _class: str):
+        """
+        Get the class label.
+        """
+        return f"{_class}_label"
 
     # FIX
     def get_variable(self, _variable: str):
@@ -354,6 +401,8 @@ class MipsVisitor:
             _cls = self.inheritance[_cls]
         scope.update(vars_class)
         scope.update(self.vars_method)
+        for _let in self.let_queue:
+            scope.update(self.vars_let[_let])
         return scope.get(_variable)
     
     def get_function(self, _class: str, _function: str):
@@ -363,7 +412,7 @@ class MipsVisitor:
         if _class == "SELF_TYPE":
             _class = self.current_class
         data = self.inheriance_class_methods
-        data = {value[0]: i*WORD for i, value in enumerate(data[_class].items())}
+        data = {value[0]: (i+1)*WORD for i, value in enumerate(data[_class].items())}
         return data[_function]
     
     # ADD
@@ -407,7 +456,7 @@ class MipsVisitor:
     
     def unvisit_class(self, _class):
         self.test_section_classes[_class.type] = {
-            "memory": self.class_memory,#+4,
+            "memory": self.class_memory,
             "attributes": self.attributes,
         }
         self.attributes = []
@@ -419,39 +468,44 @@ class MipsVisitor:
             _attribute.id: {
                 "memory": self.class_memory,
                 "type": _attribute.type,
+                "stored": "class",
+                "offset": 0,
             }
         }
         self.vars_class[self.current_class].update(attr)
 
     def unvisit_attribute(self, _attribute):
-        self.class_memory += 4
+        self.class_memory += WORD
 
     def visit_method(self, _method):
+        self.set_offset(len(_method.formals)*WORD+4)
         self.vars_method = {
-            # "return": f"0({self.rsp})",
             "self": {
                 "memory": 4,
                 "type": self.current_class,
+                "stored": "method",
+                "offset": self.current_offset,
             },
-            **{f.id: {"memory": f"{(i+2)*4}({self.rsp})", "type": f.type} for i, f in enumerate(_method.formals)},
+            **{
+                f.id: {
+                    "memory": (i+2)*WORD ,
+                    "type": f.type,
+                    "stored": "method",
+                    "offset": self.current_offset,
+                }
+                for i, f in enumerate(_method.formals)
+            },
         }
     
     def unvisit_method(self, _method):
-        # self.current_method = None
+        self.set_offset(-len(_method.formals)*WORD-4)
         self.vars_method = {}
     
     def visit_execute_method(self, _execute_method):
-        pass
+        self.set_offset(len(_execute_method.exprs)*WORD+4)
 
     def unvisit_execute_method(self, _execute_method):
-        pass
-
-    def visit_object(self, _expression):
-        pass
-    
-    def unvisit_object(self, _expression):
-        pass
-        # self.current_expression = None
+        self.set_offset(-len(_execute_method.exprs)*WORD-4)
     
     def visit_if(self, _if):
         pass
@@ -464,3 +518,25 @@ class MipsVisitor:
 
     def unvisit_while(self, _while):
         self.current_state += 1
+
+    def visit_let(self, _let):
+        self.current_let = f"let_{self.current_state}"
+        self.let_queue.append(self.current_let)
+        self.set_offset(len(_let.let_list)*WORD)
+        self.vars_let[self.current_let] = {}
+        for i, arg in enumerate(_let.let_list):
+            self.vars_let[self.current_let].update(
+                {
+                    arg.id: {
+                        "memory": (i)*WORD,
+                        "type": arg.type,
+                        "stored": "let",
+                        "offset": self.current_offset,
+                    }
+                }
+            )
+
+    def unvisit_let(self, _let):
+        self.current_state += 1
+        self.set_offset(-len(_let.let_list)*WORD)
+        self.current_let = self.let_queue.pop(-1) if self.let_queue else None
