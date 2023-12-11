@@ -12,6 +12,7 @@ from COOL.codegen.utils import TRUE
 from COOL.codegen.utils import FALSE
 
 
+# FIX use offset as I do for id?
 class Dispatch(Node):
     def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
         self.expr: Node = expr
@@ -29,6 +30,7 @@ class Dispatch(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
         expr = self.expr.codegen(mips_visitor)
+        n_stack = len(self.exprs) * 4 + 4
         exprs = []
         for i, _expr in enumerate(self.exprs):
             exprs.extend(
@@ -37,8 +39,9 @@ class Dispatch(Node):
                     Instruction("sw", mips_visitor.rt, f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4 + 4
-        return_type = self.expr.get_return(mips_visitor)
+        expr_type = self.expr.get_return(mips_visitor)
+        return_type = mips_visitor.get_return(expr_type, self.id)
+        function_index = mips_visitor.get_function(return_type, self.id)
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
@@ -52,7 +55,7 @@ class Dispatch(Node):
             # load the type reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the label reference
-            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_function(return_type, self.id)}({mips_visitor.rt})"),
+            Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
@@ -65,9 +68,9 @@ class Dispatch(Node):
     def get_return(self, mips_visitor: MipsVisitor):
         if self.type:
             return self.type
-        _type = self.expr.get_return(mips_visitor)
-        _new_type = mips_visitor.inheriance_class_methods[_type][self.id]
-        return _new_type if _new_type != "SELF_TYPE" else _type
+        expr_type = self.expr.get_return(mips_visitor)
+        return_type = mips_visitor.get_return(expr_type, self.id)
+        return return_type if return_type != "SELF_TYPE" else expr_type
 
 
 class CodeBlock(Node):
@@ -105,21 +108,27 @@ class If(Node):
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_if(self)
+        id = mips_visitor.get_id()
+        # labels
+        if_label = f"if_{id}"
+        then_label = f"then_{id}"
+        end_if_label = f"end_if_{id}"
         if_expr = self.if_expr.codegen(mips_visitor)
         then_expr = self.then_expr.codegen(mips_visitor)
         else_expr = self.else_expr.codegen(mips_visitor)
         obj = [
-            Comment(f"if_{mips_visitor.current_state}"),
+            Comment(if_label),
             *if_expr,
+            # FIX
             Instruction("lw", "$t0", "4($t0)"),
             Instruction("la", "$t1", TRUE),
-            Instruction("beq", "$t1", "$t0", f"then_{mips_visitor.current_state}"),
+            Instruction("beq", "$t1", "$t0", then_label),
             *else_expr,
-            Instruction("j", f"end_if_{mips_visitor.current_state}"),
-            Label(f"then_{mips_visitor.current_state}", indent="  "),
+            Instruction("j", end_if_label),
+            Label(then_label, indent="  "),
             *then_expr,
-            Label(f"end_if_{mips_visitor.current_state}", indent="  "),
-            Comment(f"end if_{mips_visitor.current_state}"),
+            Label(end_if_label, indent="  "),
+            Comment(end_if_label),
         ]
         mips_visitor.unvisit_if(self)
         return obj
@@ -142,18 +151,22 @@ class While(Node):
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_while(self)
+        id = mips_visitor.get_id()
+        # labels
+        while_label = f"while_{id}"
+        end_while_label = f"end_while_{id}"
         while_expr = self.while_expr.codegen(mips_visitor)
         loop_expr = self.loop_expr.codegen(mips_visitor)
         obj = [
-            Comment(f"while_{mips_visitor.current_state}"),
-            Label(f"while_{mips_visitor.current_state}", indent="  "),
+            Comment(while_label),
+            Label(while_label, indent="  "),
             *while_expr,
             Instruction("lw", "$t0", "4($t0)"),
             Instruction("la", "$t1", FALSE),
-            Instruction("beq", "$t0", "$t1", f"end_while_{mips_visitor.current_state}"),
+            Instruction("beq", "$t0", "$t1", end_while_label),
             *loop_expr,
-            Instruction("j", f"while_{mips_visitor.current_state}"),
-            Label(f"end_while_{mips_visitor.current_state}", indent="  "),
+            Instruction("j", while_label),
+            Label(end_while_label, indent="  "),
         ]
         mips_visitor.unvisit_while(self)
         return obj
@@ -175,6 +188,10 @@ class Let(Node):
     # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_let(self)
+        id = mips_visitor.get_id()
+        # labels
+        let_label = f"let_{id}"
+        end_let_label = f"end let_{id}"
         let_list = []
         for i, _let in enumerate(self.let_list):
             let_list.extend(
@@ -186,14 +203,14 @@ class Let(Node):
         expr = self.expr.codegen(mips_visitor)
         n_stack = len(self.let_list) * 4 
         obj = [
-            Comment(f"let_{mips_visitor.current_state}"),
+            Comment(let_label),
             # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
             *let_list,
             *expr,
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
-            Comment(f"end let_{mips_visitor.current_state}"),
+            Comment(end_let_label),
             "\n",
         ]
         mips_visitor.unvisit_let(self)

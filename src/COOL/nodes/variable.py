@@ -49,8 +49,12 @@ class Initialization(Node):
 
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
+        expr = self.expr.codegen(mips_visitor)
         obj = [
-            *self.expr.codegen(mips_visitor),
+            Comment(f"let var {self.id} initialize"),
+            *expr,
+            Comment(f"end let var {self.id} initialize"),
+            "\n"
         ]
         return obj
 
@@ -67,30 +71,20 @@ class Declaration(Node):
     
     # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        if self.type == "Int":
-            type = [
-                Instruction("li", mips_visitor.rt, 0),
-            ]
-        elif self.type == "String":
-            type = [
-                *mips_visitor.allocate_object(
-                    8,
-                    "String",
-                    [
-                        Instruction("li", mips_visitor.rt, 0),
-                    ]
-                ),
-            ]
-        elif self.type == "Bool":
-            type = [
-                Instruction("la", mips_visitor.rt, FALSE),
-            ]
-        else:
-            type = [
-                Instruction("la", mips_visitor.rt, NULL),
-            ]
+        match self.type:
+            case "Int":
+                instructions = [Instruction("li", mips_visitor.rt, 0)]
+            case "String":
+                instructions = [Instruction("li", mips_visitor.rt, 0)]
+            case "Bool":
+                instructions = [Instruction("la", mips_visitor.rt, FALSE)]
+            case _:
+                instructions = [Instruction("la", mips_visitor.rt, NULL)]
         obj = [
-            *type,
+            Comment(f"let var {self.id} declaration"),
+            *mips_visitor.allocate_object(8, self.type, instructions),
+            Comment(f"end let var {self.id} declaration"),
+            "\n",
         ]
         return obj
 
@@ -105,16 +99,17 @@ class Assign(Node):
 
         super().__init__(line, column)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
         var = mips_visitor.get_variable(self.id)
+        self_var = mips_visitor.get_variable("self")
         if var["stored"] == "class":
             obj = [
                 Comment(f"assign variable {self.id}"),
                 *expr,
-                Instruction("lw", mips_visitor.rt, f"4({mips_visitor.rsp})"),
-                Instruction("sw", mips_visitor.rt, f"{var['memory']}({mips_visitor.rt})"),
+                Instruction("lw", "$t1", f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
+                Instruction("sw", mips_visitor.rt, f"{var['memory']}($t1)"),
+                Instruction("sw", "$t1", f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
                 Comment(f"end assign variable {self.id}"),
             ]
         else:

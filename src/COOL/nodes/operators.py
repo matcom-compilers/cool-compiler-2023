@@ -53,19 +53,18 @@ class Operator(Node):
         expr1 = self.expr1.codegen(mips_visitor)
         mips_visitor.set_offset(4)
         expr2 = self.expr2.codegen(mips_visitor)
-        mips_visitor.set_offset(-4)
+        mips_visitor.unset_offset(4)
         operation = self.operation(mips_visitor)
-        # FIX: se deberia sumar 4 al offset?
         result =[
             *expr1,
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
             *expr2,
-            Instruction("lw", "$t1", "0($sp)"),
-            *mips_visitor.deallocate_stack(4),
             # get the value from the object instance
+            Instruction("lw", "$t1", "4($t0)"),
+            Instruction("lw", "$t0", "0($sp)"),
             Instruction("lw", "$t0", "4($t0)"),
-            Instruction("lw", "$t1", "4($t1)"),
+            *mips_visitor.deallocate_stack(4),
             *operation
         ]
         return result
