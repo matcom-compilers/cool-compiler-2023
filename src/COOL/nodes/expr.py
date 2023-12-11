@@ -40,8 +40,7 @@ class Dispatch(Node):
                 ]
             )
         expr_type = self.expr.get_return(mips_visitor)
-        return_type = mips_visitor.get_return(expr_type, self.id)
-        function_index = mips_visitor.get_function(return_type, self.id)
+        function_index = mips_visitor.get_function(expr_type, self.id)
         obj = [
             Comment(f"execute method {self.id}"),
             # allocate the stack
