@@ -119,10 +119,13 @@ if __name__ == "__main__":
     # file = "./tests/codegen/hello_world.cl"
     # file = "./tests/codegen/fib.cl"
     # file = "./tests/codegen/sort-list.cl"
+    # file = "./tests/codegen/primes.cl"
+    # file = "./tests/codegen/atoi.cl"
+    # file = "./tests/codegen/cells.cl"
+
 
     # CHECK:
-    # file = "./tests/codegen/atoi.cl"
-    file = "./tests/codegen/cells.cl"
+    file = "./tests/codegen/palindrome.cl"
     # file = "./tests/codegen/graph.cl"
     
 

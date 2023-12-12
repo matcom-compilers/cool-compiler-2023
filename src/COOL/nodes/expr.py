@@ -126,6 +126,7 @@ class If(Node):
             *then_expr,
             Label(end_if_label, indent="  "),
             Comment(end_if_label),
+            "\n"
         ]
         mips_visitor.unvisit_if(self)
         return obj
@@ -163,6 +164,8 @@ class While(Node):
             *loop_expr,
             Instruction("j", while_label),
             Label(end_while_label, indent="  "),
+            Comment(end_while_label),
+            "\n"
         ]
         mips_visitor.unvisit_while(self)
         return obj
