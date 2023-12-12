@@ -175,7 +175,7 @@ class LessEqual(Operator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("sgt", "$t2", "$t0", "$t1"),
+            Instruction("slt", "$t2", "$t0", "$t1"),
             Instruction("seq", "$t3", "$t0", "$t1"),
             Instruction("or", "$t0", "$t2", "$t3"),
             *mips_visitor.allocate_stack(4),
@@ -218,10 +218,14 @@ class Not(UnaryOperator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
+            Instruction("lb", "$t0", "0($t0)"),
             Instruction("xori", "$t0", "$t0", "1"),
             *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
-            *mips_visitor.allocate_object(8, "Int",
+            *mips_visitor.allocate_object(8, "Bool",
                     [Instruction("lw", mips_visitor.rt, "0($sp)")]
             ),
             *mips_visitor.deallocate_stack(4),
@@ -235,7 +239,7 @@ class Bitwise(UnaryOperator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("and", "$t0", "$t0", "$t1"),
+            Instruction("xor", "$t0", "$t0", "-1"),
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
             *mips_visitor.allocate_object(8, "Int",

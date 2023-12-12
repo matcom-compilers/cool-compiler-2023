@@ -18,7 +18,7 @@ SET_BOOL=[
     Label("set_bool"),
     Instruction("lw", "$t0", "0($sp)"),
     Instruction("addiu", "$sp", "$sp", "4"),
-    Instruction("lb", "$t1", "true"),
+    Instruction("li", "$t1", 1),
     Instruction("beq", "$t0", "$t1", "set_bool_true"),
     Instruction("la", "$t0", "false"),
     Instruction("jr", "$ra"),
@@ -63,6 +63,7 @@ OUT_INT=[
     Instruction("li", "$v0", 1),
     Instruction("syscall"),
     Instruction("lw", "$t0", "0($sp)"),
+    Instruction("jr", "$ra"),
     "\n",
 ]
 
