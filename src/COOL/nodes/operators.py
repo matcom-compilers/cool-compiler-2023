@@ -196,11 +196,24 @@ class Equal(Operator):
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
-    def operation(self, mips_visitor: MipsVisitor):
-        obj = [
-            Instruction("seq", "$t0", "$t0", "$t1"),
+    def codegen(self, mips_visitor: MipsVisitor) -> str:
+        expr1 = self.expr1.codegen(mips_visitor)
+        mips_visitor.set_offset(4)
+        expr2 = self.expr2.codegen(mips_visitor)
+        mips_visitor.unset_offset(4)
+        result =[
+            *expr1,
             *mips_visitor.allocate_stack(4),
-            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("sw", "$t0", "0($sp)"),
+            *expr2,
+            Instruction("lw", "$t1", "0($sp)"),
+            *mips_visitor.deallocate_stack(4),
+            *mips_visitor.allocate_stack(8),
+            Instruction("sw", "$t0", "0($sp)"),
+            Instruction("sw", "$t1", "4($sp)"),
+            Instruction("jal", "compare"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
             Instruction("jal", "set_bool"),
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
@@ -209,7 +222,10 @@ class Equal(Operator):
             ),
             *mips_visitor.deallocate_stack(4),
         ]
-        return obj
+        return result
+
+    def operation(self, mips_visitor: MipsVisitor):
+        pass
 
 
 class Not(UnaryOperator):
