@@ -125,8 +125,8 @@ if __name__ == "__main__":
 
 
     # CHECK:
-    # file = "./tests/codegen/palindrome"
-    file = "./tests/codegen/graph.cl"
+    file = "./tests/codegen/palindrome.cl"
+    # file = "./tests/codegen/graph.cl"
     
 
     test_codegen_file(file)
