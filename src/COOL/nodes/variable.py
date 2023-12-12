@@ -47,7 +47,6 @@ class Initialization(Node):
 
         super().__init__(line, column)
 
-    # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         expr = self.expr.codegen(mips_visitor)
         obj = [
@@ -69,7 +68,6 @@ class Declaration(Node):
 
         super().__init__(line, column)
     
-    # TODO
     def codegen(self, mips_visitor: MipsVisitor):
         match self.type:
             case "Int":

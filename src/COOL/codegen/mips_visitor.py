@@ -16,11 +16,6 @@ from COOL.codegen.utils import CLASS_METHODS
 from COOL.codegen.functions import FUNCTIONS
 
 
-# NOTE: class memory first value is the type reference
-# NOTE: method stack first value is the return value
-# NOTE: method stack second value is current self reference
-
-# TODO: Add str for SELF_TYPE ass first element of the class
 class MipsVisitor:
     def __init__(self) -> None:
         # number to generate labels
