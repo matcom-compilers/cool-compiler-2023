@@ -14,25 +14,47 @@ main:
 	# li $v0, 4
 	# la $a0, input_buffer
 	# syscall
-	jal IO_in_string
+	jal IO_in_int
 
-	jal IO_out_string
+	jal IO_out_int
 	# Terminar el programa
 	li $v0, 10
 	syscall
 
-# IO_in_int:
-#     li $v0 5
-#     syscall 
-#     move $t0 $v0
-#     li $a0 8
-#     li $v0 9
-#     syscall 
-#     la $t1 Int
-#     sw $t1 0($v0)
-#     sw $t0 4($v0)
-#     move $t0 $v0
-#     jr $ra
+IO_in_int:
+    li $v0 5
+    syscall 
+    move $t0 $v0
+    li $a0 8
+    li $v0 9
+    syscall 
+    la $t1 Int
+    sw $t1 0($v0)
+    sw $t0 4($v0)
+    move $t0 $v0
+    jr $ra
+
+
+IO_out_int:
+    lw $t0 4($sp)
+    lw $t0 4($t0)
+    move $a0 $t0
+    li $v0 1
+    syscall 
+    lw $t0 0($sp)
+
+
+# Function to print String
+IO_out_string:
+    lw $t0 4($sp)
+    lw $t0 4($t0)
+    move $a0 $t0
+    li $v0 4
+    syscall 
+    lw $t0 0($sp)
+    jr $ra
+
+
 
 
 # Function to read String
@@ -50,7 +72,7 @@ IO_in_string_loop:
     bnez $t2 IO_in_string_loop
     move $t3 $t1
     addi $t3 $t0 -2
-    sb $zero 0($t3)
+    sb $zero 0($t3)zz
     move $t0 $a0
     addi $a0 $t1 1
     li $v0 9
@@ -68,12 +90,12 @@ IO_in_string_loop2:
 
 
 # Function to print String
-IO_out_string:
-    lw $t0 4($sp)
-    lw $t0 4($t0)
-    move $a0 $t0
-    li $v0 4
-    syscall 
-    lw $t0 0($sp)
-    jr $ra
+# IO_out_string:
+#     lw $t0 4($sp)
+#     lw $t0 4($t0)
+#     move $a0 $t0
+#     li $v0 4
+#     syscall 
+#     lw $t0 0($sp)
+#     jr $ra
 

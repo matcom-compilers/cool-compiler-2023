@@ -167,19 +167,18 @@ IN_INT=[
 IN_STRING=[
     Comment("Function to read String", indent=""),
     Label("IO_in_string"),
-    Instruction('#la','$a0','input_buffer'),  # having  string_space  as a global variable
-    Instruction("la", "$a1", 1024),
     Instruction("li", "$v0", 8),
+    Instruction('la','$a0','input_buffer'),  # having  input_buffer  as a global variable
+    Instruction("li", "$a1", 1024),
     Instruction("syscall"),
     Instruction("move", "$t0", "$a0"),
     Instruction("addi", "$t1", "$zero", -1),
-    Label("IO_in_string_loop"),
+    Label("IO_in_string_loop_calc_len"),
     Instruction("lb", "$t2", "0($t0)"),
     Instruction("addi", "$t0", "$t0", "1"),
     Instruction("addi", "$t1", "$t1", "1"),
-    Instruction("bnez", "$t2", "IO_in_string_loop"),
+    Instruction("bnez", "$t2", "IO_in_string_loop_calc_len"),
     Instruction("move", "$t3", "$t1"),
-
     Instruction("addi", "$t3", "$t0", -2),
     Instruction("sb", "$zero", "0($t3)"),
 
@@ -195,7 +194,6 @@ IN_STRING=[
     Instruction("addi", "$t1", "$t1", "1"),
     Instruction("bnez", "$t3", "IO_in_string_loop2"),
     Instruction("move", "$a0", "$v0"),   #return t0, i think so
-
     Instruction("jr", "$ra"),
     "\n",
 ]
