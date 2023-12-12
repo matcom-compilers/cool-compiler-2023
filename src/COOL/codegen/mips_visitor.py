@@ -251,6 +251,7 @@ class MipsVisitor:
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
             Data("abort_label", ".asciiz", "\"Abort called from class \""),
+            Data("input_buffer",".space","1024"),    # Espacio para almacenar la cadena de entrada
 
         ]
         return obj
