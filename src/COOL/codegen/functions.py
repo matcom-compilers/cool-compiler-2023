@@ -231,8 +231,7 @@ IN_INT=[
     "\n",
 ]
 
-# TODO
-# FIX: return String object
+
 IN_STRING=[
     Comment("Function to read String", indent=""),
     Label("IO_in_string"),
@@ -262,7 +261,15 @@ IN_STRING=[
     Instruction("addi", "$t0", "$t0", "1"),
     Instruction("addi", "$t1", "$t1", "1"),
     Instruction("bnez", "$t3", "IO_in_string_loop2"),
-    Instruction("move", "$a0", "$v0"),   #return t0, i think so
+    Instruction("move", "$t0", "$v0"),
+    # allocate type
+    Instruction("li", "$a0", 8),
+    Instruction("li", "$v0", 9),
+    Instruction("syscall"),
+    Instruction("la", "$t1", "String"),
+    Instruction("sw", "$t1", "0($v0)"),
+    Instruction("sw", "$t0", "4($v0)"),
+    Instruction("move", "$t0", "$v0"),
     Instruction("jr", "$ra"),
     "\n",
 ]

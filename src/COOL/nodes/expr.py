@@ -12,7 +12,6 @@ from COOL.codegen.utils import TRUE
 from COOL.codegen.utils import FALSE
 
 
-# FIX use offset as I do for id?
 class Dispatch(Node):
     def __init__(self, line: int, column: int, expr: Node, id: str, type: str = None, exprs: List[Node] = None):
         self.expr: Node = expr
@@ -83,7 +82,6 @@ class CodeBlock(Node):
     def check(self,visitor:Visitor_Class):
         return visitor.visit_code_block(self)
 
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         expr = []
         for _expr in self.exprs:
@@ -173,7 +171,6 @@ class While(Node):
     def check(self, visitor):
         return visitor.visit_loops(self)
 
-    # FIX
     def get_return(self, mips_visitor: MipsVisitor) -> str:
         return self.loop_expr.get_return(mips_visitor)
 
@@ -184,7 +181,6 @@ class Let(Node):
         self.expr: Node = expr
         super().__init__(line, column)
     
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_let(self)
         id = mips_visitor.get_id()

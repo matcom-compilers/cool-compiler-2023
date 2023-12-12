@@ -40,12 +40,9 @@ from COOL.nodes.expr import New
 from COOL.nodes.expr import Isvoid
 from COOL.nodes.expr import Dispatch
 from COOL.nodes.expr import Case_expr
-# from COOL.nodes.expr import Self
 
 
-# TODO: fix return clases
 # TODO: fix and check precedence
-# TODO: set the column to the ast
 class CoolParser(Parser):
     tokens = CoolLexer.tokens
     # debugfile = 'parser.out'
