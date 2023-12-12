@@ -58,6 +58,9 @@ def test_codegen(cls, out, inp):
 
         mips_script = Codegen.codegen(ast)
         print(mips_script)
+        with open('palindrome.s', "w") as f:
+            f.write(mips_script)
+        
         break
 
 
@@ -90,7 +93,8 @@ if __name__ == "__main__":
 
 
     # Testing codegen
-    folder = "./tests/codegen/"
+    # folder = "./tests/codegen/"
+    folder = "./tests/lauren/"
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]
     out = [f[:-3] + "_output.txt" for f in cls]
