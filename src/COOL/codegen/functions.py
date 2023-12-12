@@ -167,7 +167,7 @@ IN_INT=[
 IN_STRING=[
     Comment("Function to read String", indent=""),
     Label("IO_in_string"),
-    Instruction('#la','$a0','string_space'),  # having  string_space  as a global variable
+    Instruction('#la','$a0','input_buffer'),  # having  string_space  as a global variable
     Instruction("la", "$a1", 1024),
     Instruction("li", "$v0", 8),
     Instruction("syscall"),
