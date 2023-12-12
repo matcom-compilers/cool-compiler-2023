@@ -104,7 +104,6 @@ class If(Node):
     def first_elem(self):
         return self.column
     
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_if(self)
         id = mips_visitor.get_id()
@@ -118,7 +117,6 @@ class If(Node):
         obj = [
             Comment(if_label),
             *if_expr,
-            # FIX
             Instruction("lw", "$t0", "4($t0)"),
             Instruction("la", "$t1", TRUE),
             Instruction("beq", "$t1", "$t0", then_label),
@@ -147,7 +145,6 @@ class While(Node):
     def first_elem(self):
         return self.while_expr
     
-    # FIX
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_while(self)
         id = mips_visitor.get_id()
@@ -188,6 +185,7 @@ class Let(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_let(self)
         id = mips_visitor.get_id()
+        n_stack = len(self.let_list) * 4 
         # labels
         let_label = f"let_{id}"
         end_let_label = f"end let_{id}"
@@ -200,7 +198,6 @@ class Let(Node):
                 ]
             )
         expr = self.expr.codegen(mips_visitor)
-        n_stack = len(self.let_list) * 4 
         obj = [
             Comment(let_label),
             # allocate the stack
