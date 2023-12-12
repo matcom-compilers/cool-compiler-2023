@@ -127,7 +127,7 @@ class AttributeDeclaration(Attribute):
             case "Int":
                 instructions = [Instruction("li", mips_visitor.rt, 0)]
             case "String":
-                instructions = [Instruction("li", mips_visitor.rt, 0)]
+                instructions = [Instruction("la", mips_visitor.rt, "empty")]
             case "Bool":
                 instructions = [Instruction("la", mips_visitor.rt, FALSE)]
             case _:

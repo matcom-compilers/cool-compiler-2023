@@ -228,7 +228,7 @@ class MipsVisitor:
             ),
             *self.create_class("String", 2*WORD,
                 [
-                    [Instruction("li", self.rt, 0)]
+                    [Instruction("la", self.rt, "empty")]
                 ]
             ),
             *self.create_class("Bool", 2*WORD,
@@ -247,6 +247,7 @@ class MipsVisitor:
             Comment("Data section", indent=""),
             Section("data"),
             Data("newline", ".asciiz", "\"\\n\""),
+            Data("empty", ".asciiz", "\"\""),
             Data("null", ".word", "0"),
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
@@ -551,4 +552,5 @@ class MipsVisitor:
 
     def unvisit_let(self, _let):
         self.unset_offset(len(_let.let_list)*WORD)
-        self.current_let = self.let_queue.pop(-1) if self.let_queue else None
+        self.let_queue.pop(-1)
+        self.current_let = self.let_queue[-1] if self.let_queue else None
