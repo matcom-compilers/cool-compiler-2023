@@ -247,7 +247,7 @@ class MipsVisitor:
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
             Data("abort_label", ".asciiz", "\"Abort called from class \""),
-            Data("input_buffer",".space","1024"),    # Espacio para almacenar la cadena de entrada
+            Data("input_buffer",".space","1024"),
 
         ]
         return obj
@@ -392,12 +392,7 @@ class MipsVisitor:
         Get the variable from the current scope.
         """
         scope = {}
-        vars_class = {}
-        _cls = self.current_class
-        while _cls:
-            vars_class.update(self.vars_class[_cls])
-            _cls = self.inheritance[_cls]
-        scope.update(vars_class)
+        scope.update(self.vars_class[self.current_class])
         scope.update(self.vars_method)
         for _let in self.let_queue:
             scope.update(self.vars_let[_let])
@@ -454,6 +449,25 @@ class MipsVisitor:
         for _cls in _program.classes:
             self.inheritance[_cls.type] =_cls.inherits if _cls.inherits else "Object"
             self.class_methods[_cls.type] = {f.id: f.type for f in _cls.methods}
+        
+        class_attributes = {_cls.type: _cls.attributes for _cls in _program.classes}
+        for _cls in _program.classes:
+            memory_counter = WORD
+            self.vars_class[_cls.type] = {}
+            for _current_cls in self.get_class_inheriance_list(_cls.type):
+                if _current_cls in class_attributes:
+                    for attr in class_attributes[_current_cls]:
+                        self.vars_class[_cls.type].update(
+                            {
+                                attr.id: {
+                                    "memory": memory_counter,
+                                    "type": attr.type,
+                                    "stored": "class",
+                                    "offset": 0,
+                                }
+                            }
+                        )
+                        memory_counter += WORD
 
     def unvisit_program(self, _program):
         pass
@@ -461,7 +475,7 @@ class MipsVisitor:
     def visit_class(self, _class):
         self.current_class = _class.type
         self.class_memory = 0
-        self.vars_class[self.current_class] = {}
+        # self.vars_class[self.current_class] = {}
     
     def unvisit_class(self, _class):
         self.test_section_classes[_class.type] = {
@@ -473,15 +487,7 @@ class MipsVisitor:
         self.class_memory = 0
     
     def visit_attribute(self, _attribute):
-        attr = {
-            _attribute.id: {
-                "memory": self.class_memory + 4,
-                "type": _attribute.type,
-                "stored": "class",
-                "offset": 0,
-            }
-        }
-        self.vars_class[self.current_class].update(attr)
+        pass
 
     def unvisit_attribute(self, _attribute):
         self.class_memory += WORD

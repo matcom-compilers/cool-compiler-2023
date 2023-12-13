@@ -267,7 +267,6 @@ class New(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("jal", mips_visitor.get_class_name(self.type)),
-            Instruction("move", mips_visitor.rt, mips_visitor.rv),
         ]
         return obj
 
