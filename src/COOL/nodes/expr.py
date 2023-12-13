@@ -51,7 +51,12 @@ class Dispatch(Node):
             # load the saved expr reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
             # load the type reference
-            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
+            (
+                Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})")
+                if self.type is None
+                else
+                Instruction("la", mips_visitor.rt, self.type)
+            ),
             # load the label reference
             Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),

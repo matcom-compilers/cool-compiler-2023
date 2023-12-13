@@ -22,9 +22,9 @@ class MipsVisitor:
         self.current_state = 0
 
         # GLOBAL DATA
+        self.text_section_data = {}
         self.test_section = []
         self.data_secction = []
-        self.test_section_classes = {}
 
         # LOCAL DATA
         self.attributes = []
@@ -62,29 +62,35 @@ class MipsVisitor:
             *self.create_data(),
             *self.data_secction,
             *self.generate_data_classes,
+            "\n"
         ]
 
-        class_test_section = []
-        for _cls in self.test_section_classes.keys():
-            current_class = _cls
-            inheriance = []
-            while current_class:
-                if self.test_section_classes.get(current_class) is None:
-                    break
-                inheriance.append(current_class)
-                current_class = self.inheritance[current_class]
-            
-            memory = 0
+        class_text_section = []
+        for _cls in self.text_section_data.keys():
+            inheriance = self.get_class_inheriance_list(_cls)[1:]
+            for i in ["IO", "Int", "String", "Bool"]:
+                if i in inheriance:
+                    inheriance.remove(i)
             attributes = []
-            for current_class in reversed(inheriance):
-                attributes.extend(self.test_section_classes[current_class]["attributes"])
-                memory += self.test_section_classes[current_class]["memory"]
-                current_class = self.inheritance[current_class]
+            for current_class in inheriance:
+                attr = []
+                if current_class == _cls:
+                    attributes.extend(self.text_section_data[current_class]["attributes"])
+                else:
+                    a = list(range(1, self.text_section_data[current_class]["memory"]//WORD))
+                    for i in range(1, self.text_section_data[current_class]["memory"]//WORD):
+                        attr.append(
+                            [
+                                Instruction("jal", self.get_class_name(current_class)),
+                                Instruction("lw", "$t0", f"{i*WORD}({self.rt})"),
+                            ]
+                        )
+                    attributes.extend(attr)                
             
-            class_test_section.extend(
+            class_text_section.extend(
                 self.create_class(
                     _class=_cls,
-                    memory=memory+WORD,
+                    memory=self.text_section_data[_cls]["memory"],
                     attributes=attributes
                 )
             )
@@ -94,7 +100,7 @@ class MipsVisitor:
 
         text_section = [
             *self.create_text(),
-            *class_test_section,
+            *class_text_section,
             *self.test_section,
             *self.create_base_class(),
             *aux_functions_text_section,
@@ -256,7 +262,6 @@ class MipsVisitor:
             Data("case_error", ".asciiz", "\"Case without match at line \""),
             Data("abort_label", ".asciiz", "\"Abort called from class \""),
             Data("input_buffer",".space","1024"),
-
         ]
         return obj
     
@@ -497,29 +502,27 @@ class MipsVisitor:
                             }
                         )
                         memory_counter += WORD
+            self.text_section_data[_cls.type] = {
+                "memory": memory_counter,
+            }
+        
 
     def unvisit_program(self, _program):
         pass
 
     def visit_class(self, _class):
         self.current_class = _class.type
-        self.class_memory = 0
-        # self.vars_class[self.current_class] = {}
     
     def unvisit_class(self, _class):
-        self.test_section_classes[_class.type] = {
-            "memory": self.class_memory,
-            "attributes": self.attributes,
-        }
+        self.text_section_data[_class.type].update({"attributes": self.attributes})
         self.attributes = []
         self.current_class = None
-        self.class_memory = 0
     
     def visit_attribute(self, _attribute):
         pass
 
     def unvisit_attribute(self, _attribute):
-        self.class_memory += WORD
+        pass
 
     def visit_method(self, _method):
         self.set_offset(len(_method.formals)*WORD+4)

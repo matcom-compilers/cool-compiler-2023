@@ -73,8 +73,8 @@ def test_codegen_file(file):
     ast, errors = parser.parse(tokens)
     check_errors(errors)
 
-    # errors = Semantic.check(ast)
-    # check_errors(errors)
+    errors = Semantic.check(ast)
+    check_errors(errors)
 
     mips_script = Codegen.codegen(ast)
     # print(mips_script)
