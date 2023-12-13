@@ -35,13 +35,16 @@ class MipsVisitor:
         # CURRENT
         self.current_class = None
         self.current_let = None
+        self.current_case_branch = None
         self.let_queue = []
+        self.case_queue = []
         self.current_offset = 0
         
         # SCOPE
         self.vars_method = {}
         self.vars_class = CLASS_VARS
         self.vars_let = {}
+        self.vars_case = {}
         
         # INHERITANCE
         self.inheritance = INHERIANCE
@@ -158,7 +161,11 @@ class MipsVisitor:
                 for _cls in data.keys() if data[_cls]
             ],
             *[
-                Data(_cls, ".word", self.get_class_label(_cls), *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
+                Data(self.get_class_ref(_cls), ".word", self.get_class_label(_cls), self.get_class_ref(self.get_father(_cls)))
+                for _cls in data.keys() if data[_cls]
+            ],
+            *[
+                Data(_cls, ".word", self.get_class_ref(_cls), *[self.get_method_name(_c, _m) for _m, _c in data[_cls].items()])
                 for _cls in data.keys() if data[_cls]
             ]
         ]
@@ -246,6 +253,7 @@ class MipsVisitor:
             Data("null", ".word", "0"),
             Data("true", ".word", "1"),
             Data("false", ".word", "0"),
+            Data("case_error", ".asciiz", "\"Case without match at line \""),
             Data("abort_label", ".asciiz", "\"Abort called from class \""),
             Data("input_buffer",".space","1024"),
 
@@ -385,8 +393,19 @@ class MipsVisitor:
         Get the class label.
         """
         return f"{_class}_label"
+    
+    def get_class_ref(self, _class: str):
+        """
+        Get the class reference.
+        """
+        return f"{_class}_ref" if _class else "0"
+    
+    def get_father(self, _class: str):
+        """
+        Get the father class.
+        """
+        return self.inheritance[_class]
 
-    # FIX
     def get_variable(self, _variable: str):
         """
         Get the variable from the current scope.
@@ -396,6 +415,8 @@ class MipsVisitor:
         scope.update(self.vars_method)
         for _let in self.let_queue:
             scope.update(self.vars_let[_let])
+        for _case in self.case_queue:
+            scope.update(self.vars_case[_case])
         return scope.get(_variable)
     
     def get_function(self, _class: str, _function: str):
@@ -556,3 +577,28 @@ class MipsVisitor:
         self.unset_offset(len(_let.let_list)*WORD)
         self.let_queue.pop(-1)
         self.current_let = self.let_queue[-1] if self.let_queue else None
+    
+    def visit_case(self, _case):
+        self.set_id()
+    
+    def unvisit_case(self, _case):
+        pass
+    
+    def visit_case_expr(self, _case_branch):
+        self.set_id()
+        self.current_case_branch = f"case_{self.current_state}"
+        self.case_queue.append(self.current_case_branch)
+        self.set_offset(WORD)
+        self.vars_case[self.current_case_branch] = {
+            _case_branch.id: {
+                "memory": 0,
+                "type": _case_branch.type,
+                "stored": "case",
+                "offset": self.current_offset
+            }
+        }
+
+    def unvisit_case_expr(self, _case_branch):
+        self.unset_offset(WORD)
+        self.case_queue.pop(-1)
+        self.current_case_branch = self.case_queue[-1] if self.case_queue else None

@@ -28,6 +28,8 @@ class Dispatch(Node):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
+        if isinstance(self.expr, str):
+            pass
         expr = self.expr.codegen(mips_visitor)
         n_stack = len(self.exprs) * 4 + 4
         exprs = []
@@ -227,16 +229,61 @@ class Case(Node):
     def first_elem(self):
         return self.column
     
-    # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_case(self)
+        id = mips_visitor.get_id()
+        global_expr = self.expr.codegen(mips_visitor)
+        # labels
+        case_label = f"case_{id}"
+        case_compare = "case_compare_{id}_{i}"
+        end_case_label = f"end_case_{id}"
+        case_list_compare = []
+        case_list_exec = []
+        for i, _case in enumerate(self.cases):
+            case_list_compare.extend(
+                [
+                    Instruction("la", "$t1", _case.type),
+                    Instruction("lw", "$t1", "0($t1)"),
+                    Instruction("beq", "$t0", "$t1", case_compare.format(id=id, i=i)),
+                ]
+            )
+            case_list_exec.extend(
+                [
+                    Label(case_compare.format(id=id, i=i), indent="  "),
+                    *_case.codegen(mips_visitor),
+                    Instruction("j", end_case_label),
+                ]
+            )
+        obj = [
+            Comment(case_label),
+            *global_expr,
+            Label(case_label, indent="  "),
+            # load type reference
+            Instruction("lw", "$t0", "0($t0)"),
+            Instruction("lw", "$t0", "4($t0)"),
+            *case_list_compare,
+            Instruction("lw", "$t0", "4($t0)"),
+            Instruction("li", "$t1", 0),
+            # not equal with jump
+            Instruction("bne", "$t0", "$t1", case_label),
+            Instruction("la", "$a0", "str_err_case"),
+            Instruction("li", "$v0", 4),
+            Instruction("syscall"),
+            Instruction("li", "$v0", 10),
+            Instruction("syscall"),
+            *case_list_exec,
+            Label(end_case_label, indent="  "),
+            Comment(end_case_label),
+            "\n",
+        ]
+        mips_visitor.unvisit_case(self)
+        return obj
 
     def check(self, visitor):
         return visitor.visit_case(self)
     
-    # FIX
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return self.cases[0].get_return(mips_visitor)
+        return self.expr.get_return(mips_visitor)
 
 
 class Case_expr(Node):
@@ -249,11 +296,20 @@ class Case_expr(Node):
     def first_elem(self):
         return self.expr
     
-    def codegen(self):
-        raise NotImplementedError()
+    def codegen(self, mips_visitor: MipsVisitor):
+        mips_visitor.visit_case_expr(self)
+        expr = self.expr.codegen(mips_visitor)
+        obj = [
+            *expr,
+        ]
+        mips_visitor.unvisit_case_expr(self)
+        return obj
 
     def check(self, visitor):
         return visitor.visit_case_expr(self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.type
 
 
 class New(Node):

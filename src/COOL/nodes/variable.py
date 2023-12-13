@@ -16,6 +16,8 @@ class GetVariable(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         var = mips_visitor.get_variable(self.id)
         self_var = mips_visitor.get_variable("self")
+        if not var:
+            pass
         if var["stored"] == "class":
             obj = [
                 Comment(f"get variable {self.id}"),
