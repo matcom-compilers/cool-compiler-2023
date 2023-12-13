@@ -24,6 +24,7 @@ class UnaryOperator(Node):
         operation = self.operation(mips_visitor)
         result = [
             *expr,
+            Instruction("lw", "$t0", "4($t0)"),
             *operation
         ]
         return result
@@ -50,15 +51,20 @@ class Operator(Node):
 
     def codegen(self, mips_visitor: MipsVisitor) -> str:
         expr1 = self.expr1.codegen(mips_visitor)
+        mips_visitor.set_offset(4)
         expr2 = self.expr2.codegen(mips_visitor)
+        mips_visitor.unset_offset(4)
         operation = self.operation(mips_visitor)
         result =[
             *expr1,
-            Instruction("addiu", "$sp", "$sp", "-4"),
+            *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
             *expr2,
-            Instruction("lw", "$t1", "0($sp)"),
-            Instruction("addiu", "$sp", "$sp", "4"),
+            # get the value from the object instance
+            Instruction("lw", "$t1", "4($t0)"),
+            Instruction("lw", "$t0", "0($sp)"),
+            Instruction("lw", "$t0", "4($t0)"),
+            *mips_visitor.deallocate_stack(4),
             *operation
         ]
         return result
@@ -77,6 +83,12 @@ class Add(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("add", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Int",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -88,6 +100,12 @@ class Sub(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("sub", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Int",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -99,6 +117,12 @@ class Div(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("div", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Int",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -112,6 +136,12 @@ class Times(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("mul", "$t0", "$t0", "$t1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Int",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -125,7 +155,15 @@ class Less(Operator):
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
             Instruction("slt", "$t0", "$t0", "$t1"),
-            Instruction("jal", "set_bool")
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -137,10 +175,18 @@ class LessEqual(Operator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("sgt", "$t2", "$t0", "$t1"),
+            Instruction("slt", "$t2", "$t0", "$t1"),
             Instruction("seq", "$t3", "$t0", "$t1"),
             Instruction("or", "$t0", "$t2", "$t3"),
-            Instruction("jal", "set_bool")
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -150,12 +196,36 @@ class Equal(Operator):
         
         super().__init__(line, column, expr1, expr2, ['All'],'Bool', '=')
 
-    def operation(self, mips_visitor: MipsVisitor):
-        obj = [
-            Instruction("seq", "$t0", "$t0", "$t1"),
-            Instruction("jal", "set_bool")
+    def codegen(self, mips_visitor: MipsVisitor) -> str:
+        expr1 = self.expr1.codegen(mips_visitor)
+        mips_visitor.set_offset(4)
+        expr2 = self.expr2.codegen(mips_visitor)
+        mips_visitor.unset_offset(4)
+        result =[
+            *expr1,
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *expr2,
+            Instruction("lw", "$t1", "0($sp)"),
+            *mips_visitor.deallocate_stack(4),
+            *mips_visitor.allocate_stack(8),
+            Instruction("sw", "$t0", "0($sp)"),
+            Instruction("sw", "$t1", "4($sp)"),
+            Instruction("jal", "compare"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
-        return obj
+        return result
+
+    def operation(self, mips_visitor: MipsVisitor):
+        pass
 
 
 class Not(UnaryOperator):
@@ -164,7 +234,17 @@ class Not(UnaryOperator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
+            Instruction("lb", "$t0", "0($t0)"),
             Instruction("xori", "$t0", "$t0", "1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", f"0({mips_visitor.rsp})"),
+            Instruction("jal", "set_bool"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Bool",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj
 
@@ -175,6 +255,12 @@ class Bitwise(UnaryOperator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("and", "$t0", "$t0", "$t1"),
+            Instruction("xor", "$t0", "$t0", "-1"),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            *mips_visitor.allocate_object(8, "Int",
+                    [Instruction("lw", mips_visitor.rt, "0($sp)")]
+            ),
+            *mips_visitor.deallocate_stack(4),
         ]
         return obj

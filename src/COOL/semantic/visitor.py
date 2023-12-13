@@ -9,7 +9,6 @@ class Visitor_Program:
 
     def __init__(self):
         self.types:dict = {'Object':BasicObject(),'IO':BasicIO()}
-        #TODO implement the basic types
         self.basic_types: dict = {
             'Object': BasicObject(), 'IO': BasicIO(), 'Int': BasicInt(), 'String': BasicString(), 'Bool': BasicBool()}
 
@@ -223,7 +222,6 @@ class Visitor_Program:
                 node.methods_dict[meth.id] = meth
             for feat in anc_class.features:
                 node.features_dict[feat.id] = feat
-        #TODO check if the methods and attributes are redefined in the dynamic type of the attribute.
         node.methods_dict.update({i.id:i for i in node.methods})
         node.attributes_dict.update({i.id:i for i in node.attributes})
         node.features_dict.update({i.id: i for i in node.features})
@@ -236,9 +234,11 @@ class Visitor_Class:
         self.scope = scope
         self.errors = []
         self.all_types = scope['all_types']
+        self.all_types['dynamic_type'] = 'dynamic_type'
         self.inheritance_tree = scope['inheritance_tree']  
         self.basic_types =  scope['basic_types']  
         self.type = scope['type']
+        self.temporal_scope:dict = {}
         self.operators_symbols = {
             '+': "PLUS", 
             '-': "MINUS", 
@@ -295,6 +295,18 @@ class Visitor_Class:
                     else: 
                         node.dynamic_type = type
                         return type
+                elif self.basic_types.get(type):
+                    lineage = self.basic_types[type].lineage
+                    if attrb.type not in lineage:
+                        raise SemError(
+                            attrb.line,
+                            self.get_first_token(attrb.expr),
+                            'TypeError',
+                            f'Inferred type {type} of initialization of attribute {attrb.id} does not conform to declared type {attrb.type}.')
+                    else: 
+                        node.dynamic_type = type
+                        return type
+
                 raise SemError(
                     attrb.line,
                     self.get_first_token(attrb.expr),
@@ -343,19 +355,21 @@ class Visitor_Class:
         
         node.expr = disp_type.type
         node.type = None
-        node.check(self)
+        return node.check(self)
 
 
     def visit_dispatch_expr(self,node):
         expr_type = node.expr if isinstance(node.expr, str) else node.expr.check(self)
         if expr_type:
             if not expr_type in self.all_types.keys() and not expr_type in self.basic_types.keys():
-                #TODO search this error
                 raise SemError(
                     node.line,
                     node.column,#TODO
                     'TypeError',
                     f'Dispatch on undefined class {expr_type}.')
+
+            if expr_type == 'dynamic_type':
+                return 'dynamic_type'
 
             class_meths = self.all_types[expr_type] if self.all_types.get(expr_type) else self.basic_types.get(expr_type)
             class_meths = class_meths.methods_dict
@@ -367,7 +381,6 @@ class Visitor_Class:
                     f'Dispatch to undefined method {node.id}.')
 
             elif not len(class_meths[node.id].formals) == len(node.exprs):
-                #TODO search this error    
                 raise SemError(
                     node.line,
                     node.column['ID'],
@@ -381,7 +394,6 @@ class Visitor_Class:
                     if not type: type = self.basic_types.get(node.exprs[i].check(self))
                     
                     if not(type.type == formal.type) and not (formal.type in type.lineage):
-                        #TODO search this error
                             raise SemError(
                                 node.line,
                                 self.get_first_token(node.exprs[i]),
@@ -409,10 +421,12 @@ class Visitor_Class:
                     i.column['ID'],
                     'SemanticError',
                     f'\'{i.id}\' cannot be the name of a formal parameter.')
-
-        self.temporal_scope = {i.id:i for i in node.formals}     
+        
+        last_temp_scope = {}
+        last_temp_scope.update(self.temporal_scope)
+        self.temporal_scope.update({i.id:i for i in node.formals})  
         type = node.expr.check(self)        
-        self.temporal_scope = {}
+        self.temporal_scope = last_temp_scope
         if not type:
             return None
         if  (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
@@ -423,7 +437,8 @@ class Visitor_Class:
                 f'Undefined return type {type} in method {node.id}.')
         
         type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
-        
+        if type in self.basic_types.keys():
+            type_lineage = self.basic_types[type].lineage
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
             raise SemError(
                 node.line,
@@ -438,7 +453,6 @@ class Visitor_Class:
         for expr in node.exprs:
             type = expr.check(self)
         return type
-    # TODO check if every expr in the method is conform with its type and every formal (variable declaration) is correct
 
     def search_variable_in_scope(self, exp):
         if self.temporal_scope.get(exp.id):
@@ -450,6 +464,8 @@ class Visitor_Class:
 
 
     def visit_operator(self, node):
+        if node.line == 31:
+            a=1
         ex1 = node.expr1
         ex2 = node.expr2
         type1 = type2 = None
@@ -508,7 +524,7 @@ class Visitor_Class:
         
     def visit_unary_operator(self, node):
         ex1 = node.expr
-        if not ex1.__dict__.get('id'):
+        if (not ex1.__dict__.get('id')) or ex1.__dict__.get('exprs'):
             type1 = ex1.check(self)
         else:
             type1 = self.search_variable_in_scope(ex1)
@@ -544,7 +560,7 @@ class Visitor_Class:
         return node.type 
     
     def visit_execute_method(self,node):
-        self.visit_dispatch_not_expr(node)
+        return self.visit_dispatch_not_expr(node)
 
     def visit_get_variable(self, node):
         if node.id in self.temporal_scope.keys():
@@ -552,7 +568,7 @@ class Visitor_Class:
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
         else:
-            if node.id in self.keywords:
+            if node.id == 'self':
                 return self.scope['type']
             raise SemError(
                 node.line,
@@ -572,9 +588,11 @@ class Visitor_Class:
 
         for i in node.let_list:
             i.check(self)
-        self.temporal_scope = {i.id:i for i in node.let_list}     
+        temp_scope = {}
+        temp_scope.update(self.temporal_scope)
+        self.temporal_scope.update({i.id:i for i in node.let_list})
         type = node.expr.check(self)        
-        self.temporal_scope = {}
+        self.temporal_scope = temp_scope
         if not type:
             return None
         if (type not in self.all_types.keys()) and (type not in self.basic_types.keys()):
@@ -582,7 +600,7 @@ class Visitor_Class:
                 node.line,
                 node.column,#TODO
                 'TypeError',
-                f'Undefined return type {type} in method {node.id}.')
+                f'Undefined return type {type}.')
 
 
         return type
@@ -602,15 +620,6 @@ class Visitor_Class:
 
 
     def visit_case(self, node):
-        dynamic_type = node.expr.check(self)
-        if not dynamic_type or dynamic_type =='void':
-            #TODO search this error
-            raise SemError(
-                node.line,
-                node.column,#TODO
-                'TypeError',
-                f'Case on void.')
-
         cases = node.cases
         return_types = []
         types = []
@@ -621,8 +630,13 @@ class Visitor_Class:
                     node.column,#TODO
                     'SemanticError',
                     f'Identifier \'{case.id}\' bound in \'case\'.')
-            
+
+            node.expr.type = 'dynamic_type'
+            self.temporal_scope[case.id] = node.expr#.check(self)
             return_type = case.check(self)
+            self.temporal_scope.pop(case.id)
+
+
             if not return_type:
                 return None            
             return_types.append(return_type)
@@ -645,12 +659,21 @@ class Visitor_Class:
             types.append(type)
 
         comm_type = 'Object'
+
+
         for i in range(len(return_types)-1):
             type1 = self.all_types.get(
                 return_types[i]) if return_types[i] in self.all_types.keys() else self.basic_types.get(return_types[i])
             type2 = self.all_types.get(
                 return_types[i+1]) if return_types[i+1] in self.all_types.keys() else self.basic_types.get(return_types[i+1])
-            comm_type = self._search_min_common_type(type1,type2)
+            if type1 == 'dynamic_type' and type2 == 'dynamic_type':
+                continue
+            elif type1 == 'dynamic_type':
+                comm_type = type2.type
+            elif type2 == 'dynamic_type':
+                comm_type = type1.type
+            else:
+                comm_type = self._search_min_common_type(type1,type2)
             return_types[i] = comm_type
         return comm_type
         
@@ -660,9 +683,8 @@ class Visitor_Class:
         then_expr = node.then_expr.check(self)
         else_expr = node.else_expr.check(self)
         if not if_expr or not then_expr or not else_expr:
-            return None,0
+            return None
         if not if_expr == 'Bool':
-            #TODO search this error
             raise SemError(
                 node.line,
                 self.get_first_token(node.if_expr),
@@ -719,7 +741,6 @@ class Visitor_Class:
         if not type:
             return None
         if (not type in self.all_types.keys()) and (not type in self.basic_types.keys()):
-            #TODO search this error
             raise SemError(
                 node.line,
                 node.column,#TODO
@@ -728,7 +749,6 @@ class Visitor_Class:
                 
         type_lineage = self.all_types[type].lineage if type in self.all_types.keys() else []
         if (not (type == node.type) ) and (not (node.type in type_lineage)):
-            #TODO search this error
             raise SemError(
                 node.line,
                 self.get_first_token(node.expr),
@@ -741,7 +761,6 @@ class Visitor_Class:
 
     def visit_declaration(self, node):
         if not node.type in self.all_types.keys() and not node.type in self.basic_types.keys():
-            #TODO search this error
             raise SemError(
                 node.line,
                 node.column['TYPE'],
@@ -756,5 +775,5 @@ class Visitor_Class:
         return self.type
 
     def visit_isvoid(self, node):
-        node.expr.check(self)
+        type_ = node.expr.check(self)
         return 'Bool'

@@ -25,15 +25,23 @@ class Interger(Object):
         super().__init__(line, column, value)
     
     def codegen(self, mips_visitor: MipsVisitor):
-        mips_visitor.visit_object(self)
         obj = [
-            Instruction("li", "$t0", self.value),
+            *mips_visitor.allocate_object(
+                8,
+                "Int",
+                [
+                    Instruction("li", mips_visitor.rt, self.value),
+                ]
+            ),
         ]
-        mips_visitor.unvisit_object(self)
         return obj
 
     def check(self,visitor):
         return 'Int'
+
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return "Int"
+    
 
 
 class String(Object):
@@ -47,12 +55,21 @@ class String(Object):
         ]
         mips_visitor.add_data(data)
         obj = [
-            Instruction("la", mips_visitor.rsr, str_name)
+            *mips_visitor.allocate_object(
+                8,
+                "String",
+                [
+                    Instruction("la", mips_visitor.rt, str_name),
+                ]
+            ),
         ]
         return obj
     
     def check(self,visitor):
         return 'String'
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return "String"
 
 
 class Boolean(Object):
@@ -61,9 +78,18 @@ class Boolean(Object):
     
     def codegen(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("la", "$t0", {TRUE if self.value else FALSE})
+            *mips_visitor.allocate_object(
+                8,
+                "Bool",
+                [
+                    Instruction("la", "$t0", TRUE if self.value else FALSE),
+                ]
+            ),
         ]
         return obj
 
     def check(self,visitor):
         return 'Bool'
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return "Bool"

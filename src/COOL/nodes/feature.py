@@ -29,18 +29,19 @@ class Method(Node):
             Label(mips_visitor.get_method_name(mips_visitor.current_class, self.id)),
             # save $ra reference
             *mips_visitor.allocate_stack(4),
-            Instruction("sw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            Instruction("sw", mips_visitor.rra, f"0({mips_visitor.rsp})"),
             *expr,
             # load $ra reference
-            Instruction("lw", mips_visitor.rr, f"0({mips_visitor.rsp})"),
+            Instruction("lw", mips_visitor.rra, f"0({mips_visitor.rsp})"),
             *mips_visitor.deallocate_stack(4),
-            Instruction("jr", mips_visitor.rr),
+            Instruction("jr", mips_visitor.rra),
+            "\n",
         ]
         mips_visitor.add_method(obj)
         mips_visitor.unvisit_method(self)
 
     def check(self, visitor):
-        visitor.visit_method(self)
+        return visitor.visit_method(self)
 
 
 class ExecuteMethod(Node):
@@ -55,36 +56,46 @@ class ExecuteMethod(Node):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
+        n_stack = len(self.exprs) * 4 + 4
         exprs = []
-        for i, expr in enumerate(self.exprs):
+        for i, _expr in enumerate(self.exprs):
             exprs.extend(
-                expr.codegen(mips_visitor) +
                 [
+                    *_expr.codegen(mips_visitor),
                     Instruction("sw", "$t0", f"{4*(i+1)}({mips_visitor.rsp})"),
                 ]
             )
-        n_stack = len(self.exprs) * 4 + 4
+        self_var = mips_visitor.get_variable('self')
+        function_index = mips_visitor.get_function(mips_visitor.current_class, self.id)
         obj = [
-            Comment(f"execute method {self.id}"),
+            Comment(f"execute class method {self.id}"),
             # allocate the stack
             *mips_visitor.allocate_stack(n_stack),
             *exprs,       
-            # get function label
-            Instruction("lw", mips_visitor.rsr, f"{n_stack+4}({mips_visitor.rsp})"),
-            Instruction("lw", mips_visitor.rsr, f"0({mips_visitor.rsr})"),
+            # get self reference
+            Instruction("lw", mips_visitor.rt, f"{mips_visitor.get_offset(self_var)}({mips_visitor.rsp})"),
             # save self reference
-            Instruction("sw", mips_visitor.rsr, f"0({mips_visitor.rsp})"),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+            # load the type reference
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
             # load the method to jump
-            Instruction("lw", mips_visitor.rsr, mips_visitor.get_function(mips_visitor.current_class, self.id, mips_visitor.rsr)),
-            Instruction("jal", mips_visitor.rsr),
+            Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
+            Instruction("jal", mips_visitor.rt),
             # deallocate stack
             *mips_visitor.deallocate_stack(n_stack),
+            Comment(f"end execute class method {self.id}"),
+            "\n",
         ]
         mips_visitor.unvisit_execute_method(self)
         return obj
 
     def check(self,visitor):
-        visitor.visit_execute_method(node = self)
+        return visitor.visit_execute_method(node = self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        expr_type = mips_visitor.current_class
+        return_type = mips_visitor.get_return(expr_type, self.id)
+        return return_type if return_type != "SELF_TYPE" else expr_type
 
 
 class Attribute(Node):
@@ -96,7 +107,7 @@ class Attribute(Node):
         return self.column
 
     def check(self, visitor):
-        visitor.visit_attribute(self)
+        return visitor.visit_attribute(self)
 
 
 class AttributeDeclaration(Attribute):
@@ -112,27 +123,22 @@ class AttributeDeclaration(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        if self.type == "Int" or self.type == "String":
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, "0"),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-            ]
-        elif self.type == "Bool":
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, FALSE),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-            ]
-        else:
-            obj = [
-                Comment(f"attribute {self.id}: {self.type}"),
-                Instruction("la", mips_visitor.rsr, NULL),
-                Instruction("sw", mips_visitor.rsr, "0($v0)"),
-                Instruction("addiu", "$v0", "$v0", "4"),
-            ]
+        match self.type:
+            case "Int":
+                instructions = [Instruction("li", mips_visitor.rt, 0)]
+            case "String":
+                instructions = [Instruction("la", mips_visitor.rt, "empty")]
+            case "Bool":
+                instructions = [Instruction("la", mips_visitor.rt, FALSE)]
+            case _:
+                instructions = [Instruction("la", mips_visitor.rt, NULL)]
+        obj = [
+            Comment(f"attribute {self.id}: {self.type}"),
+            *mips_visitor.allocate_object(8, self.type, instructions),
+            Comment(f"end attribute {self.id}: {self.type}"),
+            "\n",
+        ]
+        
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
 
@@ -154,22 +160,19 @@ class AttributeInicialization(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
+        # FIX move offset?
         expr = self.expr.codegen(mips_visitor)
         obj = [
             Comment(f"attribute {self.id}: {self.type}"),
-            Instruction("addiu", "$sp", "$sp", "-4"),
-            Instruction("sw", "$v0", "0($sp)"),
             *expr,
-            Instruction("lw", "$v0", "0($sp)"),
-            Instruction("addiu", "$sp", "$sp", "4"),
-            Instruction("sw", mips_visitor.rsr, "0($v0)"),
-            Instruction("addiu", "$v0", "$v0", "4"),
+            Comment(f"end attribute {self.id}: {self.type}"),
+            "\n",
         ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
 
     def check(self, visitor):
-        visitor.visit_attribute_initialization(self)
+        return visitor.visit_attribute_initialization(self)
 
 
 class Formal(Node):
