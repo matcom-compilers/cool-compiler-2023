@@ -417,7 +417,15 @@ class MipsVisitor:
             scope.update(self.vars_let[_let])
         for _case in self.case_queue:
             scope.update(self.vars_case[_case])
-        return scope.get(_variable)
+        var = scope.get(_variable)
+        if var is None:
+            return {
+                "memory": 0,
+                "type": self.current_class,
+                "stored": "method",
+                "offset": 0,
+            }
+        return var
     
     def get_function(self, _class: str, _function: str):
         """
@@ -575,6 +583,7 @@ class MipsVisitor:
 
     def unvisit_let(self, _let):
         self.unset_offset(len(_let.let_list)*WORD)
+        self.vars_let.pop(self.current_let)
         self.let_queue.pop(-1)
         self.current_let = self.let_queue[-1] if self.let_queue else None
     
@@ -600,5 +609,6 @@ class MipsVisitor:
 
     def unvisit_case_expr(self, _case_branch):
         self.unset_offset(WORD)
+        self.vars_case.pop(self.current_case_branch)
         self.case_queue.pop(-1)
         self.current_case_branch = self.case_queue[-1] if self.case_queue else None

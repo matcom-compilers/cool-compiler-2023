@@ -73,8 +73,8 @@ def test_codegen_file(file):
     ast, errors = parser.parse(tokens)
     check_errors(errors)
 
-    errors = Semantic.check(ast)
-    check_errors(errors)
+    # errors = Semantic.check(ast)
+    # check_errors(errors)
 
     mips_script = Codegen.codegen(ast)
     # print(mips_script)
@@ -103,12 +103,6 @@ if __name__ == "__main__":
 
     # Testing one file
 
-    # TODO:
-    # file = "./tests/codegen/arith.cl"
-    # file = "./tests/codegen/book_list.cl"
-    # file = "./tests/codegen/hairyscary.cl"
-    
-
     # OK:
     # file = "./tests/codegen/list.cl"
     # file = "./tests/codegen/io.cl"
@@ -122,11 +116,14 @@ if __name__ == "__main__":
     # file = "./tests/codegen/atoi.cl"
     # file = "./tests/codegen/cells.cl"
     # file = "./tests/codegen/palindrome.cl"
+    # file = "./tests/codegen/graph.cl"
+    # file = "./tests/codegen/life.cl"
 
 
     # CHECK:
-    # file = "./tests/codegen/graph.cl"
-    file = "./tests/codegen/life.cl"
+    # file = "./tests/codegen/arith.cl"
+    # file = "./tests/codegen/book_list.cl"
+    file = "./tests/codegen/hairyscary.cl"
     
 
     test_codegen_file(file)

@@ -28,8 +28,6 @@ class Dispatch(Node):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_execute_method(self)
-        if isinstance(self.expr, str):
-            pass
         expr = self.expr.codegen(mips_visitor)
         n_stack = len(self.exprs) * 4 + 4
         exprs = []
@@ -232,11 +230,11 @@ class Case(Node):
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_case(self)
         id = mips_visitor.get_id()
-        global_expr = self.expr.codegen(mips_visitor)
         # labels
         case_label = f"case_{id}"
         case_compare = "case_compare_{id}_{i}"
         end_case_label = f"end_case_{id}"
+        global_expr = self.expr.codegen(mips_visitor)
         case_list_compare = []
         case_list_exec = []
         for i, _case in enumerate(self.cases):
@@ -257,16 +255,15 @@ class Case(Node):
         obj = [
             Comment(case_label),
             *global_expr,
-            Label(case_label, indent="  "),
             # load type reference
             Instruction("lw", "$t0", "0($t0)"),
-            Instruction("lw", "$t0", "4($t0)"),
+            Instruction("lw", "$t0", "0($t0)"),
+            Label(case_label, indent="  "),
             *case_list_compare,
             Instruction("lw", "$t0", "4($t0)"),
             Instruction("li", "$t1", 0),
-            # not equal with jump
             Instruction("bne", "$t0", "$t1", case_label),
-            Instruction("la", "$a0", "str_err_case"),
+            Instruction("la", "$a0", "case_error"),
             Instruction("li", "$v0", 4),
             Instruction("syscall"),
             Instruction("li", "$v0", 10),
@@ -300,7 +297,12 @@ class Case_expr(Node):
         mips_visitor.visit_case_expr(self)
         expr = self.expr.codegen(mips_visitor)
         obj = [
+            Comment(f"case expr {self.id}"),
+            Instruction("jal", mips_visitor.get_class_name(self.type)),
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
             *expr,
+            *mips_visitor.deallocate_stack(4)
         ]
         mips_visitor.unvisit_case_expr(self)
         return obj
