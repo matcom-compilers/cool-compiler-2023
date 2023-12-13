@@ -247,7 +247,7 @@ class Case(Node):
                 [
                     Instruction("la", "$t1", _case.type),
                     Instruction("lw", "$t1", "0($t1)"),
-                    Instruction("beq", "$t0", "$t1", case_compare.format(id=id, i=i)),
+                    Instruction("beq", "$t2", "$t1", case_compare.format(id=id, i=i)),
                 ]
             )
             case_list_exec.extend(
@@ -260,14 +260,16 @@ class Case(Node):
         obj = [
             Comment(case_label),
             *global_expr,
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
             # load type reference
-            Instruction("lw", "$t0", "0($t0)"),
-            Instruction("lw", "$t0", "0($t0)"),
+            Instruction("lw", "$t2", "0($t0)"),
+            Instruction("lw", "$t2", "0($t2)"),
             Label(case_label, indent="  "),
             *case_list_compare,
-            Instruction("lw", "$t0", "4($t0)"),
+            Instruction("lw", "$t2", "4($t2)"),
             Instruction("li", "$t1", 0),
-            Instruction("bne", "$t0", "$t1", case_label),
+            Instruction("bne", "$t2", "$t1", case_label),
             Instruction("la", "$a0", "case_error"),
             Instruction("li", "$v0", 4),
             Instruction("syscall"),
@@ -275,6 +277,7 @@ class Case(Node):
             Instruction("syscall"),
             *case_list_exec,
             Label(end_case_label, indent="  "),
+            *mips_visitor.deallocate_stack(4),
             Comment(end_case_label),
             "\n",
         ]
@@ -303,11 +306,8 @@ class Case_expr(Node):
         expr = self.expr.codegen(mips_visitor)
         obj = [
             Comment(f"case expr {self.id}"),
-            Instruction("jal", mips_visitor.get_class_name(self.type)),
-            *mips_visitor.allocate_stack(4),
-            Instruction("sw", "$t0", "0($sp)"),
             *expr,
-            *mips_visitor.deallocate_stack(4)
+            Comment(f"end case expr {self.id}"),
         ]
         mips_visitor.unvisit_case_expr(self)
         return obj
@@ -328,8 +328,25 @@ class New(Node):
         return self.column
 
     def codegen(self, mips_visitor: MipsVisitor):
+        memory = mips_visitor.get_class_data(self.type)["memory"]
         obj = [
+            Comment(f"Instanciate class {self.type}"),
+            # Allocate memory
+            Instruction("li", mips_visitor.ra, memory),
+            Instruction("li", mips_visitor.rv, 9),
+            Instruction("syscall"),
+            # Save the type reference
+            Instruction("la", mips_visitor.rt, self.type),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rv})"),
+            # save self in stack
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", mips_visitor.rv, f"0({mips_visitor.rsp})"),
+            # call init
             Instruction("jal", mips_visitor.get_class_name(self.type)),
+            # load self from stack
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+            *mips_visitor.deallocate_stack(4),
+            Comment(f"End Instanciate class {self.type}"),
         ]
         return obj
 

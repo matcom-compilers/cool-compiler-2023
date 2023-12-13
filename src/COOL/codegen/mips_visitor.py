@@ -22,7 +22,7 @@ class MipsVisitor:
         self.current_state = 0
 
         # GLOBAL DATA
-        self.text_section_data = {}
+        self.text_section_data = self.classes_defaults()
         self.test_section = []
         self.data_secction = []
 
@@ -66,31 +66,44 @@ class MipsVisitor:
         ]
 
         class_text_section = []
-        for _cls in self.text_section_data.keys():
-            inheriance = self.get_class_inheriance_list(_cls)[1:]
-            for i in ["IO", "Int", "String", "Bool"]:
+        for _cls in self.text_section_data.keys() if 1 else 2:
+            inheriance = self.get_class_inheriance_list(_cls)[1:3]
+            for i in ["IO", "Int", "String", "Bool", "Object"]:
                 if i in inheriance:
                     inheriance.remove(i)
+            
+            counter = 0
             attributes = []
             for current_class in inheriance:
-                attr = []
                 if current_class == _cls:
-                    attributes.extend(self.text_section_data[current_class]["attributes"])
-                else:
-                    a = list(range(1, self.text_section_data[current_class]["memory"]//WORD))
-                    for i in range(1, self.text_section_data[current_class]["memory"]//WORD):
-                        attr.append(
+                    for _attr in self.text_section_data[current_class]["attributes"]:
+                        counter+=WORD
+                        attributes.extend(
                             [
-                                Instruction("jal", self.get_class_name(current_class)),
-                                Instruction("lw", "$t0", f"{i*WORD}({self.rt})"),
+                                *_attr,
+                                Instruction("lw", "$v0", "4($sp)"),
+                                Instruction("sw", "$t0", f"{counter}({self.rv})"),
+                                Instruction("sw", "$v0", "4($sp)"),
                             ]
                         )
-                    attributes.extend(attr)                
+                else:
+                    memory_inheriance_attrs = (self.text_section_data[current_class]["memory"]-WORD)
+                    counter += memory_inheriance_attrs
+                    attributes.extend(
+                        [
+                            Instruction("lw", "$v0", "4($sp)"),
+                            *self.allocate_stack(WORD),
+                            Instruction("sw", "$v0", "0($sp)"),
+                            Instruction("jal", self.get_class_name(current_class)),
+                            Instruction("lw", "$t0", "0($sp)"),
+                            *self.deallocate_stack(WORD),
+                        ]
+                    )
             
+            # FIX
             class_text_section.extend(
                 self.create_class(
                     _class=_cls,
-                    memory=self.text_section_data[_cls]["memory"],
                     attributes=attributes
                 )
             )
@@ -102,7 +115,7 @@ class MipsVisitor:
             *self.create_text(),
             *class_text_section,
             *self.test_section,
-            *self.create_base_class(),
+            # *self.classes_defaults(),
             *aux_functions_text_section,
         ]
         
@@ -178,74 +191,58 @@ class MipsVisitor:
         return data_section
 
     # CREATE
-    def create_class(self, _class: str, memory: int, attributes: List[Instruction]):
-        _attributes = []
-        for i, attr in enumerate(attributes):
-            _attributes.extend(
-                [   
-                    # save the class instance while creating it
-                    *self.allocate_stack(WORD),
-                    Instruction("sw", self.rv, f"0({self.rsp})"),
-                    *attr,
-                    # load the class instance
-                    Instruction("lw", self.rv, f"0({self.rsp})"),
-                    *self.deallocate_stack(WORD),
-                    # save the attribute and move the heap
-                    Instruction("sw", self.rt, f"{(i+1)*WORD}({self.rv})"),
-                ]
-            )
+    def create_class(self, _class: str, attributes: List[Instruction]):
         obj = [
             Comment(f"Create class {_class}", indent=""),
             Label(self.get_class_name(_class)),
-            # Allocate memory
-            Instruction("li", self.ra, memory),
-            Instruction("li", self.rv, 9),
-            Instruction("syscall"),
-            # Save the type reference
-            Instruction("la", self.rt, _class),
-            Instruction("sw", self.rt, f"0({self.rv})"),
             # save $ra reference
             *self.allocate_stack(WORD),
             Instruction("sw", self.rra, f"0({self.rsp})"),
-            *_attributes,
+            *attributes,
             # load $ra reference
             Instruction("lw", self.rra, f"0({self.rsp})"),
             *self.deallocate_stack(WORD),
-            # load self
-            Instruction("move", self.rt, self.rv),
             Instruction("jr", self.rra),
             "\n",
         ]
         return obj
     
-    def create_base_class(self):
+    # FIX
+    def classes_defaults(self):
         """
         Create the base classes IO, Int, String, Bool.
         """
-        obj = [
-            *self.create_class("Object", 2*WORD,
-                [
-                    [Instruction("la", self.rt, "null")]
+        classes = {
+            "Object":{
+                "memory": 8,
+                "attributes": [
+                    *self.create_class("Object", [[Instruction("la", self.rt, "null")]])
+                ],
+            },
+            "IO":{
+                "memory": 4,
+                "attributes": [],
+            },
+            "Int":{
+                "memory": 8,
+                "attributes": [
+                    *self.create_class("Int", [[Instruction("li", self.rt, 0)]])
                 ]
-            ),
-            *self.create_class("IO", 2*WORD, []),
-            *self.create_class("Int", 2*WORD,
-                [
-                    [Instruction("li", self.rt, 0)]
+            },
+            "String":{
+                "memory": 8,
+                "attributes": [
+                    *self.create_class("String", [[Instruction("la", self.rt, "empty")]])
                 ]
-            ),
-            *self.create_class("String", 2*WORD,
-                [
-                    [Instruction("la", self.rt, "empty")]
+            },
+            "Bool":{
+                "memory": 8,
+                "attributes": [
+                    *self.create_class("Bool", [[Instruction("la", self.rt, "false")]])
                 ]
-            ),
-            *self.create_class("Bool", 2*WORD,
-                [
-                    [Instruction("la", self.rt, "false")]
-                ]
-            ),
-        ]
-        return obj
+            },
+        }
+        return classes
     
     def create_data(self):
         """
@@ -269,14 +266,30 @@ class MipsVisitor:
         """
         Create the text section.
         """
+        memory = self.get_class_data("Main")["memory"]
         obj = [
             Comment("Text section", indent=""),
             Section("text"),
             Label("main"),
+            # Allocate memory
+            Instruction("li", self.ra, memory),
+            Instruction("li", self.rv, 9),
+            Instruction("syscall"),
+            # Save the type reference
+            Instruction("la", self.rt, "Main"),
+            Instruction("sw", self.rt, f"0({self.rv})"),
+            # save self in stack
+            *self.allocate_stack(4),
+            Instruction("sw", self.rv, f"0({self.rsp})"),
+            # call main function
             Instruction("jal", self.get_class_name("Main")),
-            *self.allocate_stack(WORD),
+            # load self from stack
+            Instruction("lw", self.rv, f"0({self.rsp})"),
+            *self.deallocate_stack(WORD),
+            # FIX
             Instruction("sw", self.rv, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
+            *self.deallocate_stack(WORD),
             Instruction("j", "exit"),
         ]
         return obj
@@ -425,7 +438,7 @@ class MipsVisitor:
         var = scope.get(_variable)
         if var is None:
             return {
-                "memory": 0,
+                "memory": 4,
                 "type": self.current_class,
                 "stored": "method",
                 "offset": 0,
@@ -452,6 +465,12 @@ class MipsVisitor:
             if self.class_methods[_class].get(function):
                 return self.class_methods[_class][function]
         return "Object"
+    
+    def get_class_data(self, _class: str):
+        """
+        Get the class data.
+        """
+        return self.text_section_data[_class]
     
     # ADD
     def add_data(self, _data: List[Data]):
