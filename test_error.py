@@ -20,26 +20,26 @@ def check_errors(errors):
 def test_errors(cls, out):
     for _cl, _out in zip(cls, out):
         loaded_file = load_file(_cl)
-        # with open(_out, "r") as f:
-        #     expected = f.readlines()
+        with open(_out, "r") as f:
+            expected = f.readlines()
         
         lexer = CoolLexer()
         
         print(f"Testing {Path(_cl).name}:")
         print("Expected:")
-        # for line in expected:
-        #     print(f"{line.strip()}")
+        for line in expected:
+            print(f"{line.strip()}")
         
         print("Got:")
         tokens, errors = lexer.tokenize(loaded_file)
-        # check_errors(errors)
+        check_errors(errors)
 
         parser = CoolParser()
         ast, errors = parser.parse(tokens)
         check_errors(errors)
 
-        # errors = Semantic.check(ast)
-        # check_errors(errors)
+        errors = Semantic.check(ast)
+        check_errors(errors)
         print()
 
 def test_codegen(cls, out, inp):
@@ -55,11 +55,12 @@ def test_codegen(cls, out, inp):
         ast, errors = parser.parse(tokens)
 
         errors = Semantic.check(ast)
+        check_errors(errors)
 
-        mips_script = Codegen.codegen(ast)
-        # print(mips_script)
-        with open(f'{_cl[:-3]}.s', "w") as f:
-            f.write(mips_script)
+        # mips_script = Codegen.codegen(ast)
+        # # print(mips_script)
+        # with open(f'{_cl[:-3]}.s', "w") as f:
+        #     f.write(mips_script)
         
         # break
 
@@ -77,9 +78,10 @@ def test_codegen_file(file):
     check_errors(errors)
 
     errors = Semantic.check(ast)
+    check_errors(errors)
 
-    mips_script = Codegen.codegen(ast)
-    print(mips_script)
+    # mips_script = Codegen.codegen(ast)
+    # print(mips_script)
 
 
 
@@ -93,8 +95,8 @@ if __name__ == "__main__":
 
 
     # Testing codegen
-    # folder = "./tests/codegen/"
-    folder = "./tests/lauren/yet/"
+    folder = "./tests/codegen/"
+    # folder = "./tests/lauren/yet/"
 
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]
