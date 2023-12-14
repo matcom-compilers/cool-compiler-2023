@@ -22,6 +22,8 @@ def test_errors(cls, out):
         loaded_file = load_file(_cl)
         with open(_out, "r") as f:
             expected = f.readlines()
+        with open(_out, "r") as f:
+            expected = f.readlines()
         
         lexer = CoolLexer()
         
@@ -87,11 +89,10 @@ def test_codegen_file(file):
 
 if __name__ == "__main__":
     # Testing lexer, parser and semantic
-    # folder = "./tests/semantic/"
-    # files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
-    # cls = [f for f in files if f.endswith(".cl")]
-    # out = [f[:-3] + "_error.txt" for f in cls]
-    # test_errors(cls, out)
+    folder = "./tests/semantic/"
+
+
+    # folder = "./tests/codegen/"
 
 
     # Testing codegen

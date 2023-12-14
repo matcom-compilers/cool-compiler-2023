@@ -4,26 +4,24 @@
 
 #### Cómo ejecutar y compilar. 
 
+
+
+
 El compilador se utiliza desde la carpeta src llamando al archivo `coolc.sh` y a continuación la dirección del archivo de extensión cl que se desea compilar, ejemplo: `./cool.sh /path/file.cl`. Este procedimiento compila su `file.cl` y devuelve un archivo `file.mips` que se ejecuta utilizando el comando `spim -file file.mips`.` 
 
 #### Requisitos adicionales, dependencias, configuración, etc.
+
+
+
+
+
+
 - Instalación de la biblioteca `SLY` de python. Se puede instalar mediante el comando `pip install sly`. 
 - Instalación del simulador de MIPS `SPIM`. Se puede instalar mediante el comando `sudo apt-get install spim`.
 
 
-
-<!-- Para la evaluación del proyecto Ud. debe entregar un informe en formato PDF (`report.pdf`) en esta carpeta, que resuma de manera organizada y comprensible la arquitectura e implementación de su compilador.
-El documento no tiene límite de extensión.
-En él explicará en más detalle su solución a los problemas que, durante la implementación de cada una de las fases del proceso de compilación, hayan requerido de Ud. especial atención. -->
-
-<!-- 
-Usted es libre de estructurar su reporte escrito como más conveniente le parezca. A continuación le sugerimos algunas secciones que no deberían faltar, aunque puede mezclar, renombrar y organizarlas de la manera que mejor le parezca:
-
-- **Uso del compilador**: detalles sobre las opciones de líneas de comando, si tiene opciones adicionales (e.j., `--ast` genera un AST en JSON, etc.). Básicamente lo mismo que pondrá en este Readme.
-- **Arquitectura del compilador**: una explicación general de la arquitectura, en cuántos módulos se divide el proyecto, cuantas fases tiene, qué tipo de gramática se utiliza, y en general, como se organiza el proyecto. Una buena imagen siempre ayuda.
-- **Problemas técnicos**: detalles sobre cualquier problema teórico o técnico interesante que haya necesitado resolver de forma particular. -->
-
 ### Arquitectura del compilador
+
 
 Todo el código del compilador se encuentra en la carpeta COOL dentro de src, este se divide en 4 módulos principales:
 
@@ -43,6 +41,8 @@ Además se encuentran otros módulos auxiliares encargados de los errores en tie
 
 El flujo de las fases de un compilador sigue un proceso secuencial que transforma el código fuente de un programa en un programa ejecutable. Nuestro compilador de COOL sigue el siguiente flujo de fases:
 
+
+
 #### Análisis léxico
 
 
@@ -50,6 +50,21 @@ El flujo de las fases de un compilador sigue un proceso secuencial que transform
 Esta fase se encarga de analizar el código fuente y dividirlo en unidades léxicas o tokens, como identificadores, palabras clave, operadores y símbolos.  Se generan los tokens que representan las unidades léxicas del programa.
 
 Para la lexemización, tokenización y parser se utilizó la biblioteca de python `SLY`. Esta es una biblioteca para escribir analizadores léxicos y gramaticales. Se basa libremente en las herramientas tradicionales de construcción de compiladores lex (tokenizar) y yacc (yet another compiler-compiler). Tomando su clase Lexer como base hemos creado nuestro lexer para el lenguaje COOL agregando todos los tokens necesarios para el lenguaje, así como literales,palabras claves y algunas funciones necesarias como los ignore para los comentarios.
+
+Ejemplo de como se definen tokens, literales y otros objetos utilizando el lexer de `SLY`:
+
+
+```python
+tokens = {
+        # Symbols
+        "NUMBER", "STRING", "TYPE", "ID", 
+        # Arithmetic Operators
+        "PLUS", "MINUS", "TIMES", "DIVIDE", "LESS", "LESSEQUAL", "EQUAL", "NOT", "BITWISE", "ASSIGN", "DARROW",
+        # Reserved words
+        'CLASS', "INHERITS", "IF", "THEN", "ELSE", "FI", "WHILE", "LOOP", "POOL", "LET", "IN", "CASE", "OF", "ESAC", "NEW", "ISVOID", "TRUE", "FALSE",
+    }
+    literals = {"(", ")", "{", "}", ";", ":", ",", ".", "@"}
+```
 
 Además de tokenizar la entrada el análisis léxico puede detectar tokens que no pertenecen al léxico del lenguaje de programación, como caracteres no válidos o secuencias que no tienen significado dentro del lenguaje, el uso incorrecto de operadores o símbolos, que podrían indicar algún problema en la escritura del código, puede identificar si se han escrito incorrectamente palabras clave o identificadores, también detecta errores relacionados con la delimitación de tokens, como la falta de cierre de comillas en cadenas de texto, paréntesis sin emparejar, corchetes o llaves mal balanceados, entre otros.
 
@@ -62,28 +77,113 @@ El analizador sintáctico verifica la estructura del código fuente según las r
 
 Para la obtención del AST se utilizaron las reglas gramaticales definidas en el manual de COOL, incluída la precedencia y asociatividad, junto al algoritmo de análisis sintáctico (parser) LALR(1) implementado en `SLY`. Un analizador LALR (Look-Ahead LR)  es una versión simplificada de un analizador LR canónico, para analizar un texto de acuerdo con un conjunto de reglas de producción especificadas por una gramática formal para un lenguaje.
 
-<!-- SLY utiliza una técnica de análisis conocida como análisis LR o análisis shift-reduce. El análisis LR es una técnica de abajo hacia arriba que intenta reconocer el lado derecho de varias reglas gramaticales. Cada vez que se encuentra un lado derecho válido en la entrada, se activa el método de acción apropiado y los símbolos gramaticales del lado derecho se reemplazan por el símbolo gramatical del lado izquierdo. -->
-
 Al igual que con otros tipos de gramáticas LR, un analizador o gramática LALR es bastante eficiente para encontrar el único análisis de abajo hacia arriba correcto en un solo escaneo de izquierda a derecha sobre el flujo de entrada, porque no necesita usar el retroceso. El analizador siempre utiliza una búsqueda anticipada, representando LALR(1) una búsqueda anticipada de un token.
 
-El análisis sintáctico verifica si las construcciones del código cumplen con la gramática del lenguaje de programación. Puede identificar errores como uso incorrecto de operadores, expresiones mal formadas, estructuras de control incompletas, entre otros.
+`SLY` brinda una interfaz sencilla y cómoda para definir la gramática del lenguaje, además de permitir definir la precedencia y asociatividad de los operadores.
 
+Ejemplo de como se define la precedencia y asociatividad utilizando el parser de `SLY`:
+
+```python
+ precedence = (
+       ('right', 'ASSIGN'),
+       ('nonassoc', 'NOT'),
+       ('nonassoc', 'EQUAL', 'LESS', 'LESSEQUAL'),
+       ('left', 'PLUS', 'MINUS'),
+       ('left', 'TIMES', 'DIVIDE'),
+       ('right', 'ISVOID'),
+       ('left', 'BITWISE'),
+       ('nonassoc', '@'),
+       ('nonassoc', 'NUMBER'),
+       ('nonassoc', '(',')'),
+       ('left', '.'),
+    )
+```
+
+Ejemplo de como se define una regla de la gramática utilizando el parser de `SLY`:
+```python
+@_('ID "(" formals ")" ":" TYPE "{" expr "}"')
+    def feature(self, p: YaccProduction):
+        return Method(
+            line=p.lineno,
+            column=self._get_column_from_production(p),
+            id=p.ID,
+            type=p.TYPE,
+            formals=p.formals,
+            expr=p.expr
+        )
+```
+En este ejemplo de código la función feature  utiliza la información del objeto  YaccProduction  para crear el objeto  Method . El nombre del método se obtiene del token  ID , el tipo de retorno se obtiene del token  TYPE , los parámetros se obtienen del objeto  formals  y el cuerpo del método se obtiene del objeto expr . 
+
+El análisis sintáctico verifica si las construcciones del código cumplen con la gramática del lenguaje de programación. Puede identificar errores como uso incorrecto de operadores, expresiones mal formadas, estructuras de control incompletas, entre otros.
 
 
  
 #### Análisis semántico 
 
 
-
-
 Durante esta fase, se realiza un análisis más profundo del programa para verificar la coherencia y consistencia semántica. Se comprueba si las variables están correctamente declaradas, si los tipos de datos son compatibles y si se cumplen las reglas semánticas del lenguaje. 
 
 
-En el análisis semántico del lenguaje Cool (Classroom Object-Oriented Language), se realizan diversas tareas para verificar la coherencia y corrección del programa en términos de su significado y contexto.
+En el análisis semántico del lenguaje Cool, se realizan diversas tareas para verificar la coherencia y corrección del programa en términos de su significado y contexto. Está implementado utilizando el patrón visitor en dos momentos, donde cada uno de los nodos del AST es una clase que realiza su chequeo semántico llamando a su visitor correspondiente dentro de la clase visitor.
 
-El análisis semántico está implementado utilizando el patrón visitor en dos momentos, primero a la hora de la declaración de las clases y herencias, donde verifica que no existan errores de herencia, conflictos de nombres, que no se creen herencias cíclicas, que no se redefinan atributos y que los métodos se redefinan de forma correcta. 
+Los dos momentos del chequeo son: 
 
-En segundo lugar, se realiza el análisis semántico de las expresiones, donde se verifica que los tipos de las expresiones sean correctos, la consistencia de los tipos utilizados en las diferentes expresiones, que los tipos de los parámetros de los métodos sean correctos, que las variables estén declaradas y siempre se utilicen en su ámbito correspondiente, que no se realicen operaciones entre tipos incompatibles.
+
+- Primeramente a la hora de la declaración de las clases y herencias, donde verifica que no existan errores de herencia, conflictos de nombres, que no se creen herencias cíclicas, que no se redefinan atributos y que los métodos se redefinan de forma correcta. 
+
+- En segundo lugar, se realiza el chequeo de tipos de las expresiones, donde se verifica que los tipos de las expresiones sean correctos, la consistencia de los tipos utilizados en las diferentes expresiones, que los tipos de los argumentos en los llamados a métodos sean correctos, que las variables estén declaradas y siempre se utilicen en su ámbito correspondiente, que no se realicen operaciones entre tipos incompatibles, que los retornos de las funciones sean consecuentes con su tipo, además de la correcta utilización de cada uno de los recursos del lenguaje (condicionales, ciclos, let, case, etc...) cumpliendo las indicaciones del manual de COOL.
+
+
+Todo el análisis semántico se maneja desde la clase Program en específico su método check:
+
+```python
+ def check(self):
+        try:
+            self.visitor.visit_program(self)
+
+            for class_ in self.classes:
+                if class_:
+                    if class_.inherits and class_.inherits in self.visitor.types.keys() and not  class_.inherits in self.visitor.basic_types.keys():
+                        class_.inherits_instance = self.visitor.types[class_.inherits] 
+            
+            for _class in self.classes:
+                if _class:
+                    _class.check(self.visitor)
+
+            for _class in self.classes:
+                class_visitor =  Visitor_Class( scope= {
+                    'type': _class.type, 
+                    'inherits': _class.inherits, 
+                    'features': _class.features_dict, 
+                    'methods': _class.methods_dict, 
+                    'attributes': _class.attributes_dict, 
+                    'inherits_instance': _class.inherits_instance, 
+                    'line': _class.line, 
+                    'column': _class.column,
+                    'lineage': _class.lineage,
+                    'all_types':self.visitor.types,
+                    'inheritance_tree':self.visitor.tree,
+                    'basic_types':self.visitor.basic_types,
+                    'type': _class.type
+                    })
+                for feature in _class.features:
+                    feature.check(class_visitor)
+
+        except Exception as e:
+            return [e]
+```
+
+Este es el encargado de almacenar los diferentes visitor que se utilizan a lo largo del proceso y brindarles la información de toda la estructura de las clases presentes. Además que envia a las clases y a las diferentes expresiones a realizar sus respectivos chequeos.
+
+Luego cada expresión se encarga de su propio chequeo haciendo uso de la función del visitor que le ha sido asignada desde su método check.
+Ej:
+
+```python
+    def check(self, visitor:Visitor_Class):
+        return visitor.visit_dispatch(self)
+```
+
+Todas estas funciones retornan el tipo estático de la expresión correspondiente, lo que ayuda en gran manera la realización del chequeo de las expresiones que las engloban. 
 
 Esta fase es crucial para garantizar que el programa cumpla con las reglas y restricciones del lenguaje, verificando la corrección de tipos, la coherencia en la herencia, entre otros aspectos fundamentales para el funcionamiento adecuado del programa.
 
