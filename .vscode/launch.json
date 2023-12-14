@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "TEST",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["../tests", "-v", "--tb=short"],
+            "cwd": "${workspaceRoot}/src",
+            "python": "${workspaceRoot}/.venv/bin/python",
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        }
+    ]
+}

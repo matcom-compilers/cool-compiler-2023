@@ -1,10 +1,7 @@
 members:
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
-  - name: Nombre Apellido1 Apellido2
-    github: github_id
-    group: CXXX
+  - name: Dennis Fiallo Muñoz
+    github: dfiallo35
+    group: C411
+  - name: Lauren Olivia Guerra Hernández
+    github: lauolivia
+    group: C412
