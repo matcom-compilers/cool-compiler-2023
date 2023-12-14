@@ -159,7 +159,6 @@ class AttributeInicialization(Attribute):
 
     def codegen(self, mips_visitor: MipsVisitor):
         mips_visitor.visit_attribute(self)
-        # FIX move offset?
         expr = self.expr.codegen(mips_visitor)
         obj = [
             Comment(f"attribute {self.id}: {self.type}"),
