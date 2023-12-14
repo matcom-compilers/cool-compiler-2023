@@ -74,7 +74,8 @@ class MipsVisitor:
 
             counter = 0
             attributes = []
-            for current_class in inheriance[:2]:
+            inheriance = inheriance[-2:]
+            for current_class in inheriance:
                 if current_class == _cls:
                     for _attr in self.text_section_data[current_class]["attributes"]:
                         counter+=WORD
