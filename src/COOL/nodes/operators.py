@@ -255,7 +255,7 @@ class Bitwise(UnaryOperator):
 
     def operation(self, mips_visitor: MipsVisitor):
         obj = [
-            Instruction("xor", "$t0", "$t0", "-1"),
+            Instruction("sub", "$t0", "$zero", "$t0"),
             *mips_visitor.allocate_stack(4),
             Instruction("sw", "$t0", "0($sp)"),
             *mips_visitor.allocate_object(8, "Int",
