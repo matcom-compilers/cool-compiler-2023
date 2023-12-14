@@ -352,11 +352,14 @@ class Visitor_Class:
                 'TypeError',
                 f'Expression type {static_type.type} does not conform to declared static dispatch type {disp_type.type}.')
 
-        
-        node.expr = disp_type.type
-        node.type = None
-        return node.check(self)
-
+        # node.expr = disp_type.type
+        # node.type = None
+        # return node.check(self)
+        import copy
+        copy_node = copy.deepcopy(node)
+        copy_node.expr = disp_type.type
+        copy_node.type = None
+        return copy_node.check(self)
 
     def visit_dispatch_expr(self,node):
         expr_type = node.expr if isinstance(node.expr, str) else node.expr.check(self)
@@ -564,6 +567,8 @@ class Visitor_Class:
 
     def visit_get_variable(self, node):
         if node.id in self.temporal_scope.keys():
+            if self.temporal_scope[node.id].__dict__.get('dynamic_type') and self.temporal_scope[node.id].dynamic_type =='dynamic_type':
+                return 'dynamic_type'
             return self.temporal_scope[node.id].type
         if node.id in self.scope['attributes'].keys():
             return self.scope['attributes'][node.id].type
@@ -631,7 +636,8 @@ class Visitor_Class:
                     'SemanticError',
                     f'Identifier \'{case.id}\' bound in \'case\'.')
 
-            node.expr.type = 'dynamic_type'
+            # node.expr.type = 'dynamic_type'
+            node.expr.dynamic_type = 'dynamic_type'
             self.temporal_scope[case.id] = node.expr#.check(self)
             return_type = case.check(self)
             self.temporal_scope.pop(case.id)

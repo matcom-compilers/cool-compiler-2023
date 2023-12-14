@@ -29,19 +29,19 @@ def test_errors(cls, out):
         
         print(f"Testing {Path(_cl).name}:")
         print("Expected:")
-        # for line in expected:
-        #     print(f"{line.strip()}")
+        for line in expected:
+            print(f"{line.strip()}")
         
         print("Got:")
         tokens, errors = lexer.tokenize(loaded_file)
-        # check_errors(errors)
+        check_errors(errors)
 
         parser = CoolParser()
         ast, errors = parser.parse(tokens)
         check_errors(errors)
 
-        # errors = Semantic.check(ast)
-        # check_errors(errors)
+        errors = Semantic.check(ast)
+        check_errors(errors)
         print()
 
 def test_codegen(cls, out, inp):
@@ -57,13 +57,14 @@ def test_codegen(cls, out, inp):
         ast, errors = parser.parse(tokens)
 
         errors = Semantic.check(ast)
+        check_errors(errors)
 
-        mips_script = Codegen.codegen(ast)
-        print(mips_script)
-        with open('palindrome.s', "w") as f:
-            f.write(mips_script)
+        # mips_script = Codegen.codegen(ast)
+        # # print(mips_script)
+        # with open(f'{_cl[:-3]}.s', "w") as f:
+        #     f.write(mips_script)
         
-        break
+        # break
 
 
 def test_codegen_file(file):
@@ -78,10 +79,11 @@ def test_codegen_file(file):
     ast, errors = parser.parse(tokens)
     check_errors(errors)
 
-    # errors = Semantic.check(ast)
+    errors = Semantic.check(ast)
+    check_errors(errors)
 
-    mips_script = Codegen.codegen(ast)
-    print(mips_script)
+    # mips_script = Codegen.codegen(ast)
+    # print(mips_script)
 
 
 
@@ -94,8 +96,9 @@ if __name__ == "__main__":
 
 
     # Testing codegen
-    # folder = "./tests/codegen/"
-    folder = "./tests/lauren/"
+    folder = "./tests/codegen/"
+    # folder = "./tests/lauren/yet/"
+
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder)])
     cls = [f for f in files if f.endswith(".cl")]
     out = [f[:-3] + "_output.txt" for f in cls]
