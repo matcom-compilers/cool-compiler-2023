@@ -118,12 +118,12 @@ if __name__ == "__main__":
     # file = "./tests/codegen/palindrome.cl"
     # file = "./tests/codegen/life.cl"
 
-    file = "./tests/codegen/graph.cl"
+    # file = "./tests/codegen/graph.cl"
 
 
     # CHECK:
     # file = "./tests/codegen/arith.cl"
-    # file = "./tests/codegen/book_list.cl"
+    file = "./tests/codegen/book_list.cl"
     # file = "./tests/codegen/hairyscary.cl"
     
     # file = "./t/b.cl"

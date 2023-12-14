@@ -67,14 +67,14 @@ class MipsVisitor:
 
         class_text_section = []
         for _cls in self.text_section_data.keys() if 1 else 2:
-            inheriance = self.get_class_inheriance_list(_cls)[1:3]
+            inheriance = self.get_class_inheriance_list(_cls)
             for i in ["IO", "Int", "String", "Bool", "Object"]:
                 if i in inheriance:
                     inheriance.remove(i)
-            
+
             counter = 0
             attributes = []
-            for current_class in inheriance:
+            for current_class in inheriance[:2]:
                 if current_class == _cls:
                     for _attr in self.text_section_data[current_class]["attributes"]:
                         counter+=WORD
@@ -95,7 +95,6 @@ class MipsVisitor:
                             *self.allocate_stack(WORD),
                             Instruction("sw", "$v0", "0($sp)"),
                             Instruction("jal", self.get_class_name(current_class)),
-                            Instruction("lw", "$t0", "0($sp)"),
                             *self.deallocate_stack(WORD),
                         ]
                     )
@@ -287,6 +286,7 @@ class MipsVisitor:
             Instruction("lw", self.rv, f"0({self.rsp})"),
             *self.deallocate_stack(WORD),
             # FIX
+            *self.allocate_stack(4),
             Instruction("sw", self.rv, f"0({self.rsp})"),
             Instruction("jal", self.get_method_name("Main", "main")),
             *self.deallocate_stack(WORD),
@@ -387,10 +387,11 @@ class MipsVisitor:
         """
         Get the class parents.
         """
+        current_class = _class
         parents = []
-        while _class:
-            parents.append(_class)
-            _class = self.inheritance[_class]
+        while current_class:
+            parents.append(current_class)
+            current_class = self.inheritance[current_class]
         parents = list(reversed(parents))
         return parents
     
