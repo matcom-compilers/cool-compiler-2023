@@ -51,7 +51,12 @@ class Dispatch(Node):
             # load the saved expr reference
             Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
             # load the type reference
-            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})"),
+            (
+                Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rt})")
+                if self.type is None
+                else
+                Instruction("la", mips_visitor.rt, self.type)
+            ),
             # load the label reference
             Instruction("lw", mips_visitor.rt, f"{function_index}({mips_visitor.rt})"),
             Instruction("jal", mips_visitor.rt),
@@ -227,16 +232,63 @@ class Case(Node):
     def first_elem(self):
         return self.column
     
-    # TODO
     def codegen(self, mips_visitor: MipsVisitor):
-        raise NotImplementedError()
+        mips_visitor.visit_case(self)
+        id = mips_visitor.get_id()
+        # labels
+        case_label = f"case_{id}"
+        case_compare = "case_compare_{id}_{i}"
+        end_case_label = f"end_case_{id}"
+        global_expr = self.expr.codegen(mips_visitor)
+        case_list_compare = []
+        case_list_exec = []
+        for i, _case in enumerate(self.cases):
+            case_list_compare.extend(
+                [
+                    Instruction("la", "$t1", _case.type),
+                    Instruction("lw", "$t1", "0($t1)"),
+                    Instruction("beq", "$t2", "$t1", case_compare.format(id=id, i=i)),
+                ]
+            )
+            case_list_exec.extend(
+                [
+                    Label(case_compare.format(id=id, i=i), indent="  "),
+                    *_case.codegen(mips_visitor),
+                    Instruction("j", end_case_label),
+                ]
+            )
+        obj = [
+            Comment(case_label),
+            *global_expr,
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", "$t0", "0($sp)"),
+            # load type reference
+            Instruction("lw", "$t2", "0($t0)"),
+            Instruction("lw", "$t2", "0($t2)"),
+            Label(case_label, indent="  "),
+            *case_list_compare,
+            Instruction("lw", "$t2", "4($t2)"),
+            Instruction("li", "$t1", 0),
+            Instruction("bne", "$t2", "$t1", case_label),
+            Instruction("la", "$a0", "case_error"),
+            Instruction("li", "$v0", 4),
+            Instruction("syscall"),
+            Instruction("li", "$v0", 10),
+            Instruction("syscall"),
+            *case_list_exec,
+            Label(end_case_label, indent="  "),
+            *mips_visitor.deallocate_stack(4),
+            Comment(end_case_label),
+            "\n",
+        ]
+        mips_visitor.unvisit_case(self)
+        return obj
 
     def check(self, visitor):
         return visitor.visit_case(self)
     
-    # FIX
     def get_return(self, mips_visitor: MipsVisitor) -> str:
-        return self.cases[0].get_return(mips_visitor)
+        return self.expr.get_return(mips_visitor)
 
 
 class Case_expr(Node):
@@ -249,11 +301,22 @@ class Case_expr(Node):
     def first_elem(self):
         return self.expr
     
-    def codegen(self):
-        raise NotImplementedError()
+    def codegen(self, mips_visitor: MipsVisitor):
+        mips_visitor.visit_case_expr(self)
+        expr = self.expr.codegen(mips_visitor)
+        obj = [
+            Comment(f"case expr {self.id}"),
+            *expr,
+            Comment(f"end case expr {self.id}"),
+        ]
+        mips_visitor.unvisit_case_expr(self)
+        return obj
 
     def check(self, visitor):
         return visitor.visit_case_expr(self)
+    
+    def get_return(self, mips_visitor: MipsVisitor) -> str:
+        return self.type
 
 
 class New(Node):
@@ -265,8 +328,25 @@ class New(Node):
         return self.column
 
     def codegen(self, mips_visitor: MipsVisitor):
+        memory = mips_visitor.get_class_data(self.type)["memory"]
         obj = [
+            Comment(f"Instanciate class {self.type}"),
+            # Allocate memory
+            Instruction("li", mips_visitor.ra, memory),
+            Instruction("li", mips_visitor.rv, 9),
+            Instruction("syscall"),
+            # Save the type reference
+            Instruction("la", mips_visitor.rt, self.type),
+            Instruction("sw", mips_visitor.rt, f"0({mips_visitor.rv})"),
+            # save self in stack
+            *mips_visitor.allocate_stack(4),
+            Instruction("sw", mips_visitor.rv, f"0({mips_visitor.rsp})"),
+            # call init
             Instruction("jal", mips_visitor.get_class_name(self.type)),
+            # load self from stack
+            Instruction("lw", mips_visitor.rt, f"0({mips_visitor.rsp})"),
+            *mips_visitor.deallocate_stack(4),
+            Comment(f"End Instanciate class {self.type}"),
         ]
         return obj
 

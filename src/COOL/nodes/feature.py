@@ -136,7 +136,6 @@ class AttributeDeclaration(Attribute):
             Comment(f"attribute {self.id}: {self.type}"),
             *mips_visitor.allocate_object(8, self.type, instructions),
             Comment(f"end attribute {self.id}: {self.type}"),
-            "\n",
         ]
         
         mips_visitor.add_attribute(obj)
@@ -166,7 +165,6 @@ class AttributeInicialization(Attribute):
             Comment(f"attribute {self.id}: {self.type}"),
             *expr,
             Comment(f"end attribute {self.id}: {self.type}"),
-            "\n",
         ]
         mips_visitor.add_attribute(obj)
         mips_visitor.unvisit_attribute(self)
