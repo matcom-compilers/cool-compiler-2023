@@ -289,6 +289,7 @@ OBJECT_TYPE_NAME=[
     Instruction("lw", "$t0", "0($sp)"),
     Instruction("lw", "$t0", "0($t0)"),
     Instruction("lw", "$t0", "0($t0)"),
+    Instruction("lw", "$t0", "0($t0)"),
     # allocate type
     Instruction("li", "$a0", 8),
     Instruction("li", "$v0", 9),
@@ -309,6 +310,7 @@ OBJECT_ABORT=[
     Instruction("li", "$v0", 4),
     Instruction("syscall"),
     Instruction("lw", "$t0", "0($sp)"),
+    Instruction("lw", "$t0", "0($t0)"),
     Instruction("lw", "$t0", "0($t0)"),
     Instruction("lw", "$a0", "0($t0)"),
     Instruction("li", "$v0", 4),
