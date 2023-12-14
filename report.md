@@ -89,16 +89,38 @@ Esta fase es crucial para garantizar que el programa cumpla con las reglas y res
 
 
 
-#### Generación de código
+### Generación de código
+
+En esta última fase, se genera código MIPS a partir del AST generado en la fase anterior. Para esto se utilizó el patrón similar visitor, donde se recorre el AST y se genera el código MIPS correspondiente a cada nodo, dadas las implementaciones especificas que se facilitan en los nodos. Las clases que implementan el patrón visitor son las siguientes:
+
+- `Codegen`: Clase principal que se encarga de recibir el AST y generar el código MIPS correspondiente a cada nodo.
+- `MipsVisitor`: Clase que define los métodos que se utilizan para generar el código MIPS de cada nodo.
+- `Node`: Clase abstracta que define los métodos que se utilizan para generar el código MIPS de cada nodo en la función abstracta `codegen`.
+
+Se recorre el AST a partir del llamado de `Codegen` iniciando por el `Node` llamado `Program` y se recorre el AST de forma recursiva, generando líneas de código MIPS almacenadas como los tipos:
+
+- `Instruction`: Clase que define las instrucciones MIPS.
+- `Label`: Clase que define las etiquetas MIPS.
+- `Comment`: Clase que define los comentarios MIPS.
+- `Data`: Clase que define los datos a almacenar en el segmento de datos MIPS.
+
+Al finalizar el recorrido del AST se genera el archivo `.mips` con el código MIPS generado, el cual se puede ejecutar con el simulador `spim`.
+
+#### Stack
+
+Para el manejo del Stack se tienen varios métodos que se encargan de almacenar y recuperar los valores de las variables en el Stack. Entre estos está `get_variable` el cual dado el id de la variable y sabiendo el estado actual de la ejecución del programa, se encarga de indicar la posición de la variable en el Stack. Al igual que al entrar en un scope se mueve el offset del Stack y al salir se recupera el offset anterior.
+
+En el caso de los métodos, al entrar en estos siempre se almacena como primer valor en el Stack el valor del self, para luego poder acceder a los atributos de la clase. Y una vez dentro del método se almacena el valor del registro de retorno `$ra` para luego poder retornar al lugar donde se llamó el método.
+
+#### Heap
+
+Todos los objetos creados en el programa se almacenan en el Heap, teniendo en su primera posición un puntero al tipo del objeto, mientras que este lo que almacena en su pocision 0 es el string con el nombre del tipo del objeto y en la posición 1 un puntero a su padre en el árbol de herencia.
+
+Para instanciar un objeto se crea un espacio en el Heap con el tamaño del objeto y se llama al label con nombre `{object}_class` pasandole como self el puntero al objeto creado. Este label se encarga de inicializar los atributos del objeto y retornar el puntero al objeto creado.
+
+Para acceder a los atributos de un objeto se utiliza el método `get_variable` el cual vimos anteriormente, el cual dado el id del atributo y el estado actual de la ejecución del programa, se encarga de indicar la posición del atributo en el objeto.
+
+Para acceder a los métodos de un objeto se utiliza el método `get_method` el cual dado el id del método y el estado actual de la ejecución del programa, se encarga de indicar la posición del método en el objeto.
 
 
 
-En esta última fase, se genera el código objeto o ejecutable final para la plataforma de destino específica. El compilador traduce el código intermedio optimizado a instrucciones de máquina comprensibles por el hardware objetivo, realizando asignaciones de registros, generando instrucciones de ensamblador y resolviendo referencias a memoria. 
- 
-
-Durante la generación de código de Cool a MIPS, se deben considerar diversos aspectos específicos de la arquitectura MIPS, como la gestión de la pila, la asignación de registros, las convenciones de llamada a funciones, el manejo de excepciones, entre otros. Además, es crucial asegurarse de que la traducción de las construcciones de Cool a instrucciones de MIPS sea coherente y respete las restricciones y reglas de ambas plataformas.
-
-
-
-
-Todos los detalles acerca de las reglas de gramática utilizada se puede ver en `parser.out`, además de visualizar cada uno de los estados de la ejecución actual.
