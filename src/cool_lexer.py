@@ -16,7 +16,7 @@ class CoolLexer:
 
     def tokenize(self, data):
         self.lexer.input(data)
-        print(data)
+        # print(data)
         a = []
         while True:
             tok = self.lexer.token()

@@ -10,22 +10,27 @@ def main(_input, _output):
         text = file.read()
 
     # Lexer
-    _lexer = CoolLexer()
+    lexer = CoolLexer()
     # _lexer._print(text)
-    _lexer.tokenize(text)
+    lexer.tokenize(text)
     # i = 0
     # for t in tokens:
     #     if i == 20: break
     #     print(t)
     #     i +=1
     # print(lexer.errors)
+    if lexer.errors:
+        for error in lexer.errors:
+            print(error)
 
     # Parser
-    parser = CoolParser(_lexer)
+    parser = CoolParser(lexer)
     ast = parser.parse(text)
     # print(parser.errors)
     if parser.errors:
-        parser.print_error()
+        for error in parser.errors:
+            print(error)
+        # parser.print_error()
         # raise Exception()
 
 

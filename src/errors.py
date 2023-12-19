@@ -2,8 +2,12 @@ class Error(Exception):
     def __init__(self, line, column, type_, message):
         self.line = line
         self.col = column
-        self.type = type_
+        self._type = type_
         self.message = message
+
+    
+    def __str__(self) -> str:
+        return f'({self.line},{self.col}) - {self._type}: ERROR "{self.message}"'
 
 
 class CompilerError(Error):
