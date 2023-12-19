@@ -10,9 +10,9 @@ def main(_input, _output):
         text = file.read()
 
     # Lexer
-    lexer = CoolLexer()
+    lexer = CoolLexer(text)
     # _lexer._print(text)
-    lexer.tokenize(text)
+    lexer.tokenize()
     # i = 0
     # for t in tokens:
     #     if i == 20: break
@@ -37,7 +37,7 @@ def main(_input, _output):
 if __name__ == "__main__":
     # in_path = 'tests/codegen/arith.cl'
     # in_path = 'tests/codegen/book_list.cl'
-    in_path = 'tests/lexer/iis3.cl'
+    in_path = 'tests/lexer/iis5.cl'
     out_path = 'src/codeMips.mips'
     _input = sys.argv[1] if len(sys.argv) > 1 else in_path
     _output = sys.argv[2] if len(sys.argv) > 2 else out_path

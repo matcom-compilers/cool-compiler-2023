@@ -4,7 +4,7 @@ from ply import lex
 from utils import tokens, keywords, literals
 
 class CoolLexer:
-    def __init__(self) -> None:
+    def __init__(self, data) -> None:
         self.errors = []
         
         self.tokens = tokens
@@ -13,9 +13,11 @@ class CoolLexer:
         self.lexer = lex.lex(module=self)
         self.lexer.col = 1
 
+        self.data = data
 
-    def tokenize(self, data):
-        self.lexer.input(data)
+
+    def tokenize(self):
+        self.lexer.input(self.data)
         # print(data)
         a = []
         while True:
@@ -28,9 +30,17 @@ class CoolLexer:
         return a
     
     def pos(self, token):
-        token.col = token.lexer.col
+        line_start = self.data.rfind('\n', 0, token.lexpos) + 1
+
+
+        token.col = (token.lexpos - line_start) + 1 #token.lexer.col
         token.line = token.lexer.lineno
         token.lexer.col += len(token.value)
+        
+    def find_column(self, token):
+        line_start = self.data.rfind('\n', 0, token.lexpos) + 1
+        return (token.lexpos - line_start) + 1
+
 
     def t_LESSEQ(self, t):
         r'<='
