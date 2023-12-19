@@ -215,8 +215,7 @@ class BoolType(Type):
 
     def __ne__(self, other):
         return other.name != self.name and not isinstance(other, BoolType)
-
-    
+ 
 
 class SelfType(Type):
     def __init__(self):

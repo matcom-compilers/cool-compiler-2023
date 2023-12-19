@@ -13,31 +13,37 @@ class CoolLexer:
         self.lexer = lex.lex(module=self)
         self.lexer.col = 1
 
+
     def tokenize(self, data):
         self.lexer.input(data)
+        print(data)
+        a = []
         while True:
             tok = self.lexer.token()
             if not tok:
                 break
-            yield tok
-
+            # print(tok)
+            a.append(tok)
+            # yield tok
+        return a
+    
     def pos(self, token):
         token.col = token.lexer.col
         token.line = token.lexer.lineno
         token.lexer.col += len(token.value)
 
     def t_LESSEQ(self, t):
-        r'\<='
+        r'<='
         self.pos(t)
         return t
 
     def t_ASSIGN(self, t):
-        r'\<-'
+        r'<-'
         self.pos(t)
         return t
 
     def t_ARROW(self, t):
-        r'\=>'
+        r'=>'
         self.pos(t)
         return t
 
@@ -61,6 +67,7 @@ class CoolLexer:
 
     def t_ignore_COMMENT_LINE(self, t):
         r'(--.*(\n | $))'
+        pass
 
     def t_string(self, t):
         r'"'
@@ -113,6 +120,11 @@ class CoolLexer:
             t.lexer.col = 1
         else:
             t.lexer.col += len(t.value)
+
+    def t_comments_newline(self, t):
+        r"\n"
+        t.lexer.last_new_line_pos = t.lexer.lexpos
+        t.lexer.lineno += 1
 
     def t_newline(self, t):
         r'\n+'
