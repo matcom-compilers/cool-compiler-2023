@@ -37,9 +37,9 @@ def main(_input, _output):
 if __name__ == "__main__":
     # in_path = 'tests/codegen/arith.cl'
     # in_path = 'tests/codegen/book_list.cl'
-    in_path = 'tests/lexer/mixed1.cl'
+    # in_path = 'tests/lexer/mixed2.cl'
     out_path = 'src/codeMips.mips'
-    _input = sys.argv[1] if len(sys.argv) > 1 else in_path
+    _input = sys.argv[1] #if len(sys.argv) > 1 else in_path
     _output = sys.argv[2] if len(sys.argv) > 2 else out_path
 
     main(_input, _output)
