@@ -15,6 +15,11 @@ class CoolLexer:
 
         self.data = data
 
+        self.str_val = ''
+        self.str_line = 0
+        self.str_col = 0
+        self.str_end = False
+        self.str_new_line = False
 
     def tokenize(self):
         self.lexer.input(self.data)
@@ -27,16 +32,16 @@ class CoolLexer:
             # print(tok)
             a.append(tok)
             # yield tok
+            # print(tok.value, tok.line, tok.col)
         return a
     
     def pos(self, token):
         line_start = self.data.rfind('\n', 0, token.lexpos) + 1
-
-
         token.col = (token.lexpos - line_start) + 1 #token.lexer.col
         token.line = token.lexer.lineno
         token.lexer.col += len(token.value)
         
+
     def find_column(self, token):
         line_start = self.data.rfind('\n', 0, token.lexpos) + 1
         return (token.lexpos - line_start) + 1
@@ -81,12 +86,19 @@ class CoolLexer:
 
     def t_string(self, t):
         r'"'
+        self.str_val = '"'
+        self.pos(t)
+        self.str_line = t.line
+        self.str_col = t.col
+        self.str_end = False
         t.lexer.begin('string')
 
     def t_string_end(self, t):
         r'(?<!\\)"'
+        self.str_end = True
         t.lexer.begin('INITIAL')
         t.type = 'STRING'
+        t.value = self.str_val + t.value      
         for index, char in enumerate(t.value):
             if char == '\0':
                 null_col = t.col + index
@@ -94,14 +106,29 @@ class CoolLexer:
                 self.errors.append(
                     LexicographicError(line=null_line, column=null_col, message='NULL CHARACTER')
                 )
-        t.value = t.value[1:-1]
+        # t.value += t.value[1:-1]
+        t.line = self.str_line
+        t.col = self.str_col
         return t
 
     def t_string_space(self, t):
         r'\s'
 
+        if t.value== '\n' and not self.str_new_line:
+            self.pos(t)
+            self.errors.append(LexicographicError(line=t.line, column=t.col, message="Unterminated string constant"))
+            t.lexer.begin('INITIAL')
+
     def t_string_pass(self, t):
         r'.'
+        self.str_val += t.value
+        if t.value == '\\':
+            self.str_new_line = True
+            
+            t.lexer.lineno += len(t.value)
+            t.lexer.col = 1
+        else: 
+            self.str_new_line = False
 
     def t_comment(self, t):
         r'\(\*'
@@ -248,5 +275,6 @@ class CoolLexer:
         self.pos(t)
         line = t.lineno
         col = t.col
+        # print('any', line, col)
         self.errors.append(LexicographicError(line=line, column=col, message=t.value[0]))
         t.lexer.skip(1)

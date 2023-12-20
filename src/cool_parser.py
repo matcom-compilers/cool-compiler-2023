@@ -376,16 +376,18 @@ class CoolParser:
         p[0] = []
 
     
-    def p_error(self, p):
-        if p:
-            self.add_error(p)
+    def p_error(self, t):
+        if t:
+            self.add_error(t)
         else:
-            self.errors.append(SyntacticError(message='at or near EOF', line=0, column=0))
+            self.errors.append(SyntacticError(message="EOF", line=0, column=0))
 
 
-    def add_error(self, p):
+    def add_error(self, t):
+        print('add_error_parser')
+        print(t.line)
         self.errors.append(SyntacticError(
-            message=f'at or near of {p.value}', line=p.lineno, column=p.col))
+            message=f'{t.value}', line=t.line, column=t.col))
 
 
     def print_error(self):

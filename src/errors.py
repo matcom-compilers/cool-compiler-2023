@@ -24,6 +24,9 @@ class SyntacticError(Error):
     def __init__(self, line, column, message):
         Error.__init__(self, line, column, "SyntacticError", message)
 
+    def __str__(self):
+        return f'({self.line}, {self.col}) - {self._type}: ERROR at or near "{self.message}"'
+
 
 class SemanticError(Error):
     def __init__(self, line, column, message):
