@@ -38,6 +38,8 @@ class CoolLexer:
             #     print(tok.type)
             # except:
             #     pass
+        self.lexer.lineno = 1
+        self.lexer.linestart = 0
         return a
 
     def pos(self, token):
@@ -85,7 +87,8 @@ class CoolLexer:
 
     def t_ignore_COMMENT_LINE(self, t):
         r"(--.*(\n | $))"
-        pass
+        t.lexer.lineno += 1
+        t.lexer.col = 1
 
     def t_string(self, t):
         r'"'

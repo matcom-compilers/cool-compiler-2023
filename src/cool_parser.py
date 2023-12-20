@@ -385,7 +385,7 @@ class CoolParser:
 
     def add_error(self, t):
         print('add_error_parser')
-        print(t.line)
+        # print(t.line)
         self.errors.append(SyntacticError(
             message=f'{t.value}', line=t.line, column=t.col))
 
