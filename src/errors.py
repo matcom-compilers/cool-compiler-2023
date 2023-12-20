@@ -7,7 +7,7 @@ class Error(Exception):
 
     
     def __str__(self) -> str:
-        return f'({self.line},{self.col}) - {self._type}: ERROR "{self.message}"'
+        return f'({self.line}, {self.col}) - {self._type}: ERROR "{self.message}"'
 
 
 class CompilerError(Error):

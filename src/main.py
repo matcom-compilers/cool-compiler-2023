@@ -24,20 +24,20 @@ def main(_input, _output):
             print(error)
 
     # Parser
-    parser = CoolParser(lexer)
-    ast = parser.parse(text)
-    # print(parser.errors)
-    if parser.errors:
-        for error in parser.errors:
-            print(error)
-        # parser.print_error()
-        # raise Exception()
+    # parser = CoolParser(lexer)
+    # ast = parser.parse(text)
+    # # print(parser.errors)
+    # if parser.errors:
+    #     for error in parser.errors:
+    #         print(error)
+    #     # parser.print_error()
+    #     # raise Exception()
 
 
 if __name__ == "__main__":
     # in_path = 'tests/codegen/arith.cl'
     # in_path = 'tests/codegen/book_list.cl'
-    in_path = 'tests/lexer/iis5.cl'
+    in_path = 'tests/lexer/mixed1.cl'
     out_path = 'src/codeMips.mips'
     _input = sys.argv[1] if len(sys.argv) > 1 else in_path
     _output = sys.argv[2] if len(sys.argv) > 2 else out_path
