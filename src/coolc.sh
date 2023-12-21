@@ -16,4 +16,5 @@ echo "Copyright (c) 2019: Nombre1, Nombre2, Nombre3"    # TODO: líneas a los va
 # Llamar al compilador
 # python3 ${FILE} $INPUT_FILE $OUTPUT_FILE
 
-exec python3 main.py $INPUT_FILE
+python3 main.py $INPUT_FILE $OUTPUT_FILE
+

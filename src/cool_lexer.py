@@ -113,7 +113,9 @@ class CoolLexer:
                 null_line = t.line
                 self.errors.append(
                     LexicographicError(
-                        line=null_line, column=null_col, message="String contains null character"
+                        line=null_line,
+                        column=null_col,
+                        message="String contains null character",
                     )
                 )
         # t.value += t.value[1:-1]
