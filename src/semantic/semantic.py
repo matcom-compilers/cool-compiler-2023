@@ -3,7 +3,7 @@ from collections import OrderedDict
 from tokenize import String
 
 from traitlets import Int
-from errors import SemanticError
+from src.utils.errors import SemanticError
 
 class Attribute:
     def __init__(self, name, typex):

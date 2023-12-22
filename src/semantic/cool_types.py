@@ -1,4 +1,4 @@
-from errors import *
+from src.utils.errors import *
 from semantic import *
 
 class Type:

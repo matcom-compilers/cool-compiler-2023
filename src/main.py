@@ -1,7 +1,7 @@
 import sys
 
-from cool_lexer import CoolLexer
-from cool_parser import CoolParser
+from lexer.cool_lexer import CoolLexer
+from parser.cool_parser import CoolParser
 
 
 def main(_input, _output):

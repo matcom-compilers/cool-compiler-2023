@@ -1,7 +1,7 @@
-from errors import *  # import LexicographicError
+from utils.errors import *  # import LexicographicError
 from ply import lex
 
-from utils import tokens, keywords, literals
+from utils.utils import tokens, keywords, literals
 
 
 class CoolLexer:
