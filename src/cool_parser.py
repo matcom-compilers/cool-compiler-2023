@@ -1,7 +1,7 @@
 from ply.yacc import yacc
-from cool_ast import *
 from errors import SyntacticError
 from utils import tokens
+from cool_ast import *
 
 
 class CoolParser:

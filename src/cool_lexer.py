@@ -1,20 +1,23 @@
-from sqlalchemy import column
-from errors import LexicographicError
+from errors import *  # import LexicographicError
 from ply import lex
+
 from utils import tokens, keywords, literals
 
 
 class CoolLexer:
-    def __init__(self, data) -> None:
+    def __init__(self) -> None:
         self.errors = []
 
+        self.keywords = keywords
+
         self.tokens = tokens
+
         self.states = (("comment", "exclusive"), ("string", "exclusive"))
 
         self.lexer = lex.lex(module=self)
         self.lexer.col = 1
 
-        self.data = data
+        self.data = ""
 
         self.str_val = ""
         self.str_line = 0
@@ -22,22 +25,17 @@ class CoolLexer:
         self.str_end = False
         self.str_new_line = False
 
-    def tokenize(self):
-        self.lexer.input(self.data)
+    def tokenize(self, data):
+        self.data = data
+        self.lexer.input(data)
         # print(data)
         a = []
         while True:
             tok = self.lexer.token()
             if not tok:
                 break
-            # print(tok)
             a.append(tok)
-            # yield tok
-            # print(tok.value, tok.line, tok.col)
-            # try:
-            #     print(tok.type)
-            # except:
-            #     pass
+
         self.lexer.lineno = 1
         self.lexer.linestart = 0
         return a
@@ -70,13 +68,13 @@ class CoolLexer:
     def t_TYPE(self, t):
         r"[A-Z][a-zA-Z_0-9]*"
         self.pos(t)
-        t.type = keywords.get(t.value.lower(), "TYPE")
+        t.type = self.keywords.get(t.value.lower(), "TYPE")
         return t
 
     def t_ID(self, t):
         r"[a-z][a-zA-Z_0-9]*"
         self.pos(t)
-        t.type = keywords.get(t.value.lower(), "ID")
+        t.type = self.keywords.get(t.value.lower(), "ID")
         return t
 
     def t_INT(self, t):
@@ -84,11 +82,6 @@ class CoolLexer:
         self.pos(t)
         t.value = int(t.value)
         return t
-
-    def t_ignore_COMMENT_LINE(self, t):
-        r"(--.*(\n | $))"
-        t.lexer.lineno += 1
-        t.lexer.col = 1
 
     def t_string(self, t):
         r'"'
@@ -188,6 +181,19 @@ class CoolLexer:
         r"\n"
         t.lexer.last_new_line_pos = t.lexer.lexpos
         t.lexer.lineno += 1
+
+    def t_ignore_COMMENT_LINE(self, t):
+        r"--.*($|\n)"
+        t.lexer.lineno += 1
+        t.lexer.col = 1
+
+    def t_comment_eof(self, t):
+        # print("aqui")
+        self.pos(t)
+        if t.lexer.level > 0:
+            self.errors.append(
+                LexicographicError(line=t.line, column=t.col, message="EOF in comment")
+            )
 
     def t_newline(self, t):
         r"\n+"
@@ -299,10 +305,9 @@ class CoolLexer:
 
     def t_ANY_error(self, t):
         self.pos(t)
-        line = t.lineno
+        line = t.line
         col = t.col
-        # print('any', line, col)
         self.errors.append(
-            LexicographicError(line=line, column=col, message=t.value[0])
+            LexicographicError(line=line, column=col, message=f'ERROR "{t.value[0]}"')
         )
         t.lexer.skip(1)

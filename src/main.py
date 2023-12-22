@@ -5,34 +5,26 @@ from cool_parser import CoolParser
 
 
 def main(_input, _output):
-
+    # text = ''
     with open(_input) as file:
         text = file.read()
 
     # Lexer
-    lexer = CoolLexer(text)
-    # _lexer._print(text)
-    lexer.tokenize()
-    # i = 0
-    # for t in tokens:
-    #     if i == 20: break
-    #     print(t)
-    #     i +=1
-    # print(lexer.errors)
+    lexer = CoolLexer()
+    tokens = lexer.tokenize(text)
     if lexer.errors:
         for error in lexer.errors:
             print(error)
         exit(1)
+        # raise Exception()
 
-    # Parser
+    # # Parser
     parser = CoolParser(lexer)
     ast = parser.parse(text)
     # print(parser.errors)
     if parser.errors:
         for error in parser.errors:
             print(error)
-        # parser.print_error()
-        # raise Exception()
         exit(1)
 
 
@@ -40,8 +32,8 @@ if __name__ == "__main__":
     # Lexer tests
     # in_path = 'tests/lexer/iis1.cl'
     # in_path = 'tests/lexer/mixed1.cl'
+    # in_path = '/media/paula/DATA/School/computacion/4to_2023/ENTREGA_COMP/cool-compiler-2023-master/cool-compiler-2023-master/tests/lexer/comment1.cl'
     in_path = 'tests/lexer/string1.cl'
-    # in_path = 'tests/lexer/comment1.cl'
 
     # Parser tests
     # in_path = 'tests/parser/assignment1.cl'
@@ -61,8 +53,11 @@ if __name__ == "__main__":
     # in_path = 'tests/codegen/arith.cl'
     # in_path = 'tests/codegen/book_list.cl'
     
-    out_path = 'src/codeMips.mips'
+    out_path = ''
+    # out_path = ''
     _input = sys.argv[1] if len(sys.argv) > 1 else in_path
     _output = sys.argv[2] if len(sys.argv) > 2 else out_path
 
     main(_input, _output)
+
+
