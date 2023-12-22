@@ -9,7 +9,6 @@ class CoolError(Exception):
     def __str__(self) -> str:
         return f'({self.line},{self.col}) - {self._type}: ERROR "{self.message}"'
 
-    
     def __repr__(self):
         return str(self)
 
@@ -18,19 +17,9 @@ class CompilerError(CoolError):
         CoolError.__init__(self, 0, 0, "CompilerError", message)
 
 
-class LexicographicError:
+class LexicographicError(CoolError):
     def __init__(self, line, column, message):
         CoolError.__init__(self, line, column, "LexicographicError", message)
-        # self.line = line
-        # self.col = column
-        # self.message = message
-
-    
-    # def __str__(self) -> str:
-    #     return f'{self.line, self.col} - LexicographicError: {self.message}'
-
-    # def __repr__(self):
-    #     return str(self)
 
 class SyntacticError(CoolError):
     def __init__(self, line, column, message):
