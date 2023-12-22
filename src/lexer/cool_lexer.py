@@ -44,7 +44,7 @@ class CoolLexer:
         line_start = self.data.rfind("\n", 0, token.lexpos) + 1
         token.col = (token.lexpos - line_start) + 1  # token.lexer.col
         token.line = token.lexer.lineno
-        token.lexer.col += len(token.value)
+        # token.lexer.col += len(token.value)
 
     def find_column(self, token):
         line_start = self.data.rfind("\n", 0, token.lexpos) + 1
@@ -136,8 +136,6 @@ class CoolLexer:
         self.str_val += t.value
         if t.value == "\\":
             self.str_new_line = True
-            # t.lexer.lineno += len(t.value)
-            # t.lexer.col = 1
         else:
             self.str_new_line = False
 
@@ -151,7 +149,6 @@ class CoolLexer:
 
     def t_comment(self, t):
         r"\(\*"
-        t.lexer.comm_start = t.lexer.lexpos - 2
         t.lexer.level = 1
         t.lexer.begin("comment")
 
@@ -163,9 +160,7 @@ class CoolLexer:
         r"\*\)"
         t.lexer.level -= 1
         if t.lexer.level == 0:
-            t.value = t.lexer.lexdata[t.lexer.comm_start : t.lexer.lexpos]
             t.type = "COMMENT_LINE"
-            # t.lexer.lineno += t.value.count("\n")
             t.lexer.begin("INITIAL")
 
     def t_comment_pass(self, t):
@@ -179,7 +174,6 @@ class CoolLexer:
 
     def t_comment_newline(self, t):
         r"\n"
-        t.lexer.last_new_line_pos = t.lexer.lexpos
         t.lexer.lineno += 1
 
     def t_ignore_COMMENT_LINE(self, t):
@@ -188,7 +182,6 @@ class CoolLexer:
         t.lexer.col = 1
 
     def t_comment_eof(self, t):
-        # print("aqui")
         self.pos(t)
         if t.lexer.level > 0:
             self.errors.append(
